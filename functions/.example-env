@@ -1,0 +1,3 @@
+# If needed, create an env file called `.env` for environment specific or sensitive variables
+# They can be accessed inside `index.js` using the format `process.env.MY_API_KEY`
+MY_API_KEY="123456"
