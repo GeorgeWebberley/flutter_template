@@ -30,7 +30,7 @@ dart pub global run rename setBundleId --value <MY_BUNDLE_IDENTIFIER>
 - Check for iOS by opening the ios folder in xcode and checking the Bundle Identifier inside the `Runner`.
 - Update the app name by using the following command:
 ```
-flutter pub global run rename --appname <YOUR_APP_NAME></YOUR_APP_NAME>
+dart pub global run rename setAppName --value "YourAppName"
 ```
 - Check inside `android -> app -> src -> main -> AndroidManifest.xml` that the label has been set.
 - Check in the `ios -> Runner -> Info.plist` that it has been set.
