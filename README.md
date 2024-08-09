@@ -24,7 +24,7 @@ dart pub global activate rename
 ```
 - Then run the following command with your chosen bundle identifier:
 ```
-dart pub global run rename --bundleId <MY_BUNDLE_IDENTIFIER>
+dart pub global run rename setBundleId --value <MY_BUNDLE_IDENTIFIER>
 ``` 
 - Check inside `android -> app -> build.gradle` that the applicationId has been set.
 - Check for iOS by opening the ios folder in xcode and checking the Bundle Identifier inside the `Runner`.
