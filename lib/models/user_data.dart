@@ -14,11 +14,7 @@ class UserData with _$UserData {
     required String uid,
     String? firstName,
     String? lastName,
-    String? username,
     required String email,
-    List<String>? friendRequests,
-    List<String>? friends,
-    String? imageUrl,
     List<String>? providers,
   }) = _UserData;
 

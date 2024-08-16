@@ -48,7 +48,7 @@ class PageIndicator extends AnimatedWidget {
           margin: const EdgeInsets.all(5),
           width: w,
           height: h,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 200),
         ),
       ),
     );

@@ -10,11 +10,6 @@ String formatTime(int minutes) {
   return '${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
 }
 
-bool isValidUsername(String username) {
-  return RegExp(r"^[\p{Letter}\p{Number}]{3,}$", unicode: true)
-      .hasMatch(username);
-}
-
 String truncateWithEllipsis(int cutoff, String myString) {
   return (myString.length <= cutoff)
       ? myString

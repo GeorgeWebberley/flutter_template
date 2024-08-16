@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/models/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_details.dart';
-import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_friends.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_root.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/state/account_state.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
+import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:provider/provider.dart';
 
 class Account extends StatefulWidget {
@@ -39,7 +39,6 @@ class _AccountState extends State<Account> with SingleTickerProviderStateMixin {
             Map<String, Widget> screens = {
               'details': AccountDetails(user: userData!),
               'root': AccountRoot(user: userData),
-              'friends': AccountFriends(user: userData),
               'settings': AccountDetails(user: userData),
             };
 
@@ -47,7 +46,11 @@ class _AccountState extends State<Account> with SingleTickerProviderStateMixin {
               create: (_) => AccountState(),
               child:
                   Consumer<AccountState>(builder: (context, accountState, _) {
-                return screens[accountState.currentScreen]!;
+                return Padding(
+                    padding: const EdgeInsets.all(
+                      AppPading.page,
+                    ),
+                    child: screens[accountState.currentScreen]!);
               }),
             );
           } else {

@@ -27,6 +27,7 @@ void main() async {
   LocalStorageProvider localStorageProvider = LocalStorageProvider();
   PushNotificationProvider pushNotificationProvider =
       PushNotificationProvider(localStorageProvider: localStorageProvider);
+  AuthService authService = AuthService();
   await pushNotificationProvider.init();
 
   runApp(
@@ -35,25 +36,35 @@ void main() async {
         Provider<PushNotificationProvider>(
             create: (context) => pushNotificationProvider),
         Provider<LocalStorageProvider>(
-            create: (context) => localStorageProvider)
+            create: (context) => localStorageProvider),
+        Provider<AuthService>(create: (context) => authService),
       ],
-      child: const MyApp(),
+      child: MyApp(authService: authService),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key, required this.authService});
+
+  final AuthService authService;
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return StreamProvider<AppUser?>.value(
       initialData: null,
-      value: AuthService()
+      value: authService
           .user, // A stream, for the app user so we can check auth status in real time
       child: MaterialApp(
-        title: 'My Personal App',
+        title: 'Nutriveat',
+        builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.noScaling),
+            child: child!,
+          );
+        },
         theme: ThemeData(
             fontFamily: 'Roboto',
             appBarTheme: const AppBarTheme(

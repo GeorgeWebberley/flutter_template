@@ -35,7 +35,8 @@ class _AppNavigationState extends State<AppNavigation> {
       icon: Icons.add,
       page: const ScreenTwo(),
     ),
-    NavigationItem(title: 'Account', icon: Icons.person, page: const Account()),
+    NavigationItem(
+        title: 'My Profile', icon: Icons.person, page: const Account()),
   ];
 
   void _onItemTapped(int index) {
@@ -46,24 +47,36 @@ class _AppNavigationState extends State<AppNavigation> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        // Hide the appbar if 'hideAppBar' is true
-        appBar: navigationItems[_selectedIndex].hideAppBar
-            ? null
-            : AppBar(title: Text(navigationItems[_selectedIndex].title).h2()),
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: AppColors.primary,
-          items: navigationItems
-              .map((item) => BottomNavigationBarItem(
-                    icon: Icon(item.icon),
-                    label: item.title,
-                  ))
-              .toList(),
-          currentIndex: _selectedIndex,
-          selectedItemColor: AppColors.tertiary,
-          unselectedItemColor: Colors.white,
-          onTap: _onItemTapped,
-        ),
-        body: navigationItems[_selectedIndex].page);
+    return Container(
+      decoration: BoxDecoration(gradient: AppGradients.backgroundGradient),
+      child: Scaffold(
+          backgroundColor: Colors.transparent,
+
+          // Hide the appbar if 'hideAppBar' is true
+          appBar: navigationItems[_selectedIndex].hideAppBar
+              ? null
+              : AppBar(
+                  title: Text(
+                    navigationItems[_selectedIndex].title,
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ).h3(),
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                ),
+          bottomNavigationBar: BottomNavigationBar(
+            backgroundColor: AppColors.primary,
+            items: navigationItems
+                .map((item) => BottomNavigationBarItem(
+                      icon: Icon(item.icon),
+                      label: item.title,
+                    ))
+                .toList(),
+            currentIndex: _selectedIndex,
+            selectedItemColor: AppColors.tertiary,
+            unselectedItemColor: Colors.white,
+            onTap: _onItemTapped,
+          ),
+          body: navigationItems[_selectedIndex].page),
+    );
   }
 }

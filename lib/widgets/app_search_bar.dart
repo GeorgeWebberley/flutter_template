@@ -39,7 +39,7 @@ class AppSearchBar extends StatelessWidget {
                                   topRight: AppBorderRadius.large.topRight,
                                   bottomRight:
                                       AppBorderRadius.large.bottomRight)),
-                          primary: AppColors.secondary,
+                          backgroundColor: AppColors.secondary,
                         ),
                       ),
                     )

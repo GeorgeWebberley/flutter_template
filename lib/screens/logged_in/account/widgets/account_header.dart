@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/user_data.dart';
-import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/shared/helpers.dart';
-import 'package:flutter_firebase_template/theme/colours.dart';
+import 'package:flutter_firebase_template/theme/border_radius.dart';
+import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
-import 'package:flutter_firebase_template/widgets/user_avatar.dart';
 
 class AccountHeader extends StatefulWidget {
   const AccountHeader({
-    Key? key,
+    super.key,
     required this.userData,
-  }) : super(key: key);
+  });
 
   final UserData userData;
 
@@ -24,56 +23,45 @@ class _AccountHeaderState extends State<AccountHeader> {
 
   @override
   Widget build(BuildContext context) {
-    final AuthService _auth = AuthService();
-    String _name = truncateWithEllipsis(
+    String name = truncateWithEllipsis(
         20,
         (widget.userData.firstName == null && widget.userData.lastName == null)
-            ? ""
+            ? "George Webberley"
             : "${widget.userData.firstName ?? ''} ${widget.userData.lastName ?? ''}"
                 .trim());
 
-    String _username = truncateWithEllipsis(20, widget.userData.username!);
-
     return Container(
-      color: AppColors.quaternary,
-      padding: const EdgeInsets.all(AppPading.page),
-      child: Stack(clipBehavior: Clip.none, children: [
-        Row(
-          children: [
-            UserAvatar(user: widget.userData),
-            const SizedBox(
-              width: AppPading.large,
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_name == "" ? _username : _name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w500, color: Colors.white))
-                    .h3(),
-                Text(
-                        truncateWithEllipsis(18,
-                            _name == "" ? widget.userData.email : _username),
-                        style: const TextStyle(color: Colors.white))
-                    .h5(),
-              ],
-            ),
-          ],
-        ),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: AppBorderRadius.small,
+          boxShadow: [AppBoxShadow.small]),
+      child: Stack(children: [
         Positioned(
-          bottom: -20,
+          top: 0,
           right: 0,
-          child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                elevation: 0,
-              ),
-              onPressed: () async {
-                await _auth.signOut();
-              },
-              child: const Text('logout', style: TextStyle(color: Colors.white))
-                  .h5()),
+          child: IconButton(
+            iconSize: 20,
+            icon: Icon(Icons.edit),
+            color: Colors.grey.withOpacity(0.8),
+            onPressed: () {
+              print('edit profile');
+            },
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(AppPading.page),
+          child: Column(
+            children: [
+              Row(),
+              Text(name,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w500, color: Colors.black))
+                  .h5(),
+              Text(truncateWithEllipsis(18, widget.userData.email),
+                      style: const TextStyle(color: Colors.black))
+                  .p(),
+            ],
+          ),
         ),
       ]),
     );

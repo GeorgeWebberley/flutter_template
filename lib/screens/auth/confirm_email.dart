@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
+import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/app_intro_slider/intro_slider_page.dart';
 import 'package:flutter_firebase_template/widgets/lottie_controller.dart';
+import 'package:provider/provider.dart';
 
 class ConfirmEmail extends StatefulWidget {
   const ConfirmEmail({Key? key, required this.user, required this.onSuccess})
@@ -26,9 +29,11 @@ class _ConfirmEmailState extends State<ConfirmEmail> {
   @override
   void initState() {
     super.initState();
-    widget.user.sendEmailVerification();
-    timer = Timer.periodic(
-        const Duration(seconds: 2), (_) => _checkEmailVerified());
+    if (!FirebaseAuth.instance.currentUser!.emailVerified) {
+      widget.user.sendEmailVerification();
+      timer = Timer.periodic(
+          const Duration(seconds: 3), (_) => _checkEmailVerified());
+    }
   }
 
   @override
@@ -40,7 +45,8 @@ class _ConfirmEmailState extends State<ConfirmEmail> {
   @override
   Widget build(BuildContext context) {
     return IntroSliderPage(
-      backgroundColor: AppColors.tertiary,
+      backgroundGradient: AppGradients.backgroundGradient,
+      foregroundColor: Colors.black,
       title: "Email Verification",
       description: _isEmailVerified
           ? "Email Successfully Verified"
@@ -64,18 +70,20 @@ class _ConfirmEmailState extends State<ConfirmEmail> {
               padding: const EdgeInsets.symmetric(horizontal: AppPading.page),
               child: Column(
                 children: [
-                  Row(children: const [
+                  Row(children: [
                     Expanded(
                         child: Divider(
-                      color: Colors.white,
+                      color: Colors.black.withOpacity(0.8),
                     )),
                     Padding(
                       padding:
                           EdgeInsets.symmetric(horizontal: AppPading.medium),
-                      child: Text("DIDN'T RECEIVE AN EMAIL?",
-                          style: TextStyle(color: Colors.white)),
+                      child: Text("Didn't receive an email?",
+                              style: TextStyle(color: Colors.black))
+                          .h5(),
                     ),
-                    Expanded(child: Divider(color: Colors.white)),
+                    Expanded(
+                        child: Divider(color: Colors.black.withOpacity(0.8))),
                   ]),
                   const SizedBox(
                     height: AppPading.page * 2,
@@ -91,12 +99,42 @@ class _ConfirmEmailState extends State<ConfirmEmail> {
                           fontWeight: FontWeight.w500,
                           shadows: [
                             Shadow(
-                                color: AppColors.secondary,
-                                offset: Offset(0, -2))
+                                color: AppColors.primary, offset: Offset(0, -2))
                           ],
                           color: Colors.transparent,
                           decoration: TextDecoration.underline,
-                          decorationColor: AppColors.secondary,
+                          decorationColor: AppColors.primary,
+                        ),
+                      )),
+                  const SizedBox(
+                    height: AppPading.page,
+                  ),
+                  const Text(
+                    "or",
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ).h5(),
+                  const SizedBox(
+                    height: AppPading.page,
+                  ),
+                  TextButton(
+                      onPressed: () async {
+                        await Provider.of<AuthService>(context, listen: false)
+                            .signOut();
+                      },
+                      child: const Text(
+                        "Go Back",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          shadows: [
+                            Shadow(
+                                color: AppColors.primary, offset: Offset(0, -2))
+                          ],
+                          color: Colors.transparent,
+                          decoration: TextDecoration.underline,
+                          decorationColor: AppColors.primary,
                         ),
                       )),
                 ],
@@ -107,9 +145,9 @@ class _ConfirmEmailState extends State<ConfirmEmail> {
   _checkEmailVerified() async {
     await widget.user.reload();
     if (FirebaseAuth.instance.currentUser!.emailVerified) {
+      timer?.cancel();
       setState(() {
-        _isEmailVerified = FirebaseAuth.instance.currentUser!.emailVerified;
-        timer?.cancel();
+        _isEmailVerified = true;
       });
     }
   }

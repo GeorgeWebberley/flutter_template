@@ -7,9 +7,7 @@ class UserService {
   // user document reference
   final CollectionReference<Map<String, dynamic>> _usersRef =
       FirebaseFirestore.instance.collection('users');
-  // user document reference
-  final CollectionReference<Map<String, dynamic>> _usernamesRef =
-      FirebaseFirestore.instance.collection('usernames');
+
   // Current user's ID
   final String? uid;
 
@@ -18,15 +16,11 @@ class UserService {
   Future createUserDbEntry(
       {required String email,
       required List<String> providers,
-      required String username,
-      String? imageUrl,
       String? firstName,
       String? lastName}) async {
     return await _usersRef.doc(uid).set({
       'email': email,
       'providers': providers,
-      'username': username,
-      'imageUrl': imageUrl,
       'firstName': firstName,
       'lastName': lastName,
     });
@@ -53,26 +47,6 @@ class UserService {
     return await _usersRef.doc(uid).update({
       key: value,
     });
-  }
-
-  /// Checks if a username has already been taken. Returns a Stream of snapshots
-  Stream<QuerySnapshot<Map<String, dynamic>>> checkUsername({
-    required String username,
-  }) {
-    return _usernamesRef
-        .where(FieldPath.documentId, isEqualTo: username)
-        .snapshots();
-  }
-
-  /// Sets a userame in the usernames collection. Does not set the value in the users collection
-  Future setUsername({
-    required String username,
-  }) async {
-    try {
-      await _usernamesRef.doc(username).set({'id': uid});
-    } catch (error) {
-      debugPrint(error.toString());
-    }
   }
 
   /// get the current user stream
@@ -157,26 +131,11 @@ class UserService {
     return _userDataFromQuerySnapshot(snapshot);
   }
 
-  /// Gets a [UserData] object using a provided username
-  Future<UserData?> findUserByUsername(String username) async {
-    QuerySnapshot snapshot =
-        await _usersRef.where('username', isEqualTo: username).get();
-
-    if (snapshot.docs.isEmpty) {
-      return null;
-    }
-
-    return _userDataFromQuerySnapshot(snapshot);
-  }
-
   /// userData from a snapshot
   UserData _userDataFromSnapshot(DocumentSnapshot snapshot) {
-    print("Getting userdata from snapshot");
     Map<String, dynamic> userSnapshot =
         snapshot.data()! as Map<String, dynamic>;
     userSnapshot['uid'] = snapshot.id;
-
-    print("sending back json");
 
     return UserData.fromJson(userSnapshot);
   }

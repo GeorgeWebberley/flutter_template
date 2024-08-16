@@ -13,5 +13,6 @@ InputDecoration textInputDecoration = InputDecoration(
       color: Colors.transparent,
       width: 1,
     )),
-    focusedBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: AppColors.secondary, width: 2)));
+    focusedBorder: OutlineInputBorder(
+        borderSide:
+            BorderSide(color: AppColors.primary.withOpacity(0.8), width: 2)));

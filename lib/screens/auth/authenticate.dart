@@ -37,19 +37,6 @@ class _AuthenticateState extends State<Authenticate> {
                 crossFadeState: showSignIn == true
                     ? CrossFadeState.showFirst
                     : CrossFadeState.showSecond),
-            Positioned(
-              top: 0.0,
-              left: 0.0,
-              right: 0.0,
-              child: AppBar(
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                  onPressed: () => setLoginScreen(null),
-                ),
-                backgroundColor: Colors.transparent,
-                elevation: 0.0,
-              ),
-            )
           ],
         ),
         crossFadeState: showSignIn == null

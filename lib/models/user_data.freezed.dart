@@ -12,7 +12,7 @@ part of 'user_data.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#custom-getters-and-methods');
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 UserData _$UserDataFromJson(Map<String, dynamic> json) {
   return _UserData.fromJson(json);
@@ -26,16 +26,8 @@ mixin _$UserData {
   set firstName(String? value) => throw _privateConstructorUsedError;
   String? get lastName => throw _privateConstructorUsedError;
   set lastName(String? value) => throw _privateConstructorUsedError;
-  String? get username => throw _privateConstructorUsedError;
-  set username(String? value) => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   set email(String value) => throw _privateConstructorUsedError;
-  List<String>? get friendRequests => throw _privateConstructorUsedError;
-  set friendRequests(List<String>? value) => throw _privateConstructorUsedError;
-  List<String>? get friends => throw _privateConstructorUsedError;
-  set friends(List<String>? value) => throw _privateConstructorUsedError;
-  String? get imageUrl => throw _privateConstructorUsedError;
-  set imageUrl(String? value) => throw _privateConstructorUsedError;
   List<String>? get providers => throw _privateConstructorUsedError;
   set providers(List<String>? value) => throw _privateConstructorUsedError;
 
@@ -54,11 +46,7 @@ abstract class $UserDataCopyWith<$Res> {
       {String uid,
       String? firstName,
       String? lastName,
-      String? username,
       String email,
-      List<String>? friendRequests,
-      List<String>? friends,
-      String? imageUrl,
       List<String>? providers});
 }
 
@@ -78,11 +66,7 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
     Object? uid = null,
     Object? firstName = freezed,
     Object? lastName = freezed,
-    Object? username = freezed,
     Object? email = null,
-    Object? friendRequests = freezed,
-    Object? friends = freezed,
-    Object? imageUrl = freezed,
     Object? providers = freezed,
   }) {
     return _then(_value.copyWith(
@@ -98,26 +82,10 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
           ? _value.lastName
           : lastName // ignore: cast_nullable_to_non_nullable
               as String?,
-      username: freezed == username
-          ? _value.username
-          : username // ignore: cast_nullable_to_non_nullable
-              as String?,
       email: null == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String,
-      friendRequests: freezed == friendRequests
-          ? _value.friendRequests
-          : friendRequests // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      friends: freezed == friends
-          ? _value.friends
-          : friends // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      imageUrl: freezed == imageUrl
-          ? _value.imageUrl
-          : imageUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
       providers: freezed == providers
           ? _value.providers
           : providers // ignore: cast_nullable_to_non_nullable
@@ -127,30 +95,27 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
 }
 
 /// @nodoc
-abstract class _$$_UserDataCopyWith<$Res> implements $UserDataCopyWith<$Res> {
-  factory _$$_UserDataCopyWith(
-          _$_UserData value, $Res Function(_$_UserData) then) =
-      __$$_UserDataCopyWithImpl<$Res>;
+abstract class _$$UserDataImplCopyWith<$Res>
+    implements $UserDataCopyWith<$Res> {
+  factory _$$UserDataImplCopyWith(
+          _$UserDataImpl value, $Res Function(_$UserDataImpl) then) =
+      __$$UserDataImplCopyWithImpl<$Res>;
   @override
   @useResult
   $Res call(
       {String uid,
       String? firstName,
       String? lastName,
-      String? username,
       String email,
-      List<String>? friendRequests,
-      List<String>? friends,
-      String? imageUrl,
       List<String>? providers});
 }
 
 /// @nodoc
-class __$$_UserDataCopyWithImpl<$Res>
-    extends _$UserDataCopyWithImpl<$Res, _$_UserData>
-    implements _$$_UserDataCopyWith<$Res> {
-  __$$_UserDataCopyWithImpl(
-      _$_UserData _value, $Res Function(_$_UserData) _then)
+class __$$UserDataImplCopyWithImpl<$Res>
+    extends _$UserDataCopyWithImpl<$Res, _$UserDataImpl>
+    implements _$$UserDataImplCopyWith<$Res> {
+  __$$UserDataImplCopyWithImpl(
+      _$UserDataImpl _value, $Res Function(_$UserDataImpl) _then)
       : super(_value, _then);
 
   @pragma('vm:prefer-inline')
@@ -159,14 +124,10 @@ class __$$_UserDataCopyWithImpl<$Res>
     Object? uid = null,
     Object? firstName = freezed,
     Object? lastName = freezed,
-    Object? username = freezed,
     Object? email = null,
-    Object? friendRequests = freezed,
-    Object? friends = freezed,
-    Object? imageUrl = freezed,
     Object? providers = freezed,
   }) {
-    return _then(_$_UserData(
+    return _then(_$UserDataImpl(
       uid: null == uid
           ? _value.uid
           : uid // ignore: cast_nullable_to_non_nullable
@@ -179,26 +140,10 @@ class __$$_UserDataCopyWithImpl<$Res>
           ? _value.lastName
           : lastName // ignore: cast_nullable_to_non_nullable
               as String?,
-      username: freezed == username
-          ? _value.username
-          : username // ignore: cast_nullable_to_non_nullable
-              as String?,
       email: null == email
           ? _value.email
           : email // ignore: cast_nullable_to_non_nullable
               as String,
-      friendRequests: freezed == friendRequests
-          ? _value.friendRequests
-          : friendRequests // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      friends: freezed == friends
-          ? _value.friends
-          : friends // ignore: cast_nullable_to_non_nullable
-              as List<String>?,
-      imageUrl: freezed == imageUrl
-          ? _value.imageUrl
-          : imageUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
       providers: freezed == providers
           ? _value.providers
           : providers // ignore: cast_nullable_to_non_nullable
@@ -209,20 +154,16 @@ class __$$_UserDataCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$_UserData implements _UserData {
-  _$_UserData(
+class _$UserDataImpl implements _UserData {
+  _$UserDataImpl(
       {required this.uid,
       this.firstName,
       this.lastName,
-      this.username,
       required this.email,
-      this.friendRequests,
-      this.friends,
-      this.imageUrl,
       this.providers});
 
-  factory _$_UserData.fromJson(Map<String, dynamic> json) =>
-      _$$_UserDataFromJson(json);
+  factory _$UserDataImpl.fromJson(Map<String, dynamic> json) =>
+      _$$UserDataImplFromJson(json);
 
   @override
   String uid;
@@ -231,32 +172,24 @@ class _$_UserData implements _UserData {
   @override
   String? lastName;
   @override
-  String? username;
-  @override
   String email;
-  @override
-  List<String>? friendRequests;
-  @override
-  List<String>? friends;
-  @override
-  String? imageUrl;
   @override
   List<String>? providers;
 
   @override
   String toString() {
-    return 'UserData(uid: $uid, firstName: $firstName, lastName: $lastName, username: $username, email: $email, friendRequests: $friendRequests, friends: $friends, imageUrl: $imageUrl, providers: $providers)';
+    return 'UserData(uid: $uid, firstName: $firstName, lastName: $lastName, email: $email, providers: $providers)';
   }
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
-  _$$_UserDataCopyWith<_$_UserData> get copyWith =>
-      __$$_UserDataCopyWithImpl<_$_UserData>(this, _$identity);
+  _$$UserDataImplCopyWith<_$UserDataImpl> get copyWith =>
+      __$$UserDataImplCopyWithImpl<_$UserDataImpl>(this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$_UserDataToJson(
+    return _$$UserDataImplToJson(
       this,
     );
   }
@@ -267,14 +200,11 @@ abstract class _UserData implements UserData {
       {required String uid,
       String? firstName,
       String? lastName,
-      String? username,
       required String email,
-      List<String>? friendRequests,
-      List<String>? friends,
-      String? imageUrl,
-      List<String>? providers}) = _$_UserData;
+      List<String>? providers}) = _$UserDataImpl;
 
-  factory _UserData.fromJson(Map<String, dynamic> json) = _$_UserData.fromJson;
+  factory _UserData.fromJson(Map<String, dynamic> json) =
+      _$UserDataImpl.fromJson;
 
   @override
   String get uid;
@@ -286,25 +216,13 @@ abstract class _UserData implements UserData {
   String? get lastName;
   set lastName(String? value);
   @override
-  String? get username;
-  set username(String? value);
-  @override
   String get email;
   set email(String value);
-  @override
-  List<String>? get friendRequests;
-  set friendRequests(List<String>? value);
-  @override
-  List<String>? get friends;
-  set friends(List<String>? value);
-  @override
-  String? get imageUrl;
-  set imageUrl(String? value);
   @override
   List<String>? get providers;
   set providers(List<String>? value);
   @override
   @JsonKey(ignore: true)
-  _$$_UserDataCopyWith<_$_UserData> get copyWith =>
+  _$$UserDataImplCopyWith<_$UserDataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

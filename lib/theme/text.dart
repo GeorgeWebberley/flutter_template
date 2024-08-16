@@ -40,7 +40,6 @@ extension AppText on Text {
       textAlign: textAlign,
       textDirection: textDirection,
       textHeightBehavior: textHeightBehavior,
-      textScaleFactor: textScaleFactor,
       textWidthBasis: textWidthBasis,
       semanticsLabel: semanticsLabel,
       softWrap: softWrap,

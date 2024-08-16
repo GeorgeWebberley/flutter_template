@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Box shadows used in the app kept in a single location
 class AppBoxShadow {
   static BoxShadow small = BoxShadow(
-      color: Colors.black.withOpacity(0.3),
+      color: Colors.black.withOpacity(0.1),
       blurRadius: 3,
       offset: const Offset(1, 2));
   static BoxShadow medium = BoxShadow(

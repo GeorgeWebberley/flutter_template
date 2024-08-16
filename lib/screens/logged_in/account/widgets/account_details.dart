@@ -4,14 +4,12 @@ import 'package:flutter_firebase_template/screens/logged_in/account/widgets/acco
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/dialogs.dart';
-import 'package:flutter_firebase_template/shared/helpers.dart';
 import 'package:flutter_firebase_template/state/account_state.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/form_fields.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
-import 'package:flutter_firebase_template/widgets/detail_tile.dart';
 import 'package:provider/provider.dart';
 
 // To hold the user's info for the account details screen
@@ -40,15 +38,9 @@ class AccountDetails extends StatefulWidget {
 }
 
 class _AccountDetailsState extends State<AccountDetails> {
-  final AuthService _auth = AuthService();
-
   @override
   Widget build(BuildContext context) {
     List<UserDetailsInfo> settings = [
-      UserDetailsInfo(
-          title: 'Username',
-          value: widget.user.username ?? '',
-          key: 'username'),
       UserDetailsInfo(
         title: 'First Name',
         value: widget.user.firstName ?? '',
@@ -98,47 +90,47 @@ class _AccountDetailsState extends State<AccountDetails> {
                         ],
                       ),
                       for (var setting in settings)
+                        // Padding(
+                        //   padding:
+                        //       const EdgeInsets.only(bottom: AppPading.large),
+                        //   child: DetailTile(
+                        //       title: setting.title,
+                        //       value: truncateWithEllipsis(25, setting.value),
+                        //       onPressed: setting.editable
+                        //           ? () {
+                        //               _openEditInfoDialog(
+                        //                   title: setting.title.toLowerCase(),
+                        //                   key: setting.key,
+                        //                   initialValue: setting.value,
+                        //                   user: widget.user);
+                        //             }
+                        //           : null,
+                        //       icon: setting.editable
+                        //           ? const Icon(
+                        //               Icons.arrow_forward,
+                        //               color: AppColors.secondary,
+                        //             )
+                        //           : null),
+                        // ),
+                        // DetailTile(
+                        //   title: "Password",
+                        //   value: '\u2B24' * 8,
+                        //   onPressed: () {
+                        //     _openChangePasswordDialog(user: widget.user);
+                        //   },
+                        //   icon: const Icon(
+                        //     Icons.arrow_forward,
+                        //     color: AppColors.secondary,
+                        //   ),
+                        // ),
                         Padding(
                           padding:
-                              const EdgeInsets.only(bottom: AppPading.large),
-                          child: DetailTile(
-                              title: setting.title,
-                              value: truncateWithEllipsis(25, setting.value),
-                              onPressed: setting.editable
-                                  ? () {
-                                      _openEditInfoDialog(
-                                          title: setting.title.toLowerCase(),
-                                          key: setting.key,
-                                          initialValue: setting.value,
-                                          user: widget.user);
-                                    }
-                                  : null,
-                              icon: setting.editable
-                                  ? const Icon(
-                                      Icons.arrow_forward,
-                                      color: AppColors.secondary,
-                                    )
-                                  : null),
+                              const EdgeInsets.only(right: AppPading.large * 2),
+                          child: Divider(
+                            height: 50,
+                            color: Colors.grey[300],
+                          ),
                         ),
-                      DetailTile(
-                        title: "Password",
-                        value: '\u2B24' * 8,
-                        onPressed: () {
-                          _openChangePasswordDialog(user: widget.user);
-                        },
-                        icon: const Icon(
-                          Icons.arrow_forward,
-                          color: AppColors.secondary,
-                        ),
-                      ),
-                      Padding(
-                        padding:
-                            const EdgeInsets.only(right: AppPading.large * 2),
-                        child: Divider(
-                          height: 50,
-                          color: Colors.grey[300],
-                        ),
-                      ),
                       AppButton(
                         onPressed: () {
                           // TODO: Implement account deletion
@@ -223,8 +215,9 @@ class _AccountDetailsState extends State<AccountDetails> {
                           loading = true;
                         });
 
-                        bool result = await _auth.changePassword(
-                            oldPassword, newPassword);
+                        bool result = await Provider.of<AuthService>(context,
+                                listen: false)
+                            .changePassword(oldPassword, newPassword);
 
                         if (result) {
                           showToast(

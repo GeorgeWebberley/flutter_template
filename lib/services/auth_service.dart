@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
+import 'package:flutter_firebase_template/providers/apple_sign_in_provider.dart';
 import 'package:flutter_firebase_template/providers/google_sign_in_provider.dart';
 
 enum AuthType { email, google }
@@ -9,6 +10,7 @@ enum AuthType { email, google }
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignInProvider _googleSignIn = GoogleSignInProvider();
+  final AppleSignInProvider _appleSignIn = AppleSignInProvider();
 
   // photos document reference
   final CollectionReference usersRef =
@@ -60,8 +62,17 @@ class AuthService {
     try {
       UserCredential? result = await _googleSignIn.googleLogin();
 
-      print("result?.user?.providerData");
-      print(result?.user?.providerData);
+      return AppUser.fromFirebase(result!.user);
+    } catch (error) {
+      debugPrint(error.toString());
+      return null;
+    }
+  }
+
+  // sign in with apple into firebase
+  Future signInWithApple() async {
+    try {
+      UserCredential? result = await _appleSignIn.login();
 
       return AppUser.fromFirebase(result!.user);
     } catch (error) {
@@ -116,4 +127,7 @@ class AuthService {
 
   Future<void> sendResetPasswordEmail({required String email}) async =>
       await _auth.sendPasswordResetEmail(email: email);
+
+  Future<void> createUserEntryInFirestore(
+      {required User user, required String id}) async {}
 }
