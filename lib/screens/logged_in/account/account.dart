@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
-import 'package:flutter_firebase_template/models/user_data.dart';
-import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_details.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_root.dart';
+import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_settings.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/state/account_state.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
+import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:provider/provider.dart';
 
 class Account extends StatefulWidget {
@@ -18,12 +19,15 @@ class Account extends StatefulWidget {
 
 class _AccountState extends State<Account> with SingleTickerProviderStateMixin {
   String currentScreen = 'root';
+  Widget secondScreen = Container();
+  PageController pageController = PageController();
+  int pageViewIndex = 0;
 
-  void changeScreen(String screen) {
-    setState(() {
-      currentScreen = screen;
-    });
-  }
+  // void changeScreen(String screen) {
+  //   setState(() {
+  //     currentScreen = screen;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -36,21 +40,28 @@ class _AccountState extends State<Account> with SingleTickerProviderStateMixin {
           if (snapshot.hasData) {
             UserData? userData = snapshot.data;
 
-            Map<String, Widget> screens = {
-              'details': AccountDetails(user: userData!),
-              'root': AccountRoot(user: userData),
-              'settings': AccountDetails(user: userData),
-            };
+            AccountSettings(
+              user: userData!,
+              backToRoot: backToRoot,
+            );
+
+            List<Widget> screens = [
+              AccountRoot(
+                user: userData,
+                setScreen: setScreen,
+                backToRoot: backToRoot,
+              ),
+              secondScreen
+            ];
 
             return ChangeNotifierProvider<AccountState>(
               create: (_) => AccountState(),
               child:
                   Consumer<AccountState>(builder: (context, accountState, _) {
-                return Padding(
-                    padding: const EdgeInsets.all(
-                      AppPading.page,
-                    ),
-                    child: screens[accountState.currentScreen]!);
+                return PageView(
+                  controller: pageController,
+                  children: screens,
+                );
               }),
             );
           } else {
@@ -61,5 +72,22 @@ class _AccountState extends State<Account> with SingleTickerProviderStateMixin {
             );
           }
         });
+  }
+
+  void setScreen(Widget screen) async {
+    setState(() {
+      secondScreen = screen;
+      pageViewIndex = 1;
+    });
+    await pageController.animateToPage(1,
+        duration: const Duration(milliseconds: 300), curve: Curves.ease);
+  }
+
+  backToRoot() async {
+    await pageController.animateToPage(0,
+        duration: const Duration(milliseconds: 300), curve: Curves.ease);
+    setState(() {
+      pageViewIndex = 0;
+    });
   }
 }

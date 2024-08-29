@@ -20,9 +20,19 @@ class AppGradients {
       end: Alignment.bottomRight,
       colors: [
         Color.fromARGB(255, 191, 200, 255),
-        Color.fromARGB(255, 255, 255, 255),
-        Color.fromARGB(255, 255, 255, 255),
+        Color.fromARGB(255, 223, 226, 252),
+        Color.fromARGB(255, 223, 226, 252),
+        Color.fromARGB(255, 243, 244, 254),
+        Color.fromARGB(255, 250, 237, 255),
         Color.fromARGB(255, 245, 220, 255),
+      ]);
+  static const LinearGradient backgroundGradientMild = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.fromARGB(255, 239, 241, 253),
+        Color.fromARGB(255, 236, 238, 252),
+        Color.fromARGB(255, 250, 237, 255),
       ]);
   static const LinearGradient buttonPrimaryGradient = LinearGradient(
       begin: Alignment.topLeft,
@@ -32,4 +42,12 @@ class AppGradients {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [Color(0xffE2E8FB), Color(0xffE6EAFC)]);
+
+  static const LinearGradient greenGradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.fromARGB(255, 69, 154, 82),
+        AppColors.green,
+      ]);
 }

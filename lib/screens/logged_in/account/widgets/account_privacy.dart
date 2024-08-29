@@ -10,6 +10,8 @@ class AccountPrivacy extends StatefulWidget {
 
 class _AccountPrivacyState extends State<AccountPrivacy> {
   late WebViewController controller;
+  bool isLoading = true;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -23,22 +25,22 @@ class _AccountPrivacyState extends State<AccountPrivacy> {
       ..setBackgroundColor(const Color(0x00000000))
       ..setNavigationDelegate(
         NavigationDelegate(
-          onProgress: (int progress) {
-            // Update loading bar.
-          },
+          onProgress: (int progress) {},
           onPageStarted: (String url) {},
-          onPageFinished: (String url) {},
+          onPageFinished: (String url) {
+            setState(() {
+              isLoading = false;
+            });
+          },
           onHttpError: (HttpResponseError error) {},
           onWebResourceError: (WebResourceError error) {},
           onNavigationRequest: (NavigationRequest request) {
-            if (request.url.startsWith('https://www.youtube.com/')) {
-              return NavigationDecision.prevent;
-            }
             return NavigationDecision.navigate;
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://flutter.dev'));
+      ..loadRequest(Uri.parse(
+          'https://nutrisyncai-145173104.hubspotpagebuilder.eu/en-gb/?hs_preview=xpDlnACp-111471759307#about'));
   }
 
   @override
@@ -48,8 +50,13 @@ class _AccountPrivacyState extends State<AccountPrivacy> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.white,
-      body: WebViewWidget(controller: controller),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : WebViewWidget(controller: controller),
     );
   }
 }

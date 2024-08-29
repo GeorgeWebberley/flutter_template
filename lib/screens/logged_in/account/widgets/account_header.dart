@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_firebase_template/models/user_data.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
+import 'package:flutter_firebase_template/services/user_service.dart';
+import 'package:flutter_firebase_template/shared/app_box.dart';
+import 'package:flutter_firebase_template/shared/app_dialog.dart';
 import 'package:flutter_firebase_template/shared/helpers.dart';
-import 'package:flutter_firebase_template/theme/border_radius.dart';
-import 'package:flutter_firebase_template/theme/box_shadow.dart';
+import 'package:flutter_firebase_template/theme/form_fields.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 
@@ -19,32 +21,19 @@ class AccountHeader extends StatefulWidget {
 }
 
 class _AccountHeaderState extends State<AccountHeader> {
-  bool loading = false;
-
   @override
   Widget build(BuildContext context) {
-    String name = truncateWithEllipsis(
-        20,
-        (widget.userData.firstName == null && widget.userData.lastName == null)
-            ? "George Webberley"
-            : "${widget.userData.firstName ?? ''} ${widget.userData.lastName ?? ''}"
-                .trim());
-
-    return Container(
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: AppBorderRadius.small,
-          boxShadow: [AppBoxShadow.small]),
+    return AppBox(
       child: Stack(children: [
         Positioned(
           top: 0,
           right: 0,
           child: IconButton(
             iconSize: 20,
-            icon: Icon(Icons.edit),
+            icon: const Icon(Icons.edit),
             color: Colors.grey.withOpacity(0.8),
             onPressed: () {
-              print('edit profile');
+              editNameDialog(context);
             },
           ),
         ),
@@ -52,8 +41,8 @@ class _AccountHeaderState extends State<AccountHeader> {
           padding: const EdgeInsets.all(AppPading.page),
           child: Column(
             children: [
-              Row(),
-              Text(name,
+              const Row(),
+              Text(widget.userData.name ?? "",
                       style: const TextStyle(
                           fontWeight: FontWeight.w500, color: Colors.black))
                   .h5(),
@@ -64,6 +53,43 @@ class _AccountHeaderState extends State<AccountHeader> {
           ),
         ),
       ]),
+    );
+  }
+
+  void editNameDialog(BuildContext context) {
+    String? name = widget.userData.name;
+    bool loading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, dialogSetState) {
+          return AppDialog(
+              loading: loading,
+              content: TextField(
+                decoration: textInputDecoration.copyWith(
+                  prefixIcon: const Icon(Icons.person_outline),
+                  hintText: 'First name',
+                ),
+                onChanged: (value) {
+                  dialogSetState(() {
+                    name = value;
+                  });
+                },
+              ),
+              title: "Update your name",
+              onSave: () async {
+                dialogSetState(() {
+                  loading = true;
+                });
+                await UserService(uid: widget.userData.uid).updateUserData(
+                  key: "name",
+                  value: name,
+                );
+                Navigator.of(context).pop();
+              });
+        });
+      },
     );
   }
 }

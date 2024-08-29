@@ -22,14 +22,16 @@ UserData _$UserDataFromJson(Map<String, dynamic> json) {
 mixin _$UserData {
   String get uid => throw _privateConstructorUsedError;
   set uid(String value) => throw _privateConstructorUsedError;
-  String? get firstName => throw _privateConstructorUsedError;
-  set firstName(String? value) => throw _privateConstructorUsedError;
-  String? get lastName => throw _privateConstructorUsedError;
-  set lastName(String? value) => throw _privateConstructorUsedError;
+  String? get name => throw _privateConstructorUsedError;
+  set name(String? value) => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   set email(String value) => throw _privateConstructorUsedError;
   List<String>? get providers => throw _privateConstructorUsedError;
   set providers(List<String>? value) => throw _privateConstructorUsedError;
+  List<DietaryPreference>? get dietaryPreferences =>
+      throw _privateConstructorUsedError;
+  set dietaryPreferences(List<DietaryPreference>? value) =>
+      throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -44,10 +46,10 @@ abstract class $UserDataCopyWith<$Res> {
   @useResult
   $Res call(
       {String uid,
-      String? firstName,
-      String? lastName,
+      String? name,
       String email,
-      List<String>? providers});
+      List<String>? providers,
+      List<DietaryPreference>? dietaryPreferences});
 }
 
 /// @nodoc
@@ -64,23 +66,19 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
   @override
   $Res call({
     Object? uid = null,
-    Object? firstName = freezed,
-    Object? lastName = freezed,
+    Object? name = freezed,
     Object? email = null,
     Object? providers = freezed,
+    Object? dietaryPreferences = freezed,
   }) {
     return _then(_value.copyWith(
       uid: null == uid
           ? _value.uid
           : uid // ignore: cast_nullable_to_non_nullable
               as String,
-      firstName: freezed == firstName
-          ? _value.firstName
-          : firstName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      lastName: freezed == lastName
-          ? _value.lastName
-          : lastName // ignore: cast_nullable_to_non_nullable
+      name: freezed == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
               as String?,
       email: null == email
           ? _value.email
@@ -90,6 +88,10 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
           ? _value.providers
           : providers // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      dietaryPreferences: freezed == dietaryPreferences
+          ? _value.dietaryPreferences
+          : dietaryPreferences // ignore: cast_nullable_to_non_nullable
+              as List<DietaryPreference>?,
     ) as $Val);
   }
 }
@@ -104,10 +106,10 @@ abstract class _$$UserDataImplCopyWith<$Res>
   @useResult
   $Res call(
       {String uid,
-      String? firstName,
-      String? lastName,
+      String? name,
       String email,
-      List<String>? providers});
+      List<String>? providers,
+      List<DietaryPreference>? dietaryPreferences});
 }
 
 /// @nodoc
@@ -122,23 +124,19 @@ class __$$UserDataImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? uid = null,
-    Object? firstName = freezed,
-    Object? lastName = freezed,
+    Object? name = freezed,
     Object? email = null,
     Object? providers = freezed,
+    Object? dietaryPreferences = freezed,
   }) {
     return _then(_$UserDataImpl(
       uid: null == uid
           ? _value.uid
           : uid // ignore: cast_nullable_to_non_nullable
               as String,
-      firstName: freezed == firstName
-          ? _value.firstName
-          : firstName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      lastName: freezed == lastName
-          ? _value.lastName
-          : lastName // ignore: cast_nullable_to_non_nullable
+      name: freezed == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
               as String?,
       email: null == email
           ? _value.email
@@ -148,6 +146,10 @@ class __$$UserDataImplCopyWithImpl<$Res>
           ? _value.providers
           : providers // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      dietaryPreferences: freezed == dietaryPreferences
+          ? _value.dietaryPreferences
+          : dietaryPreferences // ignore: cast_nullable_to_non_nullable
+              as List<DietaryPreference>?,
     ));
   }
 }
@@ -157,10 +159,10 @@ class __$$UserDataImplCopyWithImpl<$Res>
 class _$UserDataImpl implements _UserData {
   _$UserDataImpl(
       {required this.uid,
-      this.firstName,
-      this.lastName,
+      this.name,
       required this.email,
-      this.providers});
+      this.providers,
+      this.dietaryPreferences});
 
   factory _$UserDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserDataImplFromJson(json);
@@ -168,17 +170,17 @@ class _$UserDataImpl implements _UserData {
   @override
   String uid;
   @override
-  String? firstName;
-  @override
-  String? lastName;
+  String? name;
   @override
   String email;
   @override
   List<String>? providers;
+  @override
+  List<DietaryPreference>? dietaryPreferences;
 
   @override
   String toString() {
-    return 'UserData(uid: $uid, firstName: $firstName, lastName: $lastName, email: $email, providers: $providers)';
+    return 'UserData(uid: $uid, name: $name, email: $email, providers: $providers, dietaryPreferences: $dietaryPreferences)';
   }
 
   @JsonKey(ignore: true)
@@ -198,10 +200,10 @@ class _$UserDataImpl implements _UserData {
 abstract class _UserData implements UserData {
   factory _UserData(
       {required String uid,
-      String? firstName,
-      String? lastName,
+      String? name,
       required String email,
-      List<String>? providers}) = _$UserDataImpl;
+      List<String>? providers,
+      List<DietaryPreference>? dietaryPreferences}) = _$UserDataImpl;
 
   factory _UserData.fromJson(Map<String, dynamic> json) =
       _$UserDataImpl.fromJson;
@@ -210,17 +212,17 @@ abstract class _UserData implements UserData {
   String get uid;
   set uid(String value);
   @override
-  String? get firstName;
-  set firstName(String? value);
-  @override
-  String? get lastName;
-  set lastName(String? value);
+  String? get name;
+  set name(String? value);
   @override
   String get email;
   set email(String value);
   @override
   List<String>? get providers;
   set providers(List<String>? value);
+  @override
+  List<DietaryPreference>? get dietaryPreferences;
+  set dietaryPreferences(List<DietaryPreference>? value);
   @override
   @JsonKey(ignore: true)
   _$$UserDataImplCopyWith<_$UserDataImpl> get copyWith =>

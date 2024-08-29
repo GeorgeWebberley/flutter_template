@@ -29,4 +29,14 @@ class GoogleSignInProvider {
     return GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken, idToken: googleAuth.idToken);
   }
+
+  Future<UserCredential?> reAuthenticate() async {
+    OAuthCredential? credential = await getLoginCredential();
+
+    if (credential != null && FirebaseAuth.instance.currentUser != null) {
+      return await FirebaseAuth.instance.currentUser!
+          .reauthenticateWithCredential(credential);
+    }
+    return null;
+  }
 }

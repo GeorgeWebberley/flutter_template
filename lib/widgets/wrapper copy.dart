@@ -1,7 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
-import 'package:flutter_firebase_template/models/user_data.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
 import 'package:flutter_firebase_template/screens/auth/authenticate.dart';
 import 'package:flutter_firebase_template/screens/auth/user_setup_flow.dart';

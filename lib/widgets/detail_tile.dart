@@ -30,19 +30,24 @@ class DetailTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(AppPading.small),
-                decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: iconColor!.withOpacity(0.15)),
-                child: Icon(icon, color: iconColor),
+              if (icon != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: AppPading.large),
+                  child: Container(
+                    padding: const EdgeInsets.all(AppPading.small),
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: iconColor!.withOpacity(0.15)),
+                    child: Icon(icon, color: iconColor),
+                  ),
+                ),
+              Expanded(
+                child: Text(title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w400,
+                    )).h5(),
               ),
-              SizedBox(width: AppPading.large),
-              Text(title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w400,
-                  )).h5(),
-              Spacer(),
+              // Spacer(),
               Icon(Icons.arrow_forward_ios,
                   size: AppPading.page, color: Colors.black.withOpacity(0.8)),
             ],

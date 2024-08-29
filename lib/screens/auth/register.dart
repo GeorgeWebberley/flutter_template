@@ -26,8 +26,7 @@ class _RegisterState extends State<Register> {
 
   // text field state
   String email = '';
-  String firstName = '';
-  String lastName = '';
+  String name = '';
   String password = '';
   bool loading = false;
 
@@ -84,40 +83,18 @@ class _RegisterState extends State<Register> {
                             autocorrect: false,
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.person_outline),
-                                hintText: 'First name',
+                                hintText: 'Name',
                                 errorStyle:
                                     const TextStyle(color: Colors.white)),
                             validator: (value) {
                               if (value!.isEmpty) {
-                                return 'Enter an first name';
+                                return 'Enter a name';
                               }
                               return null;
                             },
                             onChanged: (value) {
                               setState(() {
-                                firstName = value;
-                              });
-                            },
-                          ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          TextFormField(
-                            autocorrect: false,
-                            decoration: textInputDecoration.copyWith(
-                                prefixIcon: const Icon(Icons.person_outline),
-                                hintText: 'Last name',
-                                errorStyle:
-                                    const TextStyle(color: Colors.white)),
-                            validator: (value) {
-                              if (value!.isEmpty) {
-                                return 'Enter a last name';
-                              }
-                              return null;
-                            },
-                            onChanged: (value) {
-                              setState(() {
-                                lastName = value;
+                                name = value;
                               });
                             },
                           ),
@@ -149,6 +126,7 @@ class _RegisterState extends State<Register> {
                             height: 20,
                           ),
                           TextFormField(
+                            autocorrect: false,
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 hintText: 'Password',
@@ -168,6 +146,7 @@ class _RegisterState extends State<Register> {
                             height: 20,
                           ),
                           TextFormField(
+                            autocorrect: false,
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 hintText: 'Confirm Password',
@@ -212,7 +191,6 @@ class _RegisterState extends State<Register> {
                           ),
                           const SizedBox(height: 12),
                           AppButton(
-                            loading: loading,
                             onPressed: () {
                               widget.setLoginScreen(true);
                             },
@@ -309,8 +287,7 @@ class _RegisterState extends State<Register> {
     try {
       await UserService(uid: appUser.uid).createUserDbEntry(
         email: appUser.email,
-        firstName: appUser.firstName,
-        lastName: appUser.lastName,
+        name: name,
         providers: appUser.providers,
       );
     } catch (error) {

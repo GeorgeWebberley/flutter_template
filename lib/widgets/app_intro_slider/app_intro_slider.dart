@@ -1,15 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
-import 'package:flutter_firebase_template/shared/dialogs.dart';
-import 'package:flutter_firebase_template/shared/helpers.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/fade_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
-import 'package:flutter_firebase_template/theme/form_fields.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
-import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/app_navigation.dart';
 import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:flutter_firebase_template/widgets/app_intro_slider/intro_slider_page.dart';
@@ -101,7 +96,7 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
             text: "Get Started!",
             onPressed: () async {
               await Provider.of<LocalStorageProvider?>(context, listen: false)!
-                  .set(key: "hasVisited", value: "true");
+                  .set(key: LocalStorageKeys.hasVisited, value: "true");
               Navigator.pushReplacement(
                 context,
                 FadeNavigator(

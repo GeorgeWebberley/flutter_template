@@ -103,6 +103,7 @@ class _SignInState extends State<SignIn> {
                             height: 20,
                           ),
                           TextFormField(
+                            autocorrect: false,
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 hintText: 'Password',

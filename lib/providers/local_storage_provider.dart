@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 abstract class LocalStorageKeys {
   static String get pushNotification => "push-notification";
+  static String get hasVisited => "hasVisited";
 }
 
 // Wrapper around flutter secure storage
@@ -30,6 +31,17 @@ class LocalStorageProvider {
   delete({required String key}) async {
     try {
       return await storage.delete(key: key);
+    } catch (error) {
+      debugPrint(error.toString());
+      return null;
+    }
+  }
+
+  // Deletes all keys. Called when account is deleted.
+  // TODO: Connect keys to individual users (so when people logout the keys are changed)
+  cleanup() async {
+    try {
+      return await storage.deleteAll();
     } catch (error) {
       debugPrint(error.toString());
       return null;

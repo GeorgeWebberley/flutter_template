@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 extension StringExtension on String {
   String capitalize() {
     return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
@@ -14,4 +16,38 @@ String truncateWithEllipsis(int cutoff, String myString) {
   return (myString.length <= cutoff)
       ? myString
       : '${myString.substring(0, cutoff)}...';
+}
+
+String formatDateWithSuffix(DateTime? dateTime,
+    {bool includeTime = true, bool includeDate = true}) {
+  if (dateTime == null) {
+    return "";
+  }
+  var day = dateTime.day;
+  var suffix = "th";
+
+  // Determine the suffix for the day
+  int lastDigit = day % 10;
+  if ((day > 10 && day < 20) || lastDigit > 3) {
+    suffix = "th";
+  } else if (lastDigit == 1) {
+    suffix = "st";
+  } else if (lastDigit == 2) {
+    suffix = "nd";
+  } else if (lastDigit == 3) {
+    suffix = "rd";
+  }
+
+  // Formatting the date and time
+  String formattedDate =
+      DateFormat('d').format(dateTime); // Day without leading zero
+  String month = DateFormat('MMMM').format(dateTime); // Month as full name
+  String year = DateFormat('y').format(dateTime); // Year with all digits
+  String time = DateFormat('jm').format(dateTime); // Time in am/pm format
+
+  return includeTime && includeDate
+      ? "$formattedDate$suffix $month $year at $time"
+      : includeTime
+          ? time
+          : "$formattedDate$suffix $month $year";
 }

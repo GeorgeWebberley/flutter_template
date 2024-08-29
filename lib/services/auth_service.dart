@@ -130,4 +130,63 @@ class AuthService {
 
   Future<void> createUserEntryInFirestore(
       {required User user, required String id}) async {}
+
+  Future<String?> reauthenticateWithEmailAndDelete(String password) async {
+    User? user = _auth.currentUser;
+
+    AuthCredential credential =
+        EmailAuthProvider.credential(email: user!.email!, password: password);
+
+    try {
+      await user.reauthenticateWithCredential(credential);
+      await deleteAccount();
+      return null;
+    } catch (e) {
+      debugPrint(e.toString());
+      return e.toString();
+    }
+  }
+
+  Future<String?> deleteAccount() async {
+    User? user = _auth.currentUser;
+    try {
+      if (user == null) {
+        return "User not signed in. Try logging in.";
+      }
+      await user.delete();
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        if (user == null || user.providerData.isEmpty) {
+          return "User not signed in. Try logging in.";
+        }
+        String providerId = user.providerData[0].providerId;
+        if (providerId == 'password') {
+          return "reauthenticate";
+        } else if (providerId == 'google.com') {
+          UserCredential? result =
+              await GoogleSignInProvider().reAuthenticate();
+          if (result != null) {
+            await user.delete();
+            return null;
+          } else {
+            return "Re-authentication failed, please try again.";
+          }
+        } else if (providerId == 'apple.com') {
+          UserCredential? result = await AppleSignInProvider().login();
+          if (result != null) {
+            await user.delete();
+            return null;
+          } else {
+            return "Re-authentication failed, please try again.";
+          }
+        }
+      } else {
+        return e.toString();
+      }
+    } catch (error) {
+      debugPrint(error.toString());
+      return error.toString();
+    }
+  }
 }

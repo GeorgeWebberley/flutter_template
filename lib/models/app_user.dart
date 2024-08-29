@@ -5,8 +5,7 @@ class AppUser extends ChangeNotifier {
   final String uid;
   final List<String> providers;
   final String email;
-  final String? firstName;
-  final String? lastName;
+  final String? name;
   final String? imageUrl;
   final bool emailVerified;
 
@@ -14,8 +13,7 @@ class AppUser extends ChangeNotifier {
     required this.uid,
     required this.providers,
     required this.email,
-    this.firstName,
-    this.lastName,
+    this.name,
     this.imageUrl,
     required this.emailVerified,
   });
@@ -23,22 +21,10 @@ class AppUser extends ChangeNotifier {
   static AppUser? fromFirebase(User? user) {
     if (user == null) return null;
 
-    List<String>? name = user.displayName?.split(' ');
-    String? firstName;
-    String? lastName;
-
-    if (name != null) {
-      firstName = name.first;
-      if (name.length >= 2) {
-        lastName = name.last;
-      }
-    }
-
     return AppUser(
         uid: user.uid,
         email: user.email!,
-        firstName: firstName,
-        lastName: lastName,
+        name: user.displayName,
         imageUrl: user.photoURL,
         emailVerified: user.emailVerified,
         providers: user.providerData

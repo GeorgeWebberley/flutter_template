@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_firebase_template/models/user_data.dart';
+import 'package:flutter_firebase_template/models/meal_plan/meal_plan.dart';
+import 'package:flutter_firebase_template/models/meal_plan_configuration.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 
 class UserService {
   // user document reference
@@ -13,16 +14,15 @@ class UserService {
 
   UserService({this.uid});
 
-  Future createUserDbEntry(
-      {required String email,
-      required List<String> providers,
-      String? firstName,
-      String? lastName}) async {
+  Future createUserDbEntry({
+    required String email,
+    required List<String> providers,
+    String? name,
+  }) async {
     return await _usersRef.doc(uid).set({
       'email': email,
       'providers': providers,
-      'firstName': firstName,
-      'lastName': lastName,
+      'name': name,
     });
   }
 
@@ -40,7 +40,7 @@ class UserService {
   }
 
   /// Takes a single key/value pair and updates the value in firestore
-  Future updateUserData({
+  Future<void> updateUserData({
     required String key,
     required dynamic value,
   }) async {
@@ -148,5 +148,37 @@ class UserService {
     userSnapshot['uid'] = snapshot.docs.single.id;
 
     return UserData.fromJson(userSnapshot);
+  }
+
+  // Add Meal Plan
+  Future<String> addMealPlan(MealPlanConfiguration mealPlan) async {
+    DocumentReference<Map<String, dynamic>> document =
+        await _usersRef.doc(uid).collection('mealPlans').add({
+      'loading': true,
+      'createdAt': FieldValue.serverTimestamp(),
+      'mealPlanConfiguration': mealPlan.toJson(),
+    });
+
+    return document.id;
+  }
+
+  Stream<List<MealPlan>> getMealPlans() {
+    return _usersRef.doc(uid).collection('mealPlans').snapshots().map(
+        (snapshot) => snapshot.docs
+            .map((document) => MealPlan.fromFirebase(document))
+            .toList());
+  }
+
+  Stream<MealPlan> getMealPlan(String mealPlanId) {
+    return _usersRef
+        .doc(uid)
+        .collection('mealPlans')
+        .doc(mealPlanId)
+        .snapshots()
+        .map((snapshot) => MealPlan.fromFirebase(snapshot));
+  }
+
+  Future<void> deleteMealPlan(String mealPlanId) async {
+    await _usersRef.doc(uid).collection('mealPlans').doc(mealPlanId).delete();
   }
 }

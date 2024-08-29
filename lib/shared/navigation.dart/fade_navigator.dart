@@ -12,8 +12,8 @@ class FadeNavigator<T> extends PageRouteBuilder<T> {
       {required Widget Function(
               BuildContext, Animation<double>, Animation<double>)
           builder,
-      RouteSettings? settings})
-      : super(pageBuilder: builder, settings: settings);
+      super.settings})
+      : super(pageBuilder: builder);
 
   @override
   Duration get transitionDuration => const Duration(milliseconds: 300);

@@ -1,7 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
-import 'package:flutter_firebase_template/models/user_data.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
 import 'package:flutter_firebase_template/screens/auth/authenticate.dart';
@@ -51,7 +51,7 @@ class _WrapperState extends State<Wrapper> {
                 return FutureBuilder<String?>(
                     future: Provider.of<LocalStorageProvider?>(context,
                             listen: false)!
-                        .get(key: "hasVisited"),
+                        .get(key: LocalStorageKeys.hasVisited),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.done) {
                         String? visited = snapshot.data;

@@ -28,30 +28,32 @@ class _UserSetupFlowState extends State<UserSetupFlow> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedCrossFade(
-      duration: const Duration(seconds: 1),
-      firstChild: Container(
-        constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height,
-            maxWidth: MediaQuery.of(context).size.width),
-        child: ConfirmEmail(
-          user: FirebaseAuth.instance.currentUser!,
-          onSuccess: () {
-            setState(() {
-              _emailVerified = true;
-            });
-          },
+    return Scaffold(
+      body: AnimatedCrossFade(
+        duration: const Duration(seconds: 1),
+        firstChild: Container(
+          constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height,
+              maxWidth: MediaQuery.of(context).size.width),
+          child: ConfirmEmail(
+            user: FirebaseAuth.instance.currentUser!,
+            onSuccess: () {
+              setState(() {
+                _emailVerified = true;
+              });
+            },
+          ),
         ),
+        secondChild: Container(
+          constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height,
+              maxWidth: MediaQuery.of(context).size.width),
+          child: AppIntroSlider(user: widget.user),
+        ),
+        crossFadeState: !_emailVerified
+            ? CrossFadeState.showFirst
+            : CrossFadeState.showSecond,
       ),
-      secondChild: Container(
-        constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height,
-            maxWidth: MediaQuery.of(context).size.width),
-        child: AppIntroSlider(user: widget.user),
-      ),
-      crossFadeState: !_emailVerified
-          ? CrossFadeState.showFirst
-          : CrossFadeState.showSecond,
     );
   }
 }
