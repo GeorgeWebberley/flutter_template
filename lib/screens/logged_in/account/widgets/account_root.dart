@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_header.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_privacy.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_settings.dart';
-import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
@@ -121,47 +119,6 @@ class AccountRoot extends StatelessWidget {
                         height: 0,
                         color: Colors.black.withOpacity(0.1),
                       ),
-                    ),
-                    DetailTile(
-                      title: 'Recipe',
-                      onPressed: () async {
-                        Recipe recipe = Recipe(
-                          title: 'Vegan Sausage Rolls',
-                          cookingTime: "30 minutes",
-                          ingredients: [
-                            "400g puff pastry (vegan), thawed",
-                            "250g mushrooms, finely chopped",
-                            "150g cooked lentils (canned or pre-cooked)",
-                            "1 onion, finely chopped",
-                            "2 cloves garlic, minced",
-                            "2 teaspoons soy sauce",
-                            "1 teaspoon dried thyme",
-                            "Salt and pepper, to taste",
-                            "Plant-based milk (for brushing the pastry)",
-                            "Flour (for dusting)",
-                          ],
-                          instructions: [
-                            "Preheat your oven to 400°F (200°C) and line a baking tray with parchment paper.",
-                            "Dust a clean surface with flour and roll out the puff pastry to your desired thickness, then cut into long rectangles (about 4 inches wide).",
-                            "In a large skillet, heat a splash of water or vegetable broth over medium heat and sauté the onion and garlic until translucent.",
-                            "Add the finely chopped mushrooms to the skillet and cook until they have released their moisture, about 5-7 minutes.",
-                            "Preheat your oven to 400°F (200°C) and line a baking tray with parchment paper.",
-                            "Dust a clean surface with flour and roll out the puff pastry to your desired thickness, then cut into long rectangles (about 4 inches wide).",
-                            "In a large skillet, heat a splash of water or vegetable broth over medium heat and sauté the onion and garlic until translucent.",
-                            "Add the finely chopped mushrooms to the skillet and cook until they have released their moisture, about 5-7 minutes.",
-                          ],
-                          mealType: "breakfast",
-                        );
-                        Navigator.push(
-                          context,
-                          SlideNavigator(
-                              builder: (context, _, __) => RecipeScreen(
-                                    recipe: recipe,
-                                  )),
-                        );
-                      },
-                      icon: Icons.logout,
-                      iconColor: AppColors.primary,
                     ),
                   ],
                 ),

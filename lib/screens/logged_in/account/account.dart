@@ -6,8 +6,6 @@ import 'package:flutter_firebase_template/screens/logged_in/account/widgets/acco
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/state/account_state.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
-import 'package:flutter_firebase_template/theme/padding.dart';
-import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:provider/provider.dart';
 
 class Account extends StatefulWidget {

@@ -63,22 +63,16 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
       if (mealPlanId && latestMessage['content'][0]) {
           // Extract the first content object
           const contentList = latestMessage['content'];
-          console.log("latestMessage:", latestMessage);
 
           const contentObject = contentList.length > 0 ? contentList[0] : null;
 
-          console.log("Content object:", contentObject);
-
           let parsedRecipes = [];
-          let totalIngredients;
 
           if (contentObject && contentObject['type'] === 'text') {
               const textValue = contentObject['text']['value'];
-              console.log()
               
               try {
                   const parsedJson = JSON.parse(textValue);
-                  console.log("Parsed JSON:", parsedJson);
 
                   const responseType = parsedJson['response_type'];
 
@@ -87,7 +81,6 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
                   } else if (responseType === 'recipe' && typeof parsedJson['recipe'] === 'object') {
                       parsedRecipes = [parsedJson['recipe']];
                   }
-                  totalIngredients = parsedJson['total_ingredients'];
 
               } catch (error) {
                   console.error("Error parsing response JSON:", error);
@@ -96,11 +89,8 @@ exports.sendMessage = functions.https.onCall(async (data, context) => {
 
           // If recipes were parsed successfully, update the meal plan document with recipes
           if (parsedRecipes.length > 0 && newMealPlanDocRef) {
-            console.log("Parsed recipes:", parsedRecipes);
-            console.log("Total ingredients:", totalIngredients);
               await newMealPlanDocRef.update({
                   recipes: parsedRecipes,
-                  totalIngredients: totalIngredients,
                   loading: false,  // Optionally, set loading to false since the recipes are now added
               });
           }

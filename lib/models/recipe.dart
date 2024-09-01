@@ -1,6 +1,8 @@
+import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
+
 class Recipe {
   final String title;
-  final List<String> ingredients;
+  final List<Ingredient> ingredients;
   final String cookingTime;
   final List<String> instructions;
   final String mealType;
@@ -22,7 +24,9 @@ class Recipe {
 
     return Recipe(
         title: json['title'] as String,
-        ingredients: List<String>.from(json['ingredients']),
+        ingredients: (json['ingredients'] as List)
+            .map((ingredient) => Ingredient.fromJson(ingredient))
+            .toList(),
         cookingTime: json['cooking_time'] as String,
         instructions: List<String>.from(json['instructions']),
         mealType: json['meal_type']);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
+import 'package:flutter_firebase_template/screens/logged_in/meal_plans/ingredient_tile.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
@@ -68,23 +69,8 @@ class RecipeScreen extends StatelessWidget {
                                 padding: const EdgeInsets.only(
                                     bottom: AppPading
                                         .medium), // Add some space between items
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment
-                                      .start, // Align bullet points to the top of the text
-                                  children: [
-                                    const Text('•').h5(), // Bullet point
-                                    const SizedBox(
-                                        width: AppPading
-                                            .medium), // Space between bullet and text
-                                    Expanded(
-                                      child: Text(
-                                        ingredient,
-                                        style: TextStyle(
-                                            color:
-                                                Colors.black.withOpacity(0.8)),
-                                      ).h5(), // Ingredient text
-                                    ),
-                                  ],
+                                child: IngredientTile(
+                                  ingredient: ingredient,
                                 ),
                               ),
                             )

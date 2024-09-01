@@ -9,14 +9,12 @@ class MealPlan {
   final List<Recipe>? recipes;
   final DateTime? createdAt;
   final bool loading;
-  final List<String>? totalIngredients; // New field for total ingredients
 
   MealPlan({
     required this.id,
     this.recipes,
     required this.createdAt,
     required this.loading,
-    this.totalIngredients, // Include in constructor
   });
 
   factory MealPlan.fromFirebase(
@@ -30,9 +28,6 @@ class MealPlan {
           .toList(),
       createdAt: _dateTimeFromJson(data['createdAt']),
       loading: data['loading'],
-      totalIngredients: (data['totalIngredients'] as List<dynamic>?)
-          ?.map((ingredient) => ingredient as String)
-          .toList(),
     );
   }
 

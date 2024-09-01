@@ -1,3 +1,5 @@
+import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
+import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:intl/intl.dart';
 
 extension StringExtension on String {
@@ -50,4 +52,14 @@ String formatDateWithSuffix(DateTime? dateTime,
       : includeTime
           ? time
           : "$formattedDate$suffix $month $year";
+}
+
+List<Ingredient> getTotalIngredients(List<Recipe> recipes) {
+  List<Ingredient> ingredients = [];
+  for (var recipe in recipes) {
+    for (var ingredient in recipe.ingredients) {
+      ingredients.add(ingredient);
+    }
+  }
+  return ingredients.toSet().toList();
 }

@@ -4,6 +4,7 @@ import 'package:flutter_firebase_template/screens/logged_in/meal_plans/shopping_
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/view_recipe_list_screen.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
+import 'package:flutter_firebase_template/shared/helpers.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
@@ -12,18 +13,13 @@ import 'package:flutter_firebase_template/widgets/detail_tile.dart';
 class ViewSingleMealPlan extends StatefulWidget {
   const ViewSingleMealPlan({
     super.key,
-    this.breakfasts,
-    this.lunches,
-    this.dinners,
+    this.meals,
     required this.title,
-    this.totalIngredients,
   });
 
-  final List<Recipe>? breakfasts;
-  final List<Recipe>? lunches;
-  final List<Recipe>? dinners;
+  final List<Recipe>? meals;
+
   final String title;
-  final List<String>? totalIngredients;
 
   @override
   State<ViewSingleMealPlan> createState() => _ViewSingleMealPlanState();
@@ -31,6 +27,21 @@ class ViewSingleMealPlan extends StatefulWidget {
 
 class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
   PageController pageController = PageController();
+  late List<Recipe>? breakfasts;
+  late List<Recipe>? lunches;
+  late List<Recipe>? dinners;
+
+  @override
+  void initState() {
+    super.initState();
+    breakfasts = widget.meals
+        ?.where((recipe) => recipe.mealType == "breakfast")
+        .toList();
+    lunches =
+        widget.meals?.where((recipe) => recipe.mealType == "lunch").toList();
+    dinners =
+        widget.meals?.where((recipe) => recipe.mealType == "dinner").toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +62,8 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                     context,
                     SlideNavigator(
                         builder: (context, _, __) => ShoppingListScreen(
-                              totalIngredients: widget.totalIngredients,
+                              totalIngredients:
+                                  getTotalIngredients(widget.meals!),
                             )),
                   );
                 },
@@ -66,7 +78,7 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.breakfasts?.isNotEmpty == true)
+                  if (breakfasts?.isNotEmpty == true)
                     DetailTile(
                       title: 'Breakfasts',
                       onPressed: () {
@@ -74,17 +86,16 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                           context,
                           SlideNavigator(
                               builder: (context, _, __) => ViewRecipeListScreen(
-                                  title: 'Breakfasts',
-                                  recipes: widget.breakfasts!)),
+                                  title: 'Breakfasts', recipes: breakfasts!)),
                         );
                       },
                       icon: Icons.breakfast_dining,
                       iconColor: AppColors.primary,
                     ),
-                  // Add divider if there are widget.breakfasts and either lunches or dinners
-                  if (widget.breakfasts?.isNotEmpty == true &&
-                          (widget.lunches?.isNotEmpty == true) ||
-                      (widget.dinners?.isNotEmpty == true))
+                  // Add divider if there are breakfasts and either lunches or dinners
+                  if (breakfasts?.isNotEmpty == true &&
+                          (lunches?.isNotEmpty == true) ||
+                      (dinners?.isNotEmpty == true))
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppPading.large),
@@ -93,7 +104,7 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                         color: Colors.black.withOpacity(0.1),
                       ),
                     ),
-                  if (widget.lunches?.isNotEmpty == true)
+                  if (lunches?.isNotEmpty == true)
                     DetailTile(
                       title: 'Lunches',
                       onPressed: () {
@@ -101,14 +112,14 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                           context,
                           SlideNavigator(
                               builder: (context, _, __) => ViewRecipeListScreen(
-                                  title: 'Lunches', recipes: widget.lunches!)),
+                                  title: 'Lunches', recipes: lunches!)),
                         );
                       },
                       icon: Icons.lunch_dining,
                       iconColor: AppColors.green,
                     ),
-                  if (widget.lunches?.isNotEmpty == true &&
-                      widget.dinners?.isNotEmpty == true)
+                  if (lunches?.isNotEmpty == true &&
+                      dinners?.isNotEmpty == true)
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: AppPading.large),
@@ -117,7 +128,7 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                         color: Colors.black.withOpacity(0.1),
                       ),
                     ),
-                  if (widget.dinners?.isNotEmpty == true)
+                  if (dinners?.isNotEmpty == true)
                     DetailTile(
                       title: 'Dinners',
                       onPressed: () {
@@ -125,7 +136,7 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                           context,
                           SlideNavigator(
                               builder: (context, _, __) => ViewRecipeListScreen(
-                                  title: 'Dinners', recipes: widget.dinners!)),
+                                  title: 'Dinners', recipes: dinners!)),
                         );
                       },
                       icon: Icons.dinner_dining,

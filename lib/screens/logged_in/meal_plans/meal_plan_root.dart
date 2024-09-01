@@ -98,10 +98,7 @@ class _MealPlanRootState extends State<MealPlanRoot> {
                   return ViewSingleMealPlan(
                     title: formatDateWithSuffix(plan.createdAt,
                         includeTime: false),
-                    lunches: lunches,
-                    dinners: dinners,
-                    breakfasts: breakfasts,
-                    totalIngredients: plan.totalIngredients,
+                    meals: plan.recipes,
                   );
                 }
 
