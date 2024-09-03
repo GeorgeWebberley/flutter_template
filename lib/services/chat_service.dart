@@ -4,26 +4,34 @@ import 'package:flutter_firebase_template/models/message.dart';
 class ChatService {
   ChatService();
 
-  Future<Message> sendMessage(String message, {String? mealPlanId}) async {
+  Future<Message?> sendMessage(String message,
+      {String? mealPlanId, bool isNewConversation = true}) async {
     try {
       // Prepare the data to be sent to the Cloud Function
-      final HttpsCallable callable =
-          FirebaseFunctions.instance.httpsCallable('sendMessage');
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+          'sendMessage',
+          options: HttpsCallableOptions(timeout: const Duration(minutes: 2)));
 
       Map<String, dynamic> body = {
         'message': message,
       };
 
-      if (mealPlanId != null) {
-        body['mealPlanId'] = mealPlanId;
+      if (isNewConversation) {
+        body['isNewConversation'] = isNewConversation;
       }
 
-      final response = await callable.call(body);
+      if (mealPlanId != null) {
+        body['mealPlanId'] = mealPlanId;
+        callable.call(body);
+        return null;
+      } else {
+        final response = await callable.call(body);
 
-      // Parse the JSON response into a Message object
-      final Map<String, dynamic> responseData =
-          Map<String, dynamic>.from(response.data['message']);
-      return Message.fromJson(responseData);
+        // Parse the JSON response into a Message object
+        final Map<String, dynamic> responseData =
+            Map<String, dynamic>.from(response.data['message']);
+        return Message.fromJson(responseData);
+      }
     } catch (e) {
       // Handle any errors here
       print('Error in ChatService: $e');

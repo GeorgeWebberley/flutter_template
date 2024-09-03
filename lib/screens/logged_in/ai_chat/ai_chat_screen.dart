@@ -65,6 +65,9 @@ class _AiChatScreenState extends State<AiChatScreen>
   bool specifiedDietaryPreferences = false;
   bool specifiedNumberOfPeople = false;
   bool submitted = false;
+  // Boolean will be sent to the backend cloud function to inidicate this is a new conversation.
+  // Will be set to false after the first message is sent.
+  bool isNewConversation = true;
 
   @override
   void initState() {
@@ -103,6 +106,8 @@ class _AiChatScreenState extends State<AiChatScreen>
   @override
   Widget build(BuildContext context) {
     user = Provider.of<AppUser?>(context);
+
+    print("Number of people: $specifiedNumberOfPeople");
 
     return Column(
       children: [
@@ -353,7 +358,7 @@ class _AiChatScreenState extends State<AiChatScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(),
+              const Row(),
               ...dietaryPreferences!
                   .map((preference) => Column(
                         children: [
@@ -432,7 +437,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                     _addMessage(Message(
                         role: "user",
                         responseType: "text",
-                        textResponse: message));
+                        textResponse: message.trim()));
                     setState(() {
                       _isTyping = true;
                       specifiedDietaryPreferences = true;
@@ -484,7 +489,8 @@ class _AiChatScreenState extends State<AiChatScreen>
             """Please create recipes for $breakfasts breakfasts, $lunches lunches and $dinners dinners for $numberOfPeople people. It is important you follow these dietary preferences: 
         ${dietaryPreferences!.where((preference) => preference.activated == true).map((preference) => preference.preference).toList().join(", ")}""";
 
-        _chatService.sendMessage(message, mealPlanId: planId);
+        _chatService.sendMessage(message,
+            mealPlanId: planId, isNewConversation: isNewConversation);
 
         Navigator.push(
           context,
@@ -509,6 +515,8 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _buildPlaceholder() {
+    print("specifiedNumberOfPeople == false");
+    print(specifiedNumberOfPeople == false);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: conversationType == null
@@ -519,9 +527,11 @@ class _AiChatScreenState extends State<AiChatScreen>
               : conversationType == ConversationType.mealPlan &&
                       specifiedDietaryPreferences == false
                   ? _buildDietaryPreferencesChat()
-                  : specifiedNumberOfPeople == false
+                  : conversationType == ConversationType.mealPlan &&
+                          specifiedNumberOfPeople == false
                       ? _buildPeopleInput()
-                      : submitted == false
+                      : conversationType == ConversationType.mealPlan &&
+                              submitted == false
                           ? _buildSubmitButton()
                           : Container(),
     );
@@ -720,9 +730,12 @@ class _AiChatScreenState extends State<AiChatScreen>
 
     try {
       // Call the ChatService to send the message and get the AI response
-      final Message aiMessage = await _chatService.sendMessage(text);
+      final Message? aiMessage = await _chatService.sendMessage(text,
+          isNewConversation: isNewConversation);
 
-      _addMessage(aiMessage);
+      if (aiMessage != null) {
+        _addMessage(aiMessage);
+      }
     } catch (e) {
       setState(() {
         final errorMessage = Message(
@@ -739,6 +752,7 @@ class _AiChatScreenState extends State<AiChatScreen>
       });
     } finally {
       setState(() {
+        isNewConversation = false;
         _isTyping = false;
       });
     }

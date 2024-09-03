@@ -66,7 +66,7 @@ class _MealPlanRootState extends State<MealPlanRoot> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           LottieController(
-                              repeat: false,
+                              repeat: true,
                               location:
                                   'assets/lottie/preparing_meal_plan.json',
                               height: 220),

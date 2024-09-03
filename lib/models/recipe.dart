@@ -16,11 +16,12 @@ class Recipe {
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
-    print("Title: ${json['title']}");
-    print("Ingredients: ${json['ingredients']}");
-    print("Cooking Time: ${json['cooking_time']}");
-    print("Instructions: ${json['instructions']}");
-    print("Meal Type: ${json['meal_type']}");
+    print("Title: ${json['title'] as String}");
+    print("Ingredients: ${json['ingredients'] as List}");
+    print("Cooking Time: ${json['cooking_time'] as String}");
+    print("Instructions: ${json['instructions'] as List}");
+    print("HEEWADWAD");
+    print("Meal Type: ${json['meal_type'] as String}");
 
     return Recipe(
         title: json['title'] as String,

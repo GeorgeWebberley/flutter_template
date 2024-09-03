@@ -18,17 +18,28 @@ class IngredientTile extends StatelessWidget {
         const SizedBox(
           width: AppPading.medium,
         ),
-        Text(
-          "${ingredient.name.capitalize()}: ",
-          style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.black.withOpacity(0.8)),
-        ).h5(),
         Expanded(
-          child: Text(
-            _formatIngredientQuantity(ingredient),
-            style: TextStyle(color: Colors.black.withOpacity(0.8)),
-          ).h5(),
+          child: RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: "${ingredient.name.capitalize()}: ",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black.withOpacity(0.8),
+                    fontSize: 16, // Assuming h5 is similar to headline5
+                  ),
+                ),
+                TextSpan(
+                  text: _formatIngredientQuantity(ingredient),
+                  style: TextStyle(
+                    color: Colors.black.withOpacity(0.8),
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
