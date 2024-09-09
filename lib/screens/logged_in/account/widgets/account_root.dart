@@ -3,6 +3,7 @@ import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_header.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_privacy.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_settings.dart';
+import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_smart_inventory.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
@@ -42,6 +43,34 @@ class AccountRoot extends StatelessWidget {
             children: [
               const SizedBox(height: AppPading.large),
               AccountHeader(userData: user),
+              const SizedBox(
+                height: AppPading.large,
+              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: AppPading.page),
+              //   child: Divider(
+              //     height: 30,
+              //     color: AppColors.primary,
+              //     thickness: 0.5,
+              //   ),
+              // ),
+              AppBox(
+                child: Column(
+                  children: [
+                    DetailTile(
+                      title: 'Smart inventory',
+                      onPressed: () {
+                        setScreen(AccountSmartInventory(
+                          user: user,
+                          backToRoot: backToRoot,
+                        ));
+                      },
+                      icon: Icons.kitchen,
+                      iconColor: AppColors.primary,
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(
                 height: AppPading.large,
               ),

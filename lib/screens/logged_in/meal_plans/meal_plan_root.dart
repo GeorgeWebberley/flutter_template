@@ -86,19 +86,8 @@ class _MealPlanRootState extends State<MealPlanRoot> {
                     ),
                   );
                 } else {
-                  List<Recipe>? breakfasts = plan.recipes
-                      ?.where((recipe) => recipe.mealType == "breakfast")
-                      .toList();
-                  List<Recipe>? lunches = plan.recipes
-                      ?.where((recipe) => recipe.mealType == "lunch")
-                      .toList();
-                  List<Recipe>? dinners = plan.recipes
-                      ?.where((recipe) => recipe.mealType == "dinner")
-                      .toList();
                   return ViewSingleMealPlan(
-                    title: formatDateWithSuffix(plan.createdAt,
-                        includeTime: false),
-                    meals: plan.recipes,
+                    mealPlan: plan,
                   );
                 }
 

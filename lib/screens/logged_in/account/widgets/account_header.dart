@@ -38,7 +38,8 @@ class _AccountHeaderState extends State<AccountHeader> {
           ),
         ),
         Container(
-          padding: const EdgeInsets.all(AppPading.page),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppPading.page, vertical: AppPading.page * 1.5),
           child: Column(
             children: [
               const Row(),

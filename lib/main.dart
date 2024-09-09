@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
+import 'package:flutter_firebase_template/providers/local_notification_provider.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
+import 'package:flutter_firebase_template/providers/share_provider.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/widgets/wrapper.dart';
@@ -25,6 +27,10 @@ void main() async {
   }
 
   LocalStorageProvider localStorageProvider = LocalStorageProvider();
+  ShareProvider shareProvider = ShareProvider();
+  LocalNotificationProvider localNotificationProvider =
+      LocalNotificationProvider();
+  await localNotificationProvider.initialize();
   PushNotificationProvider pushNotificationProvider =
       PushNotificationProvider(localStorageProvider: localStorageProvider);
   AuthService authService = AuthService();
@@ -38,6 +44,10 @@ void main() async {
         Provider<LocalStorageProvider>(
             create: (context) => localStorageProvider),
         Provider<AuthService>(create: (context) => authService),
+        Provider<ShareProvider>(create: (context) => shareProvider),
+        Provider<LocalNotificationProvider>(
+          create: (_) => localNotificationProvider,
+        )
       ],
       child: MyApp(authService: authService),
     ),

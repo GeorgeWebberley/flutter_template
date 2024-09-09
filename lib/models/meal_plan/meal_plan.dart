@@ -9,12 +9,18 @@ class MealPlan {
   final List<Recipe>? recipes;
   final DateTime? createdAt;
   final bool loading;
+  final bool? breakfastRefreshing;
+  final bool? lunchRefreshing;
+  final bool? dinnerRefreshing;
 
   MealPlan({
     required this.id,
     this.recipes,
     required this.createdAt,
     required this.loading,
+    this.breakfastRefreshing,
+    this.lunchRefreshing,
+    this.dinnerRefreshing,
   });
 
   factory MealPlan.fromFirebase(
@@ -28,6 +34,9 @@ class MealPlan {
           .toList(),
       createdAt: _dateTimeFromJson(data['createdAt']),
       loading: data['loading'],
+      breakfastRefreshing: data['breakfastRefreshing'],
+      lunchRefreshing: data['lunchRefreshing'],
+      dinnerRefreshing: data['dinnerRefreshing'],
     );
   }
 

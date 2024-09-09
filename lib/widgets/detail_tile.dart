@@ -6,23 +6,25 @@ import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 
 class DetailTile extends StatelessWidget {
-  const DetailTile(
-      {Key? key,
-      required this.title,
-      this.onPressed,
-      this.icon,
-      this.iconColor = AppColors.secondary})
-      : super(key: key);
+  const DetailTile({
+    Key? key,
+    required this.title,
+    this.onPressed,
+    this.icon,
+    this.iconColor = AppColors.secondary,
+    this.loading = false,
+  }) : super(key: key);
 
   final String title;
   final void Function()? onPressed;
   final IconData? icon;
   final Color? iconColor;
+  final bool? loading;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onPressed,
+      onTap: loading == true ? null : onPressed,
       child: Ink(
         child: Container(
           padding: const EdgeInsets.all(AppPading.large),
@@ -48,8 +50,15 @@ class DetailTile extends StatelessWidget {
                     )).h5(),
               ),
               // Spacer(),
-              Icon(Icons.arrow_forward_ios,
-                  size: AppPading.page, color: Colors.black.withOpacity(0.8)),
+              loading == true
+                  ? const CircularProgressIndicator(
+                      color: AppColors.primary,
+                    )
+                  : onPressed != null
+                      ? Icon(Icons.arrow_forward_ios,
+                          size: AppPading.page,
+                          color: Colors.black.withOpacity(0.8))
+                      : const SizedBox(),
             ],
           ),
         ),

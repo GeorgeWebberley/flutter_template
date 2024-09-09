@@ -6,11 +6,9 @@ import 'package:flutter_firebase_template/models/dietary_preference/dietary_pref
 import 'package:flutter_firebase_template/models/meal_plan_configuration.dart';
 import 'package:flutter_firebase_template/models/message.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
-import 'package:flutter_firebase_template/models/recipe_stub.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/typing_indicator.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/meal_plan_root.dart';
-import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_expandable_tile.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
 import 'package:flutter_firebase_template/services/chat_service.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
@@ -59,20 +57,14 @@ class _AiChatScreenState extends State<AiChatScreen>
   ];
 
   List<DietaryPreference>? dietaryPreferences;
-  List<RecipeStub>? recipeStubs;
-  int numberOfBreakfasts = 0;
-  int numberOfLunches = 0;
-  int numberOfDinners = 0;
-  List<RecipeStub> selectedBreakfastRecipes = [];
-  List<RecipeStub> selectedLunchRecipes = [];
-  List<RecipeStub> selectedDinnerRecipes = [];
+  int breakfasts = 0;
+  int lunches = 0;
+  int dinners = 0;
   int? numberOfPeople;
   bool specifiedNumberOfMeals = false;
   bool specifiedDietaryPreferences = false;
   bool specifiedNumberOfPeople = false;
-  bool selectedRecipeTitles = false;
   bool submitted = false;
-
   // Boolean will be sent to the backend cloud function to inidicate this is a new conversation.
   // Will be set to false after the first message is sent.
   bool isNewConversation = true;
@@ -114,6 +106,8 @@ class _AiChatScreenState extends State<AiChatScreen>
   @override
   Widget build(BuildContext context) {
     user = Provider.of<AppUser?>(context);
+
+    print("Number of people: $specifiedNumberOfPeople");
 
     return Column(
       children: [
@@ -209,12 +203,12 @@ class _AiChatScreenState extends State<AiChatScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(),
+              Row(),
               NumberInput(
                 label: "Breakfasts",
                 onChanged: (value) {
                   setState(() {
-                    numberOfBreakfasts = value;
+                    breakfasts = value;
                   });
                 },
               ),
@@ -229,7 +223,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                 label: "Lunches",
                 onChanged: (value) {
                   setState(() {
-                    numberOfLunches = value;
+                    lunches = value;
                   });
                 },
               ),
@@ -244,29 +238,27 @@ class _AiChatScreenState extends State<AiChatScreen>
                 label: "Dinners",
                 onChanged: (value) {
                   setState(() {
-                    numberOfDinners = value;
+                    dinners = value;
                   });
                 },
               ),
-              const SizedBox(
+              SizedBox(
                 height: AppPading.large * 2,
               ),
               AppButton(
-                  onPressed: numberOfBreakfasts == 0 &&
-                          numberOfLunches == 0 &&
-                          numberOfDinners == 0
+                  onPressed: breakfasts == 0 && lunches == 0 && dinners == 0
                       ? null
                       : () async {
                           String message = "";
 
-                          if (numberOfBreakfasts > 0) {
-                            message += "• $numberOfBreakfasts Breakfasts\n";
+                          if (breakfasts > 0) {
+                            message += "• $breakfasts Breakfasts\n";
                           }
-                          if (numberOfLunches > 0) {
-                            message += "• $numberOfLunches Lunches\n";
+                          if (lunches > 0) {
+                            message += "• $lunches Lunches\n";
                           }
-                          if (numberOfDinners > 0) {
-                            message += "• $numberOfDinners Dinners";
+                          if (dinners > 0) {
+                            message += "• $dinners Dinners";
                           }
 
                           _addMessage(Message(
@@ -312,7 +304,7 @@ class _AiChatScreenState extends State<AiChatScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(),
+              Row(),
               NumberInput(
                 label: "People",
                 minValue: 1,
@@ -322,7 +314,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                   });
                 },
               ),
-              const SizedBox(
+              SizedBox(
                 height: AppPading.large * 2,
               ),
               AppButton(
@@ -337,50 +329,18 @@ class _AiChatScreenState extends State<AiChatScreen>
                         responseType: "text",
                         textResponse:
                             "$numberOfPeople ${numberOfPeople == 1 ? "person" : "people"}"));
-                    await Future.delayed(const Duration(milliseconds: 300));
-                    _addMessage(Message(
-                        role: 'system',
-                        textResponse:
-                            "I'll create some recommendations for you, and you can tell me your favourites.",
-                        responseType: 'text'));
 
-                    List<RecipeStub> recipes =
-                        await _chatService.getRecipeStubs(
-                            numberOfPeople: numberOfPeople!,
-                            breakfasts: (numberOfBreakfasts * 1.5).ceil(),
-                            lunches: (numberOfLunches * 1.5).ceil(),
-                            dinners: (numberOfDinners * 1.5).ceil(),
-                            snacks: 0,
-                            dietaryPreferences: dietaryPreferences!
-                                .where((preference) =>
-                                    preference.activated == true)
-                                .map((preference) => preference.preference)
-                                .toList());
+                    Future.delayed(const Duration(milliseconds: 2000), () {
+                      setState(() {
+                        _isTyping = false;
+                      });
 
-                    setState(() {
-                      _isTyping = false;
-                      recipeStubs = recipes;
+                      _addMessage(Message(
+                          role: 'system',
+                          textResponse:
+                              "Perfect! Are you ready for me to start preparing? It can take around a minute or so, buy you are free to close your app and come back later :)",
+                          responseType: 'text'));
                     });
-
-                    _addMessage(Message(
-                        role: 'system',
-                        textResponse:
-                            "Here are your suggestions! Select the ones you think sound good and I'll add them to your plan.",
-                        responseType: 'text'));
-
-                    // Future.delayed(const Duration(milliseconds: 2000), () {
-                    //   _addMessage(Message(
-                    //       role: 'system',
-                    //       textResponse:
-                    //           "Perfect! Are you ready for me to start preparing? It can take around a minute or so, buy you are free to close your app and come back later :)",
-                    //       responseType: 'text'));
-
-                    //   _addMessage(Message(
-                    //       role: 'system',
-                    //       textResponse:
-                    //           "Perfect! Are you ready for me to start preparing? It can take around a minute or so, buy you are free to close your app and come back later :)",
-                    //       responseType: 'text'));
-                    // });
                   },
                   text: "Save")
             ],
@@ -430,7 +390,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                 onPressed: () {
                   addPreferenceDialog(context);
                 },
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
@@ -447,7 +407,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                   ],
                 ),
               ),
-              const SizedBox(
+              SizedBox(
                 height: AppPading.large,
               ),
               AppButton(
@@ -511,151 +471,14 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  Widget _buildSelectRecipes() {
-    if (recipeStubs == null) {
-      // TODO: Something better
-      return const Text("Something went wrong");
-    }
-
-    List<RecipeStub> breakfastRecipes =
-        recipeStubs!.where((recipe) => recipe.mealType == "breakfast").toList();
-    List<RecipeStub> lunchRecipes =
-        recipeStubs!.where((recipe) => recipe.mealType == "lunch").toList();
-    List<RecipeStub> dinnerRecipes =
-        recipeStubs!.where((recipe) => recipe.mealType == "dinner").toList();
-    // List<RecipeStub> snackRecipes =
-    //     recipeStubs!.where((recipe) => recipe.mealType == "snack").toList();
-
-    return Padding(
-      padding: const EdgeInsets.all(AppPading.large),
-      child: AppBox(
-        child: Padding(
-          padding: const EdgeInsets.all(AppPading.large),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Row(),
-              if (breakfastRecipes.isNotEmpty)
-                RecipeExpandableTile(
-                  mealType: "Breakfast",
-                  recipes: breakfastRecipes,
-                  onChanged: ((recipes) => selectedBreakfastRecipes = recipes),
-                ),
-              if (lunchRecipes.isNotEmpty)
-                RecipeExpandableTile(
-                  mealType: "Lunch",
-                  recipes: lunchRecipes,
-                  onChanged: ((recipes) => selectedLunchRecipes = recipes),
-                ),
-              if (dinnerRecipes.isNotEmpty)
-                RecipeExpandableTile(
-                  mealType: "Dinner",
-                  recipes: dinnerRecipes,
-                  onChanged: ((recipes) => selectedDinnerRecipes = recipes),
-                ),
-              const SizedBox(
-                height: AppPading.large,
-              ),
-              AppButton(
-                  onPressed: () async {
-                    if (selectedBreakfastRecipes.length < numberOfBreakfasts ||
-                        selectedLunchRecipes.length < numberOfLunches ||
-                        selectedDinnerRecipes.length < numberOfDinners) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AppDialog(
-                          buttonText: "Continue",
-                          cancelButtonText: "Go back",
-                          onCancel: () {
-                            Navigator.pop(context);
-                          },
-                          title: "You selected...",
-                          content: RichText(
-                            text: TextSpan(
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text:
-                                      "${selectedBreakfastRecipes.length} breakfast${selectedBreakfastRecipes.length == 1 ? "" : "s"}\n",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600),
-                                ),
-                                TextSpan(
-                                  text:
-                                      "${selectedLunchRecipes.length} lunch${selectedLunchRecipes.length == 1 ? "" : "es"}\n",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600),
-                                ),
-                                TextSpan(
-                                  text:
-                                      "${selectedDinnerRecipes.length} dinner${selectedDinnerRecipes.length == 1 ? "" : "s"}",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
-                          ),
-                          onSave: () {
-                            _makeMealPlan();
-                            Navigator.pop(context);
-                          },
-                        ),
-                      );
-                    } else {
-                      _makeMealPlan();
-                    }
-                  },
-                  text: "Save")
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _makeMealPlan() async {
-    String planId =
-        await UserService(uid: user!.uid).addMealPlan(MealPlanConfiguration(
-      breakfasts: selectedBreakfastRecipes.length,
-      lunches: selectedLunchRecipes.length,
-      dinners: selectedDinnerRecipes.length,
-      numberOfPeople: numberOfPeople!,
-      dietaryPreferences: dietaryPreferences!
-          .where((preference) => preference.activated == true)
-          .map((preference) => preference.preference)
-          .toList(),
-    ));
-
-    _chatService.createMealPlan(
-        mealPlanId: planId,
-        breakfasts: selectedBreakfastRecipes.map((e) => e.title).toList(),
-        lunches: selectedLunchRecipes.map((e) => e.title).toList(),
-        dinners: selectedDinnerRecipes.map((e) => e.title).toList(),
-        numberOfPeople: numberOfPeople ?? 1,
-        dietaryPreferences: dietaryPreferences!
-            .where((preference) => preference.activated == true)
-            .map((preference) => preference.preference)
-            .toList());
-    Navigator.push(
-      context,
-      FadeNavigator(
-          builder: (context, _, __) => MealPlanRoot(
-                mealPlanId: planId,
-              )),
-    );
-  }
-
   Widget _buildSubmitButton() {
     return AppButton(
       onPressed: () async {
         String planId =
             await UserService(uid: user!.uid).addMealPlan(MealPlanConfiguration(
-          breakfasts: numberOfBreakfasts,
-          lunches: numberOfLunches,
-          dinners: numberOfDinners,
+          breakfasts: breakfasts,
+          lunches: lunches,
+          dinners: dinners,
           numberOfPeople: numberOfPeople!,
           dietaryPreferences: dietaryPreferences!
               .where((preference) => preference.activated == true)
@@ -664,7 +487,7 @@ class _AiChatScreenState extends State<AiChatScreen>
         ));
 
         String message =
-            """Please create recipes for $numberOfBreakfasts breakfasts, $numberOfLunches lunches and $numberOfDinners dinners for $numberOfPeople people. It is important you follow these dietary preferences: 
+            """Please create recipes for $breakfasts breakfasts, $lunches lunches and $dinners dinners for $numberOfPeople people. It is important you follow these dietary preferences: 
         ${dietaryPreferences!.where((preference) => preference.activated == true).map((preference) => preference.preference).toList().join(", ")}""";
 
         _chatService.sendMessage(message,
@@ -693,6 +516,8 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _buildPlaceholder() {
+    print("specifiedNumberOfPeople == false");
+    print(specifiedNumberOfPeople == false);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: conversationType == null
@@ -707,12 +532,9 @@ class _AiChatScreenState extends State<AiChatScreen>
                           specifiedNumberOfPeople == false
                       ? _buildPeopleInput()
                       : conversationType == ConversationType.mealPlan &&
-                              selectedRecipeTitles == false
-                          ? _buildSelectRecipes()
-                          : conversationType == ConversationType.mealPlan &&
-                                  submitted == false
-                              ? _buildSubmitButton()
-                              : Container(),
+                              submitted == false
+                          ? _buildSubmitButton()
+                          : Container(),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/meal_plan/meal_plan.dart';
 import 'package:flutter_firebase_template/models/meal_plan_configuration.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
@@ -180,5 +181,60 @@ class UserService {
 
   Future<void> deleteMealPlan(String mealPlanId) async {
     await _usersRef.doc(uid).collection('mealPlans').doc(mealPlanId).delete();
+  }
+
+  Future<void> setRefreshing({
+    required String type,
+    required String mealPlanId,
+  }) async {
+    try {
+      await _usersRef.doc(uid).collection('mealPlans').doc(mealPlanId).update({
+        type == 'breakfast'
+            ? 'breakfastRefreshing'
+            : type == 'lunch'
+                ? 'lunchRefreshing'
+                : 'dinnerRefreshing': true,
+      });
+    } catch (e) {
+      debugPrint('Error in UserService: $e');
+      throw Exception('Failed to send message');
+    }
+  }
+
+  Future<void> setRecipeComplete({
+    required String title,
+    required String mealPlanId,
+  }) async {
+    try {
+      // Get the meal plan document
+      final docSnapshot = await _usersRef
+          .doc(uid)
+          .collection('mealPlans')
+          .doc(mealPlanId)
+          .get();
+
+      // Extract the recipes array from the document
+      List<dynamic> recipes = docSnapshot.data()?['recipes'] ?? [];
+
+      // Find the recipe by title
+      int recipeIndex = recipes.indexWhere((recipe) {
+        return recipe['title'] == title;
+      });
+
+      if (recipeIndex == -1) {
+        throw Exception('Recipe not found');
+      }
+
+      // Update the recipe to mark it as done
+      recipes[recipeIndex]['completed'] = true;
+
+      // Write the updated recipes array back to Firestore
+      await _usersRef.doc(uid).collection('mealPlans').doc(mealPlanId).update({
+        'recipes': recipes, // Replace the whole array with the updated version
+      });
+    } catch (e) {
+      debugPrint('Error in UserService: $e');
+      throw Exception('Failed to mark recipe as done');
+    }
   }
 }

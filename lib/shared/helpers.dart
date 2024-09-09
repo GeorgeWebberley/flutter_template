@@ -63,3 +63,16 @@ List<Ingredient> getTotalIngredients(List<Recipe> recipes) {
   }
   return ingredients.toSet().toList();
 }
+
+String formatIngredientQuantity(Ingredient ingredient) {
+  String unit = ingredient.unit;
+  num quantity = ingredient.quantity;
+  if (ingredient.quantity == 1 && ingredient.unit.endsWith('s')) {
+    unit = ingredient.unit.substring(0, ingredient.unit.length - 1);
+  }
+
+  if (ingredient.quantity == ingredient.quantity.toInt()) {
+    quantity = ingredient.quantity.toInt();
+  }
+  return "$quantity $unit";
+}

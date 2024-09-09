@@ -35,6 +35,11 @@ class ViewMealPlansScreen extends StatelessWidget {
             child: Text('No meal plans found'),
           );
         } else {
+          snapshot.data!.sort((a, b) {
+            return (b.createdAt ?? DateTime.now())
+                .compareTo((a.createdAt ?? DateTime.now()));
+          });
+
           return Padding(
             padding: const EdgeInsets.all(AppPading.page),
             child: ListView.builder(

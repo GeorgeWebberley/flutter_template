@@ -9,7 +9,6 @@ import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
-import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/detail_tile.dart';
 import 'package:provider/provider.dart';
 
@@ -30,7 +29,6 @@ class ViewRecipeListScreen extends StatefulWidget {
 }
 
 class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
-  GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   PageController pageController = PageController();
   List<Recipe> selected = [];
   List<Recipe> completedRecipes = [];
@@ -80,11 +78,6 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                           // TODO: delete recipes
                         }
                       },
-                backgroundColor: selected.isEmpty
-                    ? Colors.grey
-                    : mode == 'refresh'
-                        ? AppColors.primary
-                        : AppColors.danger,
                 child: mode == 'refresh'
                     ? const Icon(
                         Icons.refresh,
@@ -94,6 +87,11 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                         Icons.delete,
                         color: Colors.white,
                       ),
+                backgroundColor: selected.isEmpty
+                    ? Colors.grey
+                    : mode == 'refresh'
+                        ? AppColors.primary
+                        : AppColors.danger,
               )
             : null,
         backgroundColor: Colors.transparent,
@@ -128,8 +126,22 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                                   selected = [];
                                 });
                               },
-                              icon: const Icon(Icons.close))
+                              icon: Icon(Icons.close))
+                          //  TextButton(
+                          //     onPressed: () {
+                          //       setState(() {
+                          //         mode = null;
+                          //         selected = [];
+                          //       });
+                          //     },
+                          //     child: const Text('Cancel'),
+                          //   )
                           : PopupMenuButton<String>(
+                              // onSelected: (String result) {
+                              //   // Handle the selected option
+                              //   print(
+                              //       result); // Or perform an action based on the selected item
+                              // },
                               itemBuilder: (BuildContext context) =>
                                   <PopupMenuEntry<String>>[
                                 PopupMenuItem<String>(
@@ -143,7 +155,7 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                                 ),
                                 PopupMenuItem<String>(
                                   value: 'delete',
-                                  child: const Text('Delete recipes'),
+                                  child: Text('Delete recipes'),
                                   onTap: () {
                                     setState(() {
                                       mode = 'delete';
@@ -151,30 +163,19 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                                   },
                                 ),
                               ],
-                              icon: const Icon(Icons.more_vert_outlined),
+                              icon: Icon(Icons.more_vert_outlined),
                             ),
                     )
                   ],
                 ),
-                AnimatedList(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  key: _listKey,
-                  initialItemCount: nonCompletedRecipes.length,
-                  itemBuilder: (context, index, animation) {
-                    final recipe = nonCompletedRecipes[index];
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          bottom: index != nonCompletedRecipes.length - 1
-                              ? AppPading.large
-                              : 0),
-                      child: _builtRecipeSelectTile(
-                          recipe, context, user!.uid, index),
-                    );
-                  },
-                ),
-                if (completedRecipes.isNotEmpty)
-                  _buildCompletedRecipes(context, completedRecipes),
+                ...nonCompletedRecipes
+                    .map((recipe) => Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: AppPading.large),
+                          child: _builtRecipeSelectTile(
+                              recipe, context, user!.uid),
+                        ))
+                    .toList(),
               ],
             ),
           ),
@@ -183,8 +184,7 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
     );
   }
 
-  Row _builtRecipeSelectTile(
-      Recipe recipe, BuildContext context, String uid, int index) {
+  Row _builtRecipeSelectTile(Recipe recipe, BuildContext context, String uid) {
     return Row(
       children: [
         if (mode != null)
@@ -202,17 +202,23 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
               }),
         Flexible(
           child: Dismissible(
-            key: Key(recipe.title),
-            direction: DismissDirection.startToEnd,
+            key: Key(recipe.title), // Assuming recipe has a unique id
+            direction: DismissDirection.endToStart, // Swipe left
             confirmDismiss: (direction) async {
-              _removeRecipe(index: index, recipe: recipe, uid: uid);
-              return true;
+              // UserService(uid: uid).setRecipeComplete(
+              //     mealPlanId: widget.mealPlanId, title: recipe.title);
+              setState(() {
+                completedRecipes.add(recipe);
+                nonCompletedRecipes.remove(recipe);
+              });
             },
             background: Container(
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: AppPading.medium),
-              child: const Icon(Icons.done, color: AppColors.green),
+              color: Colors.green, // Background color when swiping
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: const Icon(Icons.done, color: Colors.white),
             ),
+
             child: AppBox(
               child: DetailTile(
                 title: recipe.title,
@@ -233,68 +239,4 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
       ],
     );
   }
-
-  void _removeRecipe(
-      {required int index, required Recipe recipe, required String uid}) async {
-    UserService(uid: uid)
-        .setRecipeComplete(title: recipe.title, mealPlanId: widget.mealPlanId);
-    setState(() {
-      completedRecipes.add(recipe); // Mark recipe as completed
-      Recipe removedRecipe = nonCompletedRecipes.removeAt(index);
-      // Trigger animated removal from list
-      _listKey.currentState!.removeItem(
-        index,
-        (context, animation) => _buildRemovedTile(removedRecipe, animation),
-        duration: const Duration(milliseconds: 300),
-      );
-    });
-  }
-
-  // Widget for animated removal
-  Widget _buildRemovedTile(Recipe recipe, Animation<double> animation) {
-    final curvedAnimation = CurvedAnimation(
-      parent: animation,
-      curve: Curves.easeInOut, // You can change this to any curve you like
-    );
-    return SizeTransition(
-      sizeFactor: curvedAnimation,
-      axisAlignment: 0.0,
-      child: Opacity(
-        opacity: 0,
-        child: AppBox(
-          child: DetailTile(
-            title: recipe.title,
-            onPressed: () {},
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-_buildCompletedRecipes(BuildContext context, List<Recipe> completedRecipes) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text('Completed Meals', style: TextStyle(fontSize: 20)).h4(),
-      const SizedBox(height: AppPading.medium),
-      ...completedRecipes.map((recipe) => Padding(
-          padding: const EdgeInsets.only(bottom: AppPading.large),
-          child: Opacity(
-            opacity: 0.5,
-            child: AppBox(
-                child: DetailTile(
-              title: recipe.title,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  SlideNavigator(
-                      builder: (context, _, __) =>
-                          RecipeScreen(recipe: recipe)),
-                );
-              },
-            )),
-          ))),
-    ],
-  );
 }

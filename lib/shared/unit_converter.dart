@@ -124,7 +124,8 @@ class UnitConverter {
 
       if (combinedQuantities.containsKey(key)) {
         // There are already entries with definite units
-        String targetType = ingredientTypes[key]!;
+
+        String? targetType = ingredientTypes[key];
 
         for (var ambiguousIngredient in ambiguousList) {
           double baseQuantity = _convertToBaseUnit(

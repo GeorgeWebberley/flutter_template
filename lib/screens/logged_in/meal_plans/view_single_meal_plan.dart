@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_template/models/meal_plan/meal_plan.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/shopping_list_screen.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/view_recipe_list_screen.dart';
@@ -13,13 +14,10 @@ import 'package:flutter_firebase_template/widgets/detail_tile.dart';
 class ViewSingleMealPlan extends StatefulWidget {
   const ViewSingleMealPlan({
     super.key,
-    this.meals,
-    required this.title,
+    required this.mealPlan,
   });
 
-  final List<Recipe>? meals;
-
-  final String title;
+  final MealPlan mealPlan;
 
   @override
   State<ViewSingleMealPlan> createState() => _ViewSingleMealPlanState();
@@ -31,20 +29,31 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
   late List<Recipe>? lunches;
   late List<Recipe>? dinners;
 
-  @override
-  void initState() {
-    super.initState();
-    breakfasts = widget.meals
-        ?.where((recipe) => recipe.mealType == "breakfast")
-        .toList();
-    lunches =
-        widget.meals?.where((recipe) => recipe.mealType == "lunch").toList();
-    dinners =
-        widget.meals?.where((recipe) => recipe.mealType == "dinner").toList();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   breakfasts = widget.mealPlan.recipes
+  //       ?.where((recipe) => recipe.mealType == "breakfast")
+  //       .toList();
+  //   lunches = widget.mealPlan.recipes
+  //       ?.where((recipe) => recipe.mealType == "lunch")
+  //       .toList();
+  //   dinners = widget.mealPlan.recipes
+  //       ?.where((recipe) => recipe.mealType == "dinner")
+  //       .toList();
+  // }
 
   @override
   Widget build(BuildContext context) {
+    breakfasts = widget.mealPlan.recipes
+        ?.where((recipe) => recipe.mealType == "breakfast")
+        .toList();
+    lunches = widget.mealPlan.recipes
+        ?.where((recipe) => recipe.mealType == "lunch")
+        .toList();
+    dinners = widget.mealPlan.recipes
+        ?.where((recipe) => recipe.mealType == "dinner")
+        .toList();
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(AppPading.page),
@@ -52,7 +61,10 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppTitle(title: widget.title),
+            AppTitle(
+              title: formatDateWithSuffix(widget.mealPlan.createdAt,
+                  includeTime: false),
+            ),
             // if (widget.totalIngredients?.isNotEmpty == true)
             AppBox(
               child: DetailTile(
@@ -63,7 +75,7 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                     SlideNavigator(
                         builder: (context, _, __) => ShoppingListScreen(
                               totalIngredients:
-                                  getTotalIngredients(widget.meals!),
+                                  getTotalIngredients(widget.mealPlan.recipes!),
                             )),
                   );
                 },
@@ -80,13 +92,18 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                 children: [
                   if (breakfasts?.isNotEmpty == true)
                     DetailTile(
-                      title: 'Breakfasts',
+                      loading: widget.mealPlan.breakfastRefreshing == true,
+                      title: widget.mealPlan.breakfastRefreshing == true
+                          ? "Fetching new..."
+                          : 'Breakfasts',
                       onPressed: () {
                         Navigator.push(
                           context,
                           SlideNavigator(
                               builder: (context, _, __) => ViewRecipeListScreen(
-                                  title: 'Breakfasts', recipes: breakfasts!)),
+                                  mealPlanId: widget.mealPlan.id,
+                                  title: 'Breakfasts',
+                                  recipes: breakfasts!)),
                         );
                       },
                       icon: Icons.breakfast_dining,
@@ -106,13 +123,18 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                     ),
                   if (lunches?.isNotEmpty == true)
                     DetailTile(
-                      title: 'Lunches',
+                      loading: widget.mealPlan.lunchRefreshing == true,
+                      title: widget.mealPlan.lunchRefreshing == true
+                          ? "Fetching new..."
+                          : 'Lunches',
                       onPressed: () {
                         Navigator.push(
                           context,
                           SlideNavigator(
                               builder: (context, _, __) => ViewRecipeListScreen(
-                                  title: 'Lunches', recipes: lunches!)),
+                                  mealPlanId: widget.mealPlan.id,
+                                  title: 'Lunches',
+                                  recipes: lunches!)),
                         );
                       },
                       icon: Icons.lunch_dining,
@@ -130,13 +152,18 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
                     ),
                   if (dinners?.isNotEmpty == true)
                     DetailTile(
-                      title: 'Dinners',
+                      loading: widget.mealPlan.dinnerRefreshing == true,
+                      title: widget.mealPlan.dinnerRefreshing == true
+                          ? "Fetching new..."
+                          : 'Dinners',
                       onPressed: () {
                         Navigator.push(
                           context,
                           SlideNavigator(
                               builder: (context, _, __) => ViewRecipeListScreen(
-                                  title: 'Dinners', recipes: dinners!)),
+                                  mealPlanId: widget.mealPlan.id,
+                                  title: 'Dinners',
+                                  recipes: dinners!)),
                         );
                       },
                       icon: Icons.dinner_dining,

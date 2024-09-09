@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/message.dart';
+import 'package:flutter_firebase_template/models/recipe_stub.dart';
 
 class ChatService {
   ChatService();
@@ -34,7 +38,102 @@ class ChatService {
       }
     } catch (e) {
       // Handle any errors here
-      print('Error in ChatService: $e');
+      debugPrint('Error in ChatService: $e');
+      throw Exception('Failed to send message');
+    }
+  }
+
+  Future<List<RecipeStub>> getRecipeStubs({
+    required int numberOfPeople,
+    required int breakfasts,
+    required int lunches,
+    required int dinners,
+    required int snacks,
+    required List<String> dietaryPreferences,
+  }) async {
+    try {
+      // Prepare the data to be sent to the Cloud Function
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+          'getRecipeList',
+          options: HttpsCallableOptions(timeout: const Duration(minutes: 2)));
+
+      Map<String, dynamic> body = {
+        'numberOfPeople': numberOfPeople,
+        'breakfasts': breakfasts,
+        'lunches': lunches,
+        'dinners': dinners,
+        'snacks': snacks,
+        'dietaryPreferences': dietaryPreferences,
+      };
+
+      final response = await callable.call(body);
+
+      final Map<String, dynamic> responseData =
+          Map<String, dynamic>.from(response.data['message']);
+
+      final String valueString = responseData['content'][0]['text']['value'];
+      final Map<String, dynamic> valueMap = jsonDecode(valueString);
+      final List<dynamic> recipes = valueMap['recipes'];
+
+      return recipes
+          .map((recipeStub) => RecipeStub.fromJson(recipeStub))
+          .toList();
+    } catch (e) {
+      // Handle any errors here
+      debugPrint('Error in ChatService: $e');
+      throw Exception('Failed to send message');
+    }
+  }
+
+  void createMealPlan(
+      {required String mealPlanId,
+      required int numberOfPeople,
+      List<String> breakfasts = const [],
+      List<String> lunches = const [],
+      List<String> dinners = const [],
+      List<String> dietaryPreferences = const []}) {
+    try {
+      // Prepare the data to be sent to the Cloud Function
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+          'generateRecipes',
+          options: HttpsCallableOptions(timeout: const Duration(minutes: 2)));
+
+      Map<String, dynamic> body = {
+        'breakfasts': breakfasts,
+        'lunches': lunches,
+        'dinners': dinners,
+        'numberOfPeople': numberOfPeople,
+        'mealPlanId': mealPlanId,
+        'dietaryPreferences': dietaryPreferences,
+      };
+      // We don't wait for the promise, since it will take a long time
+      callable.call(body);
+    } catch (e) {
+      debugPrint('Error in ChatService: $e');
+      throw Exception('Failed to send message');
+    }
+  }
+
+  void refreshRecipes({
+    required List<String> recipesToRefresh,
+    required String type,
+    required String mealPlanId,
+  }) {
+    try {
+      // Prepare the data to be sent to the Cloud Function
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+          'refreshRecipe',
+          options: HttpsCallableOptions(timeout: const Duration(minutes: 2)));
+
+      Map<String, dynamic> body = {
+        'recipesToRefresh': recipesToRefresh,
+        'type': type,
+        'mealPlanId': mealPlanId,
+      };
+      // We don't wait for the promise, since it will take a long time
+      callable.call(body);
+    } catch (e) {
+      debugPrint('Error in ChatService: $e');
       throw Exception('Failed to send message');
     }
   }
