@@ -6,9 +6,11 @@ import 'package:flutter_firebase_template/providers/local_storage_provider.dart'
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
 import 'package:flutter_firebase_template/screens/auth/authenticate.dart';
 import 'package:flutter_firebase_template/screens/auth/user_setup_flow.dart';
+import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/widgets/app_navigation.dart';
+import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:provider/provider.dart';
 
 // Wrapper class, to handle switching between auth states
@@ -22,6 +24,8 @@ class Wrapper extends StatefulWidget {
 class _WrapperState extends State<Wrapper> {
   @override
   Widget build(BuildContext context) {
+    print("wrapper");
+
     final AppUser? user = Provider.of<AppUser?>(context);
     if (user == null) {
       return const Authenticate();
@@ -33,6 +37,14 @@ class _WrapperState extends State<Wrapper> {
               UserData? userData = snapshot.data;
 
               if (userData == null) {
+                print("userData is null");
+
+                return AppButton(
+                    onPressed: () async {
+                      await AuthService().signOut();
+                    },
+                    text: "logout");
+
                 // TODO: Handle if user is null (should not be the case, since user is created when user is authenticated)
                 return Scaffold(
                   body: Container(
@@ -51,7 +63,7 @@ class _WrapperState extends State<Wrapper> {
                 return FutureBuilder<String?>(
                     future: Provider.of<LocalStorageProvider?>(context,
                             listen: false)!
-                        .get(key: LocalStorageKeys.hasVisited),
+                        .get(key: "${user.uid}-${LocalStorageKeys.hasVisited}"),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.done) {
                         String? visited = snapshot.data;

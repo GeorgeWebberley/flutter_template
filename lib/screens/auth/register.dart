@@ -236,10 +236,10 @@ class _RegisterState extends State<Register> {
                                           message:
                                               'Could not register with those credentials',
                                           color: AppColors.danger);
+                                      setState(() {});
                                     } else {
                                       await createUserDbEntry(appUser: result);
                                     }
-                                    setState(() {});
                                   },
                                   child: Image.asset(
                                     "assets/icons/google.png",
@@ -258,10 +258,10 @@ class _RegisterState extends State<Register> {
                                           message:
                                               'Could not register with those credentials',
                                           color: AppColors.danger);
+                                      setState(() {});
                                     } else {
                                       await createUserDbEntry(appUser: result);
                                     }
-                                    setState(() {});
                                   },
                                   child: Image.asset(
                                     "assets/icons/apple.png",
@@ -286,9 +286,8 @@ class _RegisterState extends State<Register> {
   }) async {
     try {
       await UserService(uid: appUser.uid).createUserDbEntry(
-        email: appUser.email,
+        appUser: appUser,
         name: name,
-        providers: appUser.providers,
       );
     } catch (error) {
       debugPrint('Error creating user db entry: $error');

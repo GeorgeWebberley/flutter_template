@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/models/meal_plan/meal_plan.dart';
 import 'package:flutter_firebase_template/models/meal_plan_configuration.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
@@ -16,14 +17,13 @@ class UserService {
   UserService({this.uid});
 
   Future createUserDbEntry({
-    required String email,
-    required List<String> providers,
+    required AppUser appUser,
     String? name,
   }) async {
     return await _usersRef.doc(uid).set({
-      'email': email,
-      'providers': providers,
-      'name': name,
+      'email': appUser.email,
+      'providers': appUser.providers,
+      'name': name ?? appUser.name,
     });
   }
 

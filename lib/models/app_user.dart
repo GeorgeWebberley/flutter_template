@@ -21,6 +21,13 @@ class AppUser extends ChangeNotifier {
   static AppUser? fromFirebase(User? user) {
     if (user == null) return null;
 
+    print("user.uid: ${user.uid}");
+    print("user.email: ${user.email}");
+    print("user.displayName: ${user.displayName}");
+    print("user.photoURL: ${user.photoURL}");
+    print("user.emailVerified: ${user.emailVerified}");
+    print("user.providerData: ${user.providerData}");
+
     return AppUser(
         uid: user.uid,
         email: user.email!,

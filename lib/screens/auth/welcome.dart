@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
+import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/dialogs.dart';
 import 'package:flutter_firebase_template/theme/border_radius.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
@@ -111,8 +112,10 @@ class _WelcomeState extends State<Welcome> {
                                     message:
                                         'Could not register with those credentials',
                                     color: AppColors.danger);
+                                setState(() {});
+                              } else {
+                                await createUserDbEntry(appUser: result);
                               }
-                              setState(() {});
                             },
                             child: Image.asset(
                               "assets/icons/google.png",
@@ -130,8 +133,10 @@ class _WelcomeState extends State<Welcome> {
                                     message:
                                         'Could not register with those credentials',
                                     color: AppColors.danger);
+                                setState(() {});
+                              } else {
+                                await createUserDbEntry(appUser: result);
                               }
-                              setState(() {});
                             },
                             child: Image.asset(
                               "assets/icons/apple.png",
@@ -148,5 +153,18 @@ class _WelcomeState extends State<Welcome> {
         ),
       ),
     );
+  }
+
+  Future<void> createUserDbEntry({
+    required AppUser appUser,
+  }) async {
+    try {
+      await UserService(uid: appUser.uid).createUserDbEntry(
+        appUser: appUser,
+      );
+    } catch (error) {
+      debugPrint('Error creating user db entry: $error');
+      throw error;
+    }
   }
 }

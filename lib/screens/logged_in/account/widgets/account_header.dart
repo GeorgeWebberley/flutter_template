@@ -43,11 +43,17 @@ class _AccountHeaderState extends State<AccountHeader> {
           child: Column(
             children: [
               const Row(),
-              Text(widget.userData.name ?? "",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w500, color: Colors.black))
-                  .h5(),
-              Text(truncateWithEllipsis(18, widget.userData.email),
+              if (widget.userData.name != null)
+                Text(widget.userData.name ?? "",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w500, color: Colors.black))
+                    .h5()
+              else
+                const Text("No name set",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w500, color: Colors.black))
+                    .h5(),
+              Text(truncateWithEllipsis(40, widget.userData.email),
                       style: const TextStyle(color: Colors.black))
                   .p(),
             ],

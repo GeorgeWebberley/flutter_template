@@ -96,7 +96,9 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
             text: "Get Started!",
             onPressed: () async {
               await Provider.of<LocalStorageProvider?>(context, listen: false)!
-                  .set(key: LocalStorageKeys.hasVisited, value: "true");
+                  .set(
+                      key: "${widget.user.uid}-${LocalStorageKeys.hasVisited}",
+                      value: "true");
               Navigator.pushReplacement(
                 context,
                 FadeNavigator(

@@ -28,6 +28,7 @@ class _UserSetupFlowState extends State<UserSetupFlow> {
 
   @override
   Widget build(BuildContext context) {
+    print("user setup flow");
     return Scaffold(
       body: AnimatedCrossFade(
         duration: const Duration(seconds: 1),
