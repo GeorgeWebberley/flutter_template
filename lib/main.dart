@@ -9,10 +9,12 @@ import 'package:flutter_firebase_template/providers/share_provider.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/widgets/wrapper.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await Firebase.initializeApp();
 
   // Get the environment from the provided arguments. Default to 'development' if none passed.
@@ -35,6 +37,8 @@ void main() async {
       PushNotificationProvider(localStorageProvider: localStorageProvider);
   AuthService authService = AuthService();
   await pushNotificationProvider.init();
+
+  FlutterNativeSplash.remove();
 
   runApp(
     MultiProvider(
