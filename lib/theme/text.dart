@@ -45,6 +45,7 @@ extension AppText on Text {
       softWrap: softWrap,
       strutStyle: strutStyle,
       locale: locale,
+      textScaler: TextScaler.noScaling,
       style: style != null
           ? style!.copyWith(
               fontSize: style!.fontSize ?? size,

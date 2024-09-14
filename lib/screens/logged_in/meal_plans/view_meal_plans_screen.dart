@@ -8,6 +8,7 @@ import 'package:flutter_firebase_template/shared/helpers.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
+import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:provider/provider.dart';
 
 class ViewMealPlansScreen extends StatelessWidget {

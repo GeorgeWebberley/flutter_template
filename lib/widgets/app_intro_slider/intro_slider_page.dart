@@ -49,6 +49,7 @@ class IntroSliderPage extends StatelessWidget {
       child: Center(
         child: SingleChildScrollView(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               const SizedBox(
                 height: AppPading.page,
@@ -59,7 +60,7 @@ class IntroSliderPage extends StatelessWidget {
                 style: TextStyle(
                     color: foregroundColor ?? Colors.black,
                     fontFamily: 'Times New Roman',
-                    fontSize: 40,
+                    fontSize: 38,
                     fontWeight: FontWeight.w500),
               ),
               const SizedBox(
@@ -71,7 +72,7 @@ class IntroSliderPage extends StatelessWidget {
                 height: AppPading.page * 2,
               ),
               SizedBox(
-                height: 80,
+                height: 120,
                 child: Text(
                   description,
                   textAlign: TextAlign.center,

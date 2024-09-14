@@ -5,20 +5,15 @@ part 'dietary_preference.g.dart';
 
 // If updating, run:
 // flutter pub run build_runner build --delete-conflicting-outputs
+// Seems overkill having a model for just a String value. However this will be
+// useful if we need to add more properties in the future (such as "activated").
 @unfreezed
 class DietaryPreference with _$DietaryPreference {
   factory DietaryPreference({
     required String preference,
-    bool? activated,
+    // bool? activated,
   }) = _DietaryPreference;
 
   factory DietaryPreference.fromJson(Map<String, dynamic> json) =>
       _$DietaryPreferenceFromJson(json);
-
-  // Map<String, dynamic> toJson(DietaryPreference preference) {
-  //   return {
-  //     "preference": preference.preference,
-  //     "activated": preference.activated
-  //   };
-  // }
 }

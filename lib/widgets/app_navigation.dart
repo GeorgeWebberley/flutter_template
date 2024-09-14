@@ -26,25 +26,7 @@ class AppNavigation extends StatefulWidget {
 }
 
 class _AppNavigationState extends State<AppNavigation> {
-  int _selectedIndex = 2;
-
-  List<NavigationItem> navigationItems = [
-    NavigationItem(
-        title: 'Meal Plans',
-        icon: Icons.home,
-        page: const ViewMealPlansScreen()),
-    NavigationItem(
-      title: 'Chat',
-      hideAppBar: true,
-      icon: Icons.chat,
-      page: const AiChatScreen(),
-    ),
-    NavigationItem(
-        title: 'My Profile',
-        icon: Icons.person,
-        page: const Account(),
-        hideAppBar: true),
-  ];
+  int _selectedIndex = 1;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -54,6 +36,25 @@ class _AppNavigationState extends State<AppNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    List<NavigationItem> navigationItems = [
+      NavigationItem(
+          title: 'Meal Plans',
+          icon: Icons.home,
+          page: const ViewMealPlansScreen()),
+      NavigationItem(
+        title: 'Meal Hub',
+        hideAppBar: true,
+        icon: Icons.chat,
+        page: AiChatScreen(
+          changeNavigationIndex: _onItemTapped,
+        ),
+      ),
+      NavigationItem(
+          title: 'My Profile',
+          icon: Icons.person,
+          page: const Account(),
+          hideAppBar: true),
+    ];
     return Container(
       decoration:
           const BoxDecoration(gradient: AppGradients.backgroundGradient),
@@ -69,29 +70,6 @@ class _AppNavigationState extends State<AppNavigation> {
                   backgroundColor: Colors.transparent,
                   elevation: 0,
                 ),
-          // floatingActionButton: _selectedIndex == 1
-          //     ? null
-          //     : FloatingActionButton(
-          //         onPressed: () {},
-          //         //params
-          //       ),
-          // floatingActionButtonLocation:
-          //     FloatingActionButtonLocation.endContained,
-          // bottomNavigationBar: AnimatedBottomNavigationBar(
-          //   icons: [
-          //     Icons.abc,
-          //     Icons.person,
-          //     Icons.settings,
-          //     Icons.wordpress_outlined
-          //   ],
-          //   activeIndex: _selectedIndex,
-          //   gapLocation: GapLocation.end,
-          //   notchSmoothness: NotchSmoothness.verySmoothEdge,
-          //   // leftCornerRadius: _selectedIndex == 1 ? null : 32,
-          //   // rightCornerRadius: _selectedIndex == 1 ? null : 32,
-          //   onTap: (index) => setState(() => _selectedIndex = index),
-          //   //other params
-          // ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               gradient: AppGradients.buttonPrimaryGradient,

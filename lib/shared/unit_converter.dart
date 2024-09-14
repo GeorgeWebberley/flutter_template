@@ -73,7 +73,6 @@ class UnitConverter {
     return baseQuantity; // Return the base quantity as-is for unrecognized units
   }
 
-  /// Combine ingredients with a two-pass approach to handle ambiguous units.
   List<Ingredient> combineIngredients(List<Ingredient> ingredients) {
     Map<String, double> combinedQuantities = {};
     Map<String, String> finalUnits = {};
@@ -87,6 +86,19 @@ class UnitConverter {
       String normalizedUnit = _normalizeUnit(ingredient.unit);
       String key = ingredient.name.toLowerCase();
 
+      // If the unit is unrecognized (i.e., non-standard), handle it separately
+      if (!_isRecognizedUnit(normalizedUnit)) {
+        String uniqueKey = '$key (${ingredient.unit})';
+        if (combinedQuantities.containsKey(uniqueKey)) {
+          combinedQuantities[uniqueKey] =
+              combinedQuantities[uniqueKey]! + ingredient.quantity;
+        } else {
+          combinedQuantities[uniqueKey] = ingredient.quantity;
+          finalUnits[uniqueKey] = ingredient.unit;
+        }
+        continue;
+      }
+
       if (_isAmbiguousUnit(normalizedUnit)) {
         if (ambiguousIngredients.containsKey(key)) {
           ambiguousIngredients[key]!.add(ingredient);
@@ -96,9 +108,8 @@ class UnitConverter {
         continue; // Skip ambiguous units for now
       }
 
-      double baseQuantity = _isRecognizedUnit(normalizedUnit)
-          ? _convertToBaseUnit(ingredient.quantity, normalizedUnit)
-          : ingredient.quantity;
+      double baseQuantity =
+          _convertToBaseUnit(ingredient.quantity, normalizedUnit);
 
       if (combinedQuantities.containsKey(key)) {
         combinedQuantities[key] = combinedQuantities[key]! + baseQuantity;

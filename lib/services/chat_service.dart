@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/message.dart';
+import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/models/recipe_stub.dart';
 
 class ChatService {
@@ -35,6 +36,53 @@ class ChatService {
         final Map<String, dynamic> responseData =
             Map<String, dynamic>.from(response.data['message']);
         return Message.fromJson(responseData);
+      }
+    } catch (e) {
+      // Handle any errors here
+      debugPrint('Error in ChatService: $e');
+      throw Exception('Failed to send message');
+    }
+  }
+
+  Future<Map<String, dynamic>?> sendSimpleMessage(
+    String message, {
+    String? threadId,
+    Recipe? recipe,
+  }) async {
+    try {
+      // Prepare the data to be sent to the Cloud Function
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+          'sendMessageRecipeHelp',
+          options: HttpsCallableOptions(timeout: const Duration(minutes: 2)));
+
+      Map<String, dynamic> body = {
+        'message': message,
+      };
+      if (threadId != null) {
+        body['threadId'] = threadId;
+      }
+      if (recipe != null) {
+        body['recipeJson'] = recipe.toJson();
+      }
+
+      final response = await callable.call(body);
+
+      // Parse the JSON response into a Message object
+      final Map<String, dynamic> responseData =
+          Map<String, dynamic>.from(response.data['message']);
+
+      try {
+        print("responseData: $responseData");
+        //TODO: Make this into a model
+        return {
+          'message': responseData['content'][0]['text']['value'],
+          'threadId': responseData['thread_id'],
+        };
+      } catch (e) {
+        return {
+          'message': "Sorry I don't understand that! Can you try again?",
+          'threadId': responseData['thread_id']
+        };
       }
     } catch (e) {
       // Handle any errors here

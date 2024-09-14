@@ -6,11 +6,11 @@ import 'package:flutter_firebase_template/providers/local_storage_provider.dart'
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
 import 'package:flutter_firebase_template/screens/auth/authenticate.dart';
 import 'package:flutter_firebase_template/screens/auth/user_setup_flow.dart';
-import 'package:flutter_firebase_template/services/auth_service.dart';
+import 'package:flutter_firebase_template/screens/logged_in/meal_plans/meal_plan_root.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
+import 'package:flutter_firebase_template/shared/navigation.dart/fade_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/widgets/app_navigation.dart';
-import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:provider/provider.dart';
 
 // Wrapper class, to handle switching between auth states
@@ -24,8 +24,6 @@ class Wrapper extends StatefulWidget {
 class _WrapperState extends State<Wrapper> {
   @override
   Widget build(BuildContext context) {
-    print("wrapper");
-
     final AppUser? user = Provider.of<AppUser?>(context);
     if (user == null) {
       return const Authenticate();
@@ -37,18 +35,9 @@ class _WrapperState extends State<Wrapper> {
               UserData? userData = snapshot.data;
 
               if (userData == null) {
-                print("userData is null");
-
-                return AppButton(
-                    onPressed: () async {
-                      await AuthService().signOut();
-                    },
-                    text: "logout");
-
-                // TODO: Handle if user is null (should not be the case, since user is created when user is authenticated)
                 return Scaffold(
                   body: Container(
-                    height: MediaQuery.of(context).size.height,
+                    height: double.infinity,
                     decoration: const BoxDecoration(
                       gradient: AppGradients.backgroundGradient,
                     ),
@@ -83,12 +72,13 @@ class _WrapperState extends State<Wrapper> {
                                   currentUser: userData);
                             }
                           });
+
                           return const AppNavigation();
                         }
                       } else {
                         return Scaffold(
                           body: Container(
-                            height: MediaQuery.of(context).size.height,
+                            height: double.infinity,
                             decoration: const BoxDecoration(
                               gradient: AppGradients.backgroundGradient,
                             ),
@@ -105,7 +95,7 @@ class _WrapperState extends State<Wrapper> {
             } else {
               return Scaffold(
                 body: Container(
-                  height: MediaQuery.of(context).size.height,
+                  height: double.infinity,
                   decoration: const BoxDecoration(
                     gradient: AppGradients.backgroundGradient,
                   ),
@@ -126,7 +116,15 @@ class _WrapperState extends State<Wrapper> {
       required Map<String, dynamic> message,
       required UserData currentUser}) async {
     // Example of handling a friend request notification
-    if (message["type"] == 'friendRequest' && message["friendId"] != null) {}
-    // Can handle other notifications here
+    if (message["type"] == 'mealplanReady' && message["mealplanId"] != null) {
+      Navigator.push(
+        context,
+        FadeNavigator(
+          builder: (context, _, __) => MealPlanRoot(
+            mealPlanId: message["mealplanId"],
+          ),
+        ),
+      );
+    }
   }
 }

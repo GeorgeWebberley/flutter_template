@@ -44,4 +44,15 @@ class Recipe {
   String toString() {
     return '$title\nCooking Time: $cookingTime\nIngredients: ${ingredients.join(', ')}\nInstructions: ${instructions.join('\n')}';
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'ingredients':
+          ingredients.map((ingredient) => ingredient.toJson()).toList(),
+      'cooking_time': cookingTime,
+      'instructions': instructions,
+      'meal_type': mealType,
+    };
+  }
 }

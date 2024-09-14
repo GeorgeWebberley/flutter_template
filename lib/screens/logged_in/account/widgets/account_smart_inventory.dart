@@ -3,19 +3,17 @@ import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/editable_ingredient.dart';
-import 'package:flutter_firebase_template/screens/logged_in/meal_plans/ingredient_tile.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_dialog.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/dialogs.dart';
-import 'package:flutter_firebase_template/shared/unit_converter%20copy%202.dart';
+import 'package:flutter_firebase_template/shared/unit_converter.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/form_fields.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
-import 'package:flutter_firebase_template/widgets/detail_tile.dart';
 import 'package:provider/provider.dart';
 
 class AccountSmartInventory extends StatelessWidget {

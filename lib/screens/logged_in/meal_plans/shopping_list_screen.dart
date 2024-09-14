@@ -50,35 +50,18 @@ class ShoppingListScreen extends StatelessWidget {
                 Positioned(
                   top: 0,
                   right: 0,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.fmd_bad),
-                        onPressed: () async {
-                          await Provider.of<LocalNotificationProvider>(context,
-                                  listen: false)
-                              .showShoppingListNotification(combinedIngredients
-                                  .map((ingredient) =>
-                                      "${ingredient.name.capitalize()} : ${formatIngredientQuantity(ingredient)}")
-                                  .toList());
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.share),
-                        onPressed: () async {
-                          String text = "Shopping List\n\n";
-                          for (Ingredient ingredient in combinedIngredients) {
-                            text +=
-                                "${ingredient.name.capitalize()} : ${formatIngredientQuantity(ingredient)}\n";
-                          }
+                  child: IconButton(
+                    icon: const Icon(Icons.share),
+                    onPressed: () async {
+                      String text = "Shopping List\n\n";
+                      for (Ingredient ingredient in combinedIngredients) {
+                        text +=
+                            "${ingredient.name.capitalize()} : ${formatIngredientQuantity(ingredient)}\n";
+                      }
 
-                          await Provider.of<ShareProvider>(context,
-                                  listen: false)
-                              .shareText(text);
-                        },
-                      ),
-                    ],
+                      await Provider.of<ShareProvider>(context, listen: false)
+                          .shareText(text);
+                    },
                   ),
                 ),
                 Column(

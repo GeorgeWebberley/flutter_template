@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter_firebase_template/models/recipe.dart';
 
+/// A more advanced Message that can handle multiple types of responses, including
+/// text responses and recipe responses.
 class Message {
   final String role;
   final String? textResponse;

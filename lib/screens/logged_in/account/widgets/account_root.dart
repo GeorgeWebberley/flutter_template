@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_header.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_privacy.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_firebase_template/screens/logged_in/account/widgets/acco
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
+import 'package:flutter_firebase_template/shared/unit_converter.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
@@ -26,6 +28,28 @@ class AccountRoot extends StatelessWidget {
   final void Function() backToRoot;
   @override
   Widget build(BuildContext context) {
+    // List<Ingredient> exampleList = [
+    //   Ingredient(name: 'Red onion', quantity: 0.25, unit: 'pieces'),
+    //   Ingredient(name: 'Red onion', quantity: 30, unit: 'grams'),
+    //   Ingredient(name: 'Chia seeds', quantity: 30, unit: 'grams'),
+    //   Ingredient(name: 'Chia seeds', quantity: 100, unit: 'grams'),
+    //   Ingredient(name: 'Chia seeds', quantity: 2, unit: 'tablespoons'),
+    //   Ingredient(name: 'Flour', quantity: 200, unit: 'grams'),
+    //   Ingredient(name: 'Flour', quantity: 0.5, unit: 'kilograms'),
+    //   Ingredient(name: 'Garlic', quantity: 5, unit: 'cloves'),
+    //   Ingredient(name: 'Garlic', quantity: 2, unit: 'cloves'),
+    //   Ingredient(name: 'Eggs', quantity: 3, unit: 'pieces'),
+    //   Ingredient(name: 'Eggs', quantity: 2, unit: 'pieces'),
+    //   Ingredient(name: 'Yogurt', quantity: 2, unit: 'cups'),
+    //   Ingredient(name: 'Yogurt', quantity: 100, unit: 'milliliters'),
+    // ];
+
+    // List<Ingredient> output = UnitConverter().combineIngredients(exampleList);
+
+    // for (var item in output) {
+    //   print(item);
+    // }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -54,26 +78,26 @@ class AccountRoot extends StatelessWidget {
               //     thickness: 0.5,
               //   ),
               // ),
-              AppBox(
-                child: Column(
-                  children: [
-                    DetailTile(
-                      title: 'Smart inventory',
-                      onPressed: () {
-                        setScreen(AccountSmartInventory(
-                          user: user,
-                          backToRoot: backToRoot,
-                        ));
-                      },
-                      icon: Icons.kitchen,
-                      iconColor: AppColors.primary,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(
-                height: AppPading.large,
-              ),
+              // AppBox(
+              //   child: Column(
+              //     children: [
+              //       DetailTile(
+              //         title: 'Smart inventory',
+              //         onPressed: () {
+              //           setScreen(AccountSmartInventory(
+              //             user: user,
+              //             backToRoot: backToRoot,
+              //           ));
+              //         },
+              //         icon: Icons.kitchen,
+              //         iconColor: AppColors.primary,
+              //       ),
+              //     ],
+              //   ),
+              // ),
+              // const SizedBox(
+              //   height: AppPading.large,
+              // ),
               AppBox(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

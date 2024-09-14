@@ -22,8 +22,6 @@ DietaryPreference _$DietaryPreferenceFromJson(Map<String, dynamic> json) {
 mixin _$DietaryPreference {
   String get preference => throw _privateConstructorUsedError;
   set preference(String value) => throw _privateConstructorUsedError;
-  bool? get activated => throw _privateConstructorUsedError;
-  set activated(bool? value) => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -37,7 +35,7 @@ abstract class $DietaryPreferenceCopyWith<$Res> {
           DietaryPreference value, $Res Function(DietaryPreference) then) =
       _$DietaryPreferenceCopyWithImpl<$Res, DietaryPreference>;
   @useResult
-  $Res call({String preference, bool? activated});
+  $Res call({String preference});
 }
 
 /// @nodoc
@@ -54,17 +52,12 @@ class _$DietaryPreferenceCopyWithImpl<$Res, $Val extends DietaryPreference>
   @override
   $Res call({
     Object? preference = null,
-    Object? activated = freezed,
   }) {
     return _then(_value.copyWith(
       preference: null == preference
           ? _value.preference
           : preference // ignore: cast_nullable_to_non_nullable
               as String,
-      activated: freezed == activated
-          ? _value.activated
-          : activated // ignore: cast_nullable_to_non_nullable
-              as bool?,
     ) as $Val);
   }
 }
@@ -77,7 +70,7 @@ abstract class _$$DietaryPreferenceImplCopyWith<$Res>
       __$$DietaryPreferenceImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String preference, bool? activated});
+  $Res call({String preference});
 }
 
 /// @nodoc
@@ -92,17 +85,12 @@ class __$$DietaryPreferenceImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? preference = null,
-    Object? activated = freezed,
   }) {
     return _then(_$DietaryPreferenceImpl(
       preference: null == preference
           ? _value.preference
           : preference // ignore: cast_nullable_to_non_nullable
               as String,
-      activated: freezed == activated
-          ? _value.activated
-          : activated // ignore: cast_nullable_to_non_nullable
-              as bool?,
     ));
   }
 }
@@ -110,19 +98,17 @@ class __$$DietaryPreferenceImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$DietaryPreferenceImpl implements _DietaryPreference {
-  _$DietaryPreferenceImpl({required this.preference, this.activated});
+  _$DietaryPreferenceImpl({required this.preference});
 
   factory _$DietaryPreferenceImpl.fromJson(Map<String, dynamic> json) =>
       _$$DietaryPreferenceImplFromJson(json);
 
   @override
   String preference;
-  @override
-  bool? activated;
 
   @override
   String toString() {
-    return 'DietaryPreference(preference: $preference, activated: $activated)';
+    return 'DietaryPreference(preference: $preference)';
   }
 
   @JsonKey(ignore: true)
@@ -141,7 +127,7 @@ class _$DietaryPreferenceImpl implements _DietaryPreference {
 }
 
 abstract class _DietaryPreference implements DietaryPreference {
-  factory _DietaryPreference({required String preference, bool? activated}) =
+  factory _DietaryPreference({required String preference}) =
       _$DietaryPreferenceImpl;
 
   factory _DietaryPreference.fromJson(Map<String, dynamic> json) =
@@ -150,9 +136,6 @@ abstract class _DietaryPreference implements DietaryPreference {
   @override
   String get preference;
   set preference(String value);
-  @override
-  bool? get activated;
-  set activated(bool? value);
   @override
   @JsonKey(ignore: true)
   _$$DietaryPreferenceImplCopyWith<_$DietaryPreferenceImpl> get copyWith =>

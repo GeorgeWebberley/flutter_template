@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_firebase_template/models/message.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
-import 'package:flutter_firebase_template/screens/logged_in/ai_chat/ai_chat_popup.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/ingredient_tile.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
@@ -9,19 +8,10 @@ import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 
-class RecipeScreen extends StatefulWidget {
+class RecipeScreen extends StatelessWidget {
   const RecipeScreen({super.key, required this.recipe});
 
   final Recipe recipe;
-
-  @override
-  _RecipeScreenState createState() => _RecipeScreenState();
-}
-
-class _RecipeScreenState extends State<RecipeScreen> {
-  bool _isChatMinimized = true;
-  List<Message> _messages = [];
-  String? _threadId;
 
   @override
   Widget build(BuildContext context) {
@@ -30,62 +20,23 @@ class _RecipeScreenState extends State<RecipeScreen> {
         gradient: AppGradients.backgroundGradient,
       ),
       child: Scaffold(
-        floatingActionButton: AnimatedContainer(
-            curve: Curves.easeInOut,
-            duration: const Duration(milliseconds: 300),
-            width: _isChatMinimized ? 60 : 300,
-            height: _isChatMinimized ? 60 : 500,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              gradient:
-                  _isChatMinimized ? AppGradients.buttonPrimaryGradient : null,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                )
-              ],
-            ),
-            child: _isChatMinimized
-                ? IconButton(
-                    icon: const Icon(
-                      Icons.chat,
-                      color: Colors.white,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isChatMinimized = false;
-                      });
-                    },
-                  )
-                : Stack(
-                    children: [
-                      AiChatPopup(
-                        recipe: widget.recipe,
-                        messages: _messages,
-                        threadId: _threadId,
-                        setThreadId: (threadId) {
-                          setState(() {
-                            _threadId = threadId;
-                          });
-                        },
-                      ),
-                      Positioned(
-                        top: AppPading.extraSmall,
-                        right: AppPading.extraSmall,
-                        child: IconButton(
-                          icon: Icon(Icons.close),
-                          onPressed: () {
-                            setState(() {
-                              _isChatMinimized = true;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  )),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            // Make chat window appear
+          },
+          child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+                gradient: AppGradients.buttonPrimaryGradient,
+              ),
+              child: const Icon(
+                Icons.chat,
+                size: 40,
+                color: Colors.white,
+              )),
+        ),
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           leading: IconButton(
@@ -104,8 +55,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 AppTitle(
-                  title: widget.recipe.title,
-                  subtitle: "Cooking time: ${widget.recipe.cookingTime}",
+                  title: recipe.title,
+                  subtitle: "Cooking time: ${recipe.cookingTime}",
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -129,11 +80,12 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         const SizedBox(
                           height: AppPading.large,
                         ),
-                        ...widget.recipe.ingredients
+                        ...recipe.ingredients
                             .map(
                               (ingredient) => Padding(
                                 padding: const EdgeInsets.only(
-                                    bottom: AppPading.medium),
+                                    bottom: AppPading
+                                        .medium), // Add some space between items
                                 child: IngredientTile(
                                   ingredient: ingredient,
                                 ),
@@ -157,23 +109,27 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         const SizedBox(
                           height: AppPading.large,
                         ),
-                        ...widget.recipe.instructions
+                        ...recipe.instructions
                             .map(
                               (ingredient) => Padding(
                                 padding: const EdgeInsets.only(
-                                    bottom: AppPading.medium),
+                                    bottom: AppPading
+                                        .medium), // Add some space between items
                                 child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment
+                                      .start, // Align bullet points to the top of the text
                                   children: [
-                                    const Text('•').h5(),
-                                    const SizedBox(width: AppPading.medium),
+                                    const Text('•').h5(), // Bullet point
+                                    const SizedBox(
+                                        width: AppPading
+                                            .medium), // Space between bullet and text
                                     Expanded(
                                       child: Text(
                                         ingredient,
                                         style: TextStyle(
                                             color:
                                                 Colors.black.withOpacity(0.8)),
-                                      ).h5(),
+                                      ).h5(), // Ingredient text
                                     ),
                                   ],
                                 ),

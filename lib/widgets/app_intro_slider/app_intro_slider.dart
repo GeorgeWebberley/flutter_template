@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
-import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/fade_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
@@ -25,18 +24,15 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
   List<IntroSliderPage> _sliderPages = [];
   int _currentPage = 0;
   final double _imageHeight = 220;
-  bool _formFieldTouched = false;
-  bool _userCreated = false;
 
   @override
   Widget build(BuildContext context) {
-    UserService _userService = UserService(uid: widget.user.uid);
-
     _sliderPages = [
       IntroSliderPage(
         backgroundColor: Colors.transparent,
-        title: "Welcome to",
-        description: "Are you ready to begin your Nutriveat journey?",
+        title: "Welcome",
+        description:
+            "Thank you for joining Nutriveat.\n\n Are you ready to begin your journey? Let's get you started!",
         optionalChild: AppButton(
             text: "Start",
             onPressed: () async {
@@ -45,15 +41,15 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
                   curve: Curves.ease);
             }),
         image: Image.asset(
-          "assets/images/logo.png",
+          "assets/images/logo_medium_2.png",
           height: _imageHeight,
         ),
       ),
       IntroSliderPage(
         backgroundColor: Colors.transparent,
-        title: "Culinary Creator",
+        title: "Tailored Meal Plans",
         description:
-            "Discover delicious recipes crafted just for you! Let our AI whip up personalized dishes tailored to your lifestyle and dietary goals.",
+            "Our platform creates personalised meal plans tailored to your dietary needs and preferences, ensuring you have delicious meals tailored for your exact needs!",
         lottieFile: LottieController(
             repeat: false,
             location: 'assets/lottie/cook.json',
@@ -68,9 +64,9 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
       ),
       IntroSliderPage(
         backgroundColor: Colors.transparent,
-        title: "Smooth Checkout",
+        title: "Shopping Made Easy",
         description:
-            "No more searching for ingredients—everything you need is already in your basket, making checkout a breeze!",
+            "Once you've selected your preferred dishes, our platform will create a shopping list containing all the essential ingredients for your weekly cooking escapades.",
         lottieFile: LottieController(
             repeat: false,
             location: 'assets/lottie/fruit_basket.json',
@@ -85,12 +81,12 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
       ),
       IntroSliderPage(
         backgroundColor: Colors.transparent,
-        title: "Smart Training Plans",
+        title: "Step-By-Step Recipes",
         description:
-            "Experience workouts crafted by AI to match your unique goals and lifestyle. Fitness has never been so personal!",
+            "Every dish is accompanied by a simple to follow recipe, offering step-by-step instructions for crafting each meal. It's very straightforward!",
         lottieFile: LottieController(
             repeat: false,
-            location: 'assets/lottie/exercise.json',
+            location: 'assets/lottie/cook_book.json',
             height: _imageHeight),
         optionalChild: AppButton(
             text: "Get Started!",
@@ -110,7 +106,6 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
 
     return Scaffold(
       body: Container(
-        padding: const EdgeInsets.all(AppPading.page),
         decoration: BoxDecoration(
           gradient: AppGradients.backgroundGradient,
         ),
@@ -125,7 +120,10 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
               });
             },
             itemBuilder: (BuildContext context, int index) {
-              return _sliderPages[index];
+              return Padding(
+                padding: const EdgeInsets.all(AppPading.page),
+                child: _sliderPages[index],
+              );
             },
           ),
           Positioned(

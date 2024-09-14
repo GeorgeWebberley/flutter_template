@@ -1,8 +1,8 @@
-import 'package:flutter_firebase_template/models/message.dart';
+import 'package:flutter_firebase_template/models/recipe.dart';
 
 class AiResponse {
   final String status;
-  final List<Message> messages;
+  final List<Recipe> messages;
 
   AiResponse({
     required this.status,
@@ -13,7 +13,7 @@ class AiResponse {
     return AiResponse(
       status: json['status'] as String,
       messages: (json['messages'] as List<dynamic>)
-          .map((msg) => Message.fromJson(Map<String, dynamic>.from(msg)))
+          .map((msg) => Recipe.fromJson(Map<String, dynamic>.from(msg)))
           .toList(),
     );
   }

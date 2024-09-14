@@ -13,6 +13,7 @@ const generalAiAssistantId = "asst_wNFWDodhq6vuUYHS3HlOZBSv";
 const recipeAiAssistantId = "asst_pxquMj2BqU0kjkB18dp5H68l";
 const recipeListAiAssistantId = "asst_9OK4fq0HyQoOk4rQ7vS8s2v2";
 const refreshRecipeAiAssistantId = "asst_LGfISDuP0aG7YF0x739YGBHh";
+const recipeHelpAiAssistantId = "asst_vi2XNfwlTHrMZAXLwKPGjbW8";
 
 // After updating this document, re-deploy functions using the following command:
 //
@@ -129,6 +130,64 @@ exports.sendMessage = functions.runWith({ timeoutSeconds: 120 }).https.onCall(as
 });
 
 
+// Sends a message to the Recipe Help AI model.
+// Currently we are not storing this conversation in the database.
+// To decide on whether we want to or not. Could even be done frontend when the conversation ends.
+exports.sendMessageRecipeHelp = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
+  const userId = context.auth.uid;
+  if(!userId){
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated.');
+  }
+  
+  let threadId = data.threadId;
+  const recipeJson = data.recipeJson;
+  
+  try {
+    let userMessage = "";
+    // If the thread doesn't exist, create a new one.
+    if (!threadId) {
+      const thread = await openai.beta.threads.create(
+        {messages: [
+          {
+            "role": "assistant",
+            "content": "Hello! Chef Michael at your service. Need any help with " + recipeJson?.title + "?",
+          }
+        ]}
+      );
+      threadId = thread.id;
+      if(recipeJson != null){
+        userMessage = JSON.stringify(recipeJson) + "\n";
+      }
+    }
+
+    userMessage += data.message;
+
+    await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: userMessage,
+    });
+
+    const run = await openai.beta.threads.runs.createAndPoll(threadId, {
+      assistant_id: recipeHelpAiAssistantId, 
+    });
+
+    if (run.status === 'completed') {
+      const messages = await openai.beta.threads.messages.list(run.thread_id);
+      // Return only the latest message from the assistant
+      const latestMessage = messages.data.find(msg => msg.role === 'assistant');
+      // TODO: Decide whether we want to store the conversation in the database
+
+      return { status: 'success', message: latestMessage, threadId: threadId };
+    } else {
+      return { status: run.status };
+    }
+  } catch (error) {
+    console.error("Error handling message:", error);
+    throw new functions.https.HttpsError('failed-precondition', 'Failed to send message.');
+  }
+});
+
+
 
 // TODO: The above function seems to fail often times when producing may recipes (10 plus). To get round this another option is to call 2 different AI models.
 // - The first one returns list of recipe names
@@ -200,7 +259,7 @@ exports.getRecipeList = functions.runWith({ timeoutSeconds: 120 }).https.onCall(
 });
 
 
-exports.generateRecipes = functions.https.onCall(async (data, context) => {
+exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
   const { breakfasts, lunches, dinners, dietaryPreferences, numberOfPeople, mealPlanId } = data;
 
   const userId = context.auth.uid;
@@ -288,6 +347,8 @@ exports.generateRecipes = functions.https.onCall(async (data, context) => {
       loading: false,
     });
     console.log("Meal plan updated successfully");
+    sendMealPlanNotification(userId, mealPlanId);
+
   } catch (dbError) {
     console.error('Error updating Firestore document:', dbError);
     throw new functions.https.HttpsError('internal', 'Failed to update the meal plan');
@@ -487,5 +548,41 @@ async function generateRecipe(recipeTitle, mealType, dietaryPreferences, numberO
   } catch (error) {
     console.error('Error generating recipe:', error);
     return null;
+  }
+}
+
+
+async function sendMealPlanNotification(userId, mealplanId) {
+   // Get the user's details
+   const user = await admin.firestore().collection("users").doc(userId).get();
+
+   if (!user.exists) {
+     functions.logger.error(`User with ID ${userId} not found.`);
+     return;
+   }
+ 
+   const tokens = user.data().tokens;
+ 
+   if (!tokens || tokens.length === 0) {
+     functions.logger.warn(`No tokens found for user with ID ${userId}.`);
+     return;
+   }
+
+  var notification = {
+    title: "Your meal plan is ready!",
+    body: "Click to go to your recipes.",
+  };
+
+  try {
+    await admin.messaging().sendEachForMulticast({
+      tokens: user.data().tokens,
+      data: {
+        type: "mealplanReady",
+        mealplanId: mealplanId
+      },
+      notification: notification,
+    });
+  } catch (error) {
+    functions.logger.error("Error sending friend request notification:", error);
   }
 }

@@ -33,13 +33,15 @@ class _AppCheckboxState extends State<AppCheckbox> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          widget.label,
-          style: TextStyle(
-            fontWeight: FontWeight.w400,
-            color: Colors.black87,
-          ),
-        ).h5(),
+        Flexible(
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              color: Colors.black87,
+            ),
+          ).h5(),
+        ),
 
         GestureDetector(
           onTap: () {
