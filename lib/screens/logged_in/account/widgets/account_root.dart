@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_about.dart';
+import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_favourites.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_header.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_privacy.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_settings.dart';
@@ -75,34 +76,34 @@ class AccountRoot extends StatelessWidget {
               const SizedBox(
                 height: AppPading.large,
               ),
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(horizontal: AppPading.page),
-              //   child: Divider(
-              //     height: 30,
-              //     color: AppColors.primary,
-              //     thickness: 0.5,
-              //   ),
-              // ),
-              // AppBox(
-              //   child: Column(
-              //     children: [
-              //       DetailTile(
-              //         title: 'Smart inventory',
-              //         onPressed: () {
-              //           setScreen(AccountSmartInventory(
-              //             user: user,
-              //             backToRoot: backToRoot,
-              //           ));
-              //         },
-              //         icon: Icons.kitchen,
-              //         iconColor: AppColors.primary,
-              //       ),
-              //     ],
-              //   ),
-              // ),
-              // const SizedBox(
-              //   height: AppPading.large,
-              // ),
+              if (user.favourites != null && user.favourites!.isNotEmpty)
+                Column(
+                  children: [
+                    AppBox(
+                      child: Column(
+                        children: [
+                          DetailTile(
+                            title: 'Favourite meals',
+                            onPressed: () {
+                              setScreen(AccountFavourites(
+                                      userData: user, backToRoot: backToRoot)
+                                  //   AccountSmartInventory(
+                                  //   user: user,
+                                  //   backToRoot: backToRoot,
+                                  // )
+                                  );
+                            },
+                            icon: Icons.favorite,
+                            iconColor: AppColors.danger,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(
+                      height: AppPading.large,
+                    ),
+                  ],
+                ),
               AppBox(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/models/meal_plan/meal_plan.dart';
 import 'package:flutter_firebase_template/models/meal_plan_configuration.dart';
+import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
+import 'package:rxdart/rxdart.dart';
 
 class UserService {
   // user document reference
@@ -170,6 +173,60 @@ class UserService {
             .toList());
   }
 
+  Stream<List<Recipe>> getRecipes(String mealPlanId) {
+    return _usersRef
+        .doc(uid)
+        .collection('mealPlans')
+        .doc(mealPlanId)
+        .collection('recipes')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              Map<String, dynamic> data = doc.data();
+              data['id'] = doc.id;
+
+              return Recipe.fromJson(data);
+            }).toList());
+  }
+
+  Future<void> refreshSingleRecipe({
+    required String recipeId,
+    required String mealPlanId,
+    required MealPlanConfiguration? mealPlanConfiguration,
+    required List<String> existingTitles,
+    required String mealType,
+  }) async {
+    try {
+      await _usersRef
+          .doc(uid)
+          .collection('mealPlans')
+          .doc(mealPlanId)
+          .collection("recipes")
+          .doc(recipeId)
+          .update({
+        'loading': true,
+      });
+
+      // Prepare the data to be sent to the Cloud Function
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+          'refreshSingleRecipe',
+          options: HttpsCallableOptions(timeout: const Duration(minutes: 2)));
+
+      Map<String, dynamic> body = {
+        'mealPlanId': mealPlanId,
+        'mealPlanConfiguration': mealPlanConfiguration?.toJson(),
+        'recipeId': recipeId,
+        'existingTitles': existingTitles,
+        'mealType': mealType,
+      };
+
+      // We don't wait for the promise, since it will take a long time
+      callable.call(body);
+    } catch (e) {
+      debugPrint('Error in ChatService: $e');
+      throw Exception('Failed to send message');
+    }
+  }
+
   Stream<MealPlan> getMealPlan(String mealPlanId) {
     return _usersRef
         .doc(uid)
@@ -177,6 +234,35 @@ class UserService {
         .doc(mealPlanId)
         .snapshots()
         .map((snapshot) => MealPlan.fromFirebase(snapshot));
+  }
+
+  Stream<MealPlanWithRecipes> getMealPlanWithRecipes(String mealPlanId) {
+    final mealPlanStream =
+        _usersRef.doc(uid).collection('mealPlans').doc(mealPlanId).snapshots();
+    final recipesStream = _usersRef
+        .doc(uid)
+        .collection('mealPlans')
+        .doc(mealPlanId)
+        .collection('recipes')
+        .snapshots();
+
+    return Rx.combineLatest2(mealPlanStream, recipesStream,
+        (mealPlanSnap, recipesSnap) {
+      print("test 1");
+      final mealPlan = MealPlan.fromFirebase(mealPlanSnap);
+      print("test 2");
+
+      final recipes = recipesSnap.docs.map((doc) {
+        Map<String, dynamic> data = doc.data();
+        data['id'] = doc.id;
+
+        return Recipe.fromJson(data);
+      }).toList();
+
+      print("test 3");
+
+      return MealPlanWithRecipes(mealPlan, recipes);
+    });
   }
 
   Future<void> deleteMealPlan(String mealPlanId) async {
@@ -202,39 +288,118 @@ class UserService {
   }
 
   Future<void> setRecipeComplete({
-    required String title,
+    required String recipeId,
     required String mealPlanId,
   }) async {
     try {
-      // Get the meal plan document
-      final docSnapshot = await _usersRef
+      // Write the updated recipes array back to Firestore
+      await _usersRef
           .doc(uid)
           .collection('mealPlans')
           .doc(mealPlanId)
-          .get();
-
-      // Extract the recipes array from the document
-      List<dynamic> recipes = docSnapshot.data()?['recipes'] ?? [];
-
-      // Find the recipe by title
-      int recipeIndex = recipes.indexWhere((recipe) {
-        return recipe['title'] == title;
-      });
-
-      if (recipeIndex == -1) {
-        throw Exception('Recipe not found');
-      }
-
-      // Update the recipe to mark it as done
-      recipes[recipeIndex]['completed'] = true;
-
-      // Write the updated recipes array back to Firestore
-      await _usersRef.doc(uid).collection('mealPlans').doc(mealPlanId).update({
-        'recipes': recipes, // Replace the whole array with the updated version
+          .collection('recipes')
+          .doc(recipeId)
+          .update({
+        'completed': true,
       });
     } catch (e) {
       debugPrint('Error in UserService: $e');
       throw Exception('Failed to mark recipe as done');
+    }
+  }
+
+  Future<void> deleteRecipe({
+    required String recipeId,
+    required String mealPlanId,
+  }) async {
+    try {
+      await _usersRef
+          .doc(uid)
+          .collection('mealPlans')
+          .doc(mealPlanId)
+          .collection('recipes')
+          .doc(recipeId)
+          .delete();
+    } catch (e) {
+      debugPrint('Error in UserService: $e');
+      throw Exception('Failed to delete recipe');
+    }
+  }
+
+  Future<void> setFavourite({
+    required Recipe recipe,
+    required String mealPlanId,
+    required bool value,
+  }) async {
+    try {
+      DocumentReference recipeRef = _usersRef
+          .doc(uid)
+          .collection('mealPlans')
+          .doc(mealPlanId)
+          .collection('recipes')
+          .doc(recipe.id);
+
+      if (value) {
+        await recipeRef.update({
+          'favourite': true,
+        });
+        await _usersRef.doc(uid).update({
+          'favourites': FieldValue.arrayUnion([recipeRef]),
+        });
+      } else {
+        await recipeRef.update({
+          'favourite': false,
+        });
+        await _usersRef.doc(uid).update({
+          'favourites': FieldValue.arrayRemove([recipeRef]),
+        });
+      }
+    } catch (e) {
+      debugPrint('Error in UserService: $e');
+      throw Exception('Failed to update favourite status');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getFavourites() async {
+    DocumentSnapshot userSnapshot =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    // Cast the favourites to List<DocumentReference>
+    List<DocumentReference> favourites =
+        (userSnapshot.data() as Map)['favourites'] != null
+            ? (userSnapshot.data() as Map)['favourites']
+                .map<DocumentReference>((ref) => ref as DocumentReference)
+                .toList()
+            : [];
+
+    List<Map<String, dynamic>> favouriteRecipes = [];
+
+    for (DocumentReference ref in favourites) {
+      DocumentSnapshot recipeSnapshot = await ref.get();
+
+      Map<String, dynamic> recipeData =
+          recipeSnapshot.data() as Map<String, dynamic>;
+      recipeData['id'] = recipeSnapshot.id;
+      Recipe recipe = Recipe.fromJson(recipeData);
+
+      // Extract mealPlanId from the reference
+      String mealPlanId = getMealPlanId(ref);
+
+      favouriteRecipes.add({
+        'recipe': recipe,
+        'mealPlanId': mealPlanId,
+      });
+    }
+
+    return favouriteRecipes;
+  }
+
+  String getMealPlanId(DocumentReference reference) {
+    List<String> pathSegments = reference.path.split('/');
+    if (pathSegments.length >= 4) {
+      return pathSegments[3]; // Extract mealPlanId from the path
+    } else {
+      throw Exception('Invalid DocumentReference path');
     }
   }
 }

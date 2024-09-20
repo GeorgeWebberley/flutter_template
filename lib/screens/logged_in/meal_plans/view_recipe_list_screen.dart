@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
+import 'package:flutter_firebase_template/models/meal_plan/meal_plan.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
 import 'package:flutter_firebase_template/services/chat_service.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
+import 'package:flutter_firebase_template/theme/border_radius.dart';
 import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
@@ -17,14 +19,14 @@ import 'package:provider/provider.dart';
 class ViewRecipeListScreen extends StatefulWidget {
   const ViewRecipeListScreen({
     super.key,
-    required this.recipes,
+    required this.mealType,
     required this.title,
-    required this.mealPlanId,
+    required this.mealPlan,
   });
 
-  final List<Recipe> recipes;
+  final String mealType;
   final String title;
-  final String mealPlanId;
+  final MealPlan mealPlan;
 
   @override
   State<ViewRecipeListScreen> createState() => _ViewRecipeListScreenState();
@@ -39,64 +41,14 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
   String? mode;
 
   @override
-  void initState() {
-    completedRecipes =
-        widget.recipes.where((element) => element.completed == true).toList();
-
-    nonCompletedRecipes =
-        widget.recipes.where((element) => element.completed != true).toList();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final ChatService _chatService = ChatService();
-    AppUser? user = Provider.of<AppUser?>(context);
+    AppUser user = Provider.of<AppUser>(context);
 
     return Container(
       decoration: const BoxDecoration(
         gradient: AppGradients.backgroundGradient,
       ),
       child: Scaffold(
-        floatingActionButton: mode != null
-            ? FloatingActionButton(
-                onPressed: selected.isEmpty
-                    ? null
-                    : () async {
-                        if (mode == 'refresh') {
-                          _chatService.refreshRecipes(
-                            recipesToRefresh: selected
-                                .map(
-                                  (e) => e.title,
-                                )
-                                .toList(),
-                            type: selected[0].mealType,
-                            mealPlanId: widget.mealPlanId,
-                          );
-                          await UserService(uid: user!.uid).setRefreshing(
-                              type: selected[0].mealType,
-                              mealPlanId: widget.mealPlanId);
-
-                          Navigator.pop(context);
-                        } else if (mode == 'delete') {
-                          // TODO: delete recipes
-                        }
-                      },
-                backgroundColor: selected.isEmpty
-                    ? Colors.grey
-                    : mode == 'refresh'
-                        ? AppColors.primary
-                        : AppColors.danger,
-                child: mode == 'refresh'
-                    ? const Icon(
-                        Icons.refresh,
-                        color: Colors.white,
-                      )
-                    : const Icon(
-                        Icons.delete,
-                        color: Colors.white,
-                      ),
-              )
-            : null,
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           leading: IconButton(
@@ -108,84 +60,97 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(AppPading.page),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    AppTitle(title: widget.title),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppPading.large),
-                      child: mode != null
-                          ? IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  mode = null;
-                                  selected = [];
-                                });
-                              },
-                              icon: const Icon(Icons.close))
-                          : PopupMenuButton<String>(
-                              itemBuilder: (BuildContext context) =>
-                                  <PopupMenuEntry<String>>[
-                                PopupMenuItem<String>(
-                                  value: 'refresh',
-                                  child: const Text('Refresh recipes'),
-                                  onTap: () {
-                                    setState(() {
-                                      mode = 'refresh';
-                                    });
-                                  },
-                                ),
-                                PopupMenuItem<String>(
-                                  value: 'delete',
-                                  child: const Text('Delete recipes'),
-                                  onTap: () {
-                                    setState(() {
-                                      mode = 'delete';
-                                    });
-                                  },
-                                ),
-                              ],
-                              icon: const Icon(Icons.more_vert_outlined),
-                            ),
-                    )
-                  ],
-                ),
-                AnimatedList(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  key: _listKey,
-                  initialItemCount: nonCompletedRecipes.length,
-                  itemBuilder: (context, index, animation) {
-                    final recipe = nonCompletedRecipes[index];
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          bottom: index != nonCompletedRecipes.length - 1
-                              ? AppPading.large
-                              : 0),
-                      child: _builtRecipeSelectTile(
-                          recipe, context, user!.uid, index),
-                    );
-                  },
-                ),
-                if (completedRecipes.isNotEmpty)
-                  _buildCompletedRecipes(context, completedRecipes),
-              ],
-            ),
-          ),
-        ),
+        body: StreamBuilder<List<Recipe>>(
+            stream: UserService(uid: user.uid).getRecipes(widget.mealPlan.id),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  ),
+                );
+              } else if (snapshot.hasError) {
+                return Center(
+                  child: Text('An error occurred: ${snapshot.error}'),
+                );
+              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                List<Recipe> recipes = snapshot.data!
+                    .where((recipe) => recipe.mealType == widget.mealType)
+                    .toList();
+
+                completedRecipes = recipes
+                    .where((element) => element.completed == true)
+                    .toList();
+
+                nonCompletedRecipes = recipes
+                    .where((element) => element.completed != true)
+                    .toList();
+
+                return SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppPading.page),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppTitle(title: widget.title),
+                        AnimatedList(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          key: _listKey,
+                          initialItemCount: nonCompletedRecipes.length,
+                          itemBuilder: (context, index, animation) {
+                            final recipe = nonCompletedRecipes[index];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                  bottom:
+                                      index != nonCompletedRecipes.length - 1
+                                          ? AppPading.large
+                                          : 0),
+                              child: _buildDismissableRecipeTile(
+                                  recipe, context, user.uid, index, recipes),
+                            );
+                          },
+                        ),
+                        if (completedRecipes.isNotEmpty)
+                          _buildCompletedRecipes(
+                              context, completedRecipes, user.uid, recipes),
+                      ],
+                    ),
+                  ),
+                );
+              } else {
+                return const Center(
+                  child: Text('No recipes found'),
+                );
+              }
+            }),
       ),
     );
   }
 
-  Container _builtRecipeSelectTile(
-      Recipe recipe, BuildContext context, String uid, int index) {
+  Widget _buildDismissableRecipeTile(Recipe recipe, BuildContext context,
+      String uid, int index, List<Recipe> allRecipes) {
+    return Dismissible(
+      key: Key(recipe.title),
+      direction: DismissDirection.startToEnd,
+      confirmDismiss: (direction) async {
+        _removeRecipe(
+            index: index, recipe: recipe, uid: uid, allRecipes: allRecipes);
+        return true;
+      },
+      child: _buildRecipeCard(recipe, context, uid, allRecipes),
+    );
+  }
+
+  Container _buildRecipeCard(Recipe recipe, BuildContext context, String uid,
+      List<Recipe> allRecipes) {
+    bool loading = recipe.loading ?? false;
+    Color loadingColor = Colors.grey;
+
+    bool isFavourite = recipe.favourite ?? false;
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -194,19 +159,65 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
       ),
       child: Column(
         children: [
-          Container(
-            height: 150,
-            width: double.infinity,
-            child: ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+          Stack(
+            children: [
+              Container(
+                height: 150,
+                width: double.infinity,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                  child: loading
+                      ? ColorFiltered(
+                          colorFilter: ColorFilter.mode(
+                            loadingColor, // Applying a grey filter
+                            BlendMode
+                                .saturation, // Saturation blend mode to achieve the black and white effect
+                          ),
+                          child: Image.network(
+                            recipe.image ?? "", // replace with your image URL
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Image.network(
+                          recipe.image ?? "", // replace with your image URL
+                          fit: BoxFit.cover,
+                        ),
+                ),
               ),
-              child: Image.network(
-                recipe.image ?? "", // replace with your image URL
-                fit: BoxFit.cover,
+              Positioned(
+                top: AppPading.small,
+                right: AppPading.small,
+                child: InkWell(
+                  onTap: () async {
+                    await UserService(uid: uid).setFavourite(
+                      recipe: recipe,
+                      mealPlanId: widget.mealPlan.id,
+                      value: !isFavourite,
+                    );
+                  },
+                  child: Container(
+                      padding: const EdgeInsets.all(AppPading.small),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.5),
+                        borderRadius: AppBorderRadius.small,
+                      ),
+                      child: isFavourite
+                          ? Icon(
+                              Icons.favorite,
+                              size: 25,
+                              color: AppColors.danger,
+                            )
+                          : Icon(
+                              Icons.favorite_border,
+                              size: 25,
+                              color: Colors.black,
+                            )),
+                ),
               ),
-            ),
+            ],
           ),
           Container(
             decoration: BoxDecoration(
@@ -223,7 +234,7 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                 Text(
                   recipe.title,
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: loading ? loadingColor : AppColors.primary,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -231,7 +242,7 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                 Text(
                   recipe.cookingTime,
                   style: TextStyle(
-                    color: Colors.black,
+                    color: loading ? loadingColor : Colors.black,
                     fontSize: 14,
                   ),
                 ),
@@ -249,7 +260,7 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                         'View',
                         style: TextStyle(color: Colors.white),
                       ),
-                      onPressed: mode != null
+                      onPressed: mode != null || loading
                           ? null
                           : () {
                               Navigator.push(
@@ -266,35 +277,56 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                         ),
                       ),
                     ),
-
-                    // OutlinedButton.icon(
-                    //   icon: Icon(
-                    //     Icons.swap_horiz,
-                    //     color: AppColors.primary,
-                    //   ),
-                    //   label: Text('Swap',
-                    //       style: TextStyle(color: AppColors.primary)),
-                    //   onPressed: () {},
-                    //   style: OutlinedButton.styleFrom(
-                    //     side: BorderSide(color: AppColors.primary),
-                    //     shape: RoundedRectangleBorder(
-                    //       borderRadius: BorderRadius.circular(10),
-                    //     ),
-                    //   ),
-                    // ),
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.favorite_border),
-                          onPressed: () {},
-                          color: Colors.black,
+                    OutlinedButton.icon(
+                      icon: loading
+                          ? Container(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: loadingColor,
+                              ))
+                          : Icon(
+                              Icons.swap_horiz,
+                              color: AppColors.primary,
+                            ),
+                      label: Text(loading ? "Swapping" : 'Swap',
+                          style: TextStyle(
+                              color:
+                                  loading ? loadingColor : AppColors.primary)),
+                      onPressed: mode != null || loading
+                          ? null
+                          : () {
+                              UserService(uid: uid).refreshSingleRecipe(
+                                recipeId: recipe.id,
+                                mealPlanId: widget.mealPlan.id,
+                                mealType: recipe.mealType,
+                                mealPlanConfiguration:
+                                    widget.mealPlan.mealPlanConfiguration,
+                                existingTitles: allRecipes
+                                    .map(
+                                      (e) => e.title,
+                                    )
+                                    .toList(),
+                              );
+                            },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                            color: loading ? loadingColor : AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () {},
-                          color: AppColors.danger,
-                        ),
-                      ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () async {
+                        await UserService(uid: uid).deleteRecipe(
+                          recipeId: recipe.id,
+                          mealPlanId: widget.mealPlan.id,
+                        );
+                      },
+                      color: AppColors.danger,
                     ),
                   ],
                 ),
@@ -305,75 +337,36 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
       ),
     );
   }
-  // Row _builtRecipeSelectTile(
-  //     Recipe recipe, BuildContext context, String uid, int index) {
-  //   return Row(
-  //     children: [
-  //       if (mode != null)
-  //         Checkbox(
-  //             activeColor: AppColors.primary,
-  //             value: selected.contains(recipe),
-  //             onChanged: (value) {
-  //               setState(() {
-  //                 if (selected.contains(recipe)) {
-  //                   selected.remove(recipe);
-  //                 } else {
-  //                   selected.add(recipe);
-  //                 }
-  //               });
-  //             }),
-  //       Flexible(
-  //         child: Dismissible(
-  //           key: Key(recipe.title),
-  //           direction: DismissDirection.startToEnd,
-  //           confirmDismiss: (direction) async {
-  //             _removeRecipe(index: index, recipe: recipe, uid: uid);
-  //             return true;
-  //           },
-  //           background: Container(
-  //             alignment: Alignment.centerLeft,
-  //             padding: const EdgeInsets.symmetric(horizontal: AppPading.medium),
-  //             child: const Icon(Icons.done, color: AppColors.green),
-  //           ),
-  //           child: AppBox(
-  //             child: DetailTile(
-  //               title: recipe.title,
-  //               onPressed: mode != null
-  //                   ? null
-  //                   : () {
-  //                       Navigator.push(
-  //                         context,
-  //                         SlideNavigator(
-  //                             builder: (context, _, __) =>
-  //                                 RecipeScreen(recipe: recipe)),
-  //                       );
-  //                     },
-  //             ),
-  //           ),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 
   void _removeRecipe(
-      {required int index, required Recipe recipe, required String uid}) async {
+      {required int index,
+      required Recipe recipe,
+      required String uid,
+      required List<Recipe> allRecipes}) async {
     UserService(uid: uid)
-        .setRecipeComplete(title: recipe.title, mealPlanId: widget.mealPlanId);
-    setState(() {
-      completedRecipes.add(recipe); // Mark recipe as completed
-      Recipe removedRecipe = nonCompletedRecipes.removeAt(index);
-      // Trigger animated removal from list
-      _listKey.currentState!.removeItem(
-        index,
-        (context, animation) => _buildRemovedTile(removedRecipe, animation),
-        duration: const Duration(milliseconds: 300),
-      );
-    });
+        .setRecipeComplete(recipeId: recipe.id, mealPlanId: widget.mealPlan.id);
+    // setState(() {
+    completedRecipes.add(recipe); // Mark recipe as completed
+    Recipe removedRecipe = nonCompletedRecipes.removeAt(index);
+    // Trigger animated removal from list
+    _listKey.currentState!.removeItem(
+      index,
+      (context, animation) => _buildRemovedTile(
+          recipe: removedRecipe,
+          animation: animation,
+          uid: uid,
+          allRecipes: allRecipes),
+      duration: const Duration(milliseconds: 300),
+    );
+    // });
   }
 
   // Widget for animated removal
-  Widget _buildRemovedTile(Recipe recipe, Animation<double> animation) {
+  Widget _buildRemovedTile(
+      {required Recipe recipe,
+      required Animation<double> animation,
+      required String uid,
+      required List<Recipe> allRecipes}) {
     final curvedAnimation = CurvedAnimation(
       parent: animation,
       curve: Curves.easeInOut, // You can change this to any curve you like
@@ -383,40 +376,26 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
       axisAlignment: 0.0,
       child: Opacity(
         opacity: 0,
-        child: AppBox(
-          child: DetailTile(
-            title: recipe.title,
-            onPressed: () {},
-          ),
-        ),
+        child: _buildRecipeCard(recipe, context, uid, allRecipes),
       ),
     );
   }
-}
 
-_buildCompletedRecipes(BuildContext context, List<Recipe> completedRecipes) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text('Completed Meals', style: TextStyle(fontSize: 20)).h4(),
-      const SizedBox(height: AppPading.medium),
-      ...completedRecipes.map((recipe) => Padding(
-          padding: const EdgeInsets.only(bottom: AppPading.large),
-          child: Opacity(
-            opacity: 0.5,
-            child: AppBox(
-                child: DetailTile(
-              title: recipe.title,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  SlideNavigator(
-                      builder: (context, _, __) =>
-                          RecipeScreen(recipe: recipe)),
-                );
-              },
-            )),
-          ))),
-    ],
-  );
+  _buildCompletedRecipes(BuildContext context, List<Recipe> completedRecipes,
+      String uid, List<Recipe> allRecipes) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Completed Meals', style: TextStyle(fontSize: 20)).h4(),
+        const SizedBox(height: AppPading.medium),
+        ...completedRecipes.map((recipe) => Padding(
+            padding: const EdgeInsets.only(bottom: AppPading.large),
+            child: Opacity(
+              opacity: 0.5,
+              child: _buildRecipeCard(
+                  recipe, context, Provider.of<AppUser>(context).uid, []),
+            ))),
+      ],
+    );
+  }
 }

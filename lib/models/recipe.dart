@@ -1,6 +1,7 @@
 import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 
 class Recipe {
+  final String id;
   final String title;
   final List<Ingredient> ingredients;
   final String cookingTime;
@@ -13,8 +14,11 @@ class Recipe {
   final int? protein;
   final int? carbohydrates;
   final int? fat;
+  final bool? loading;
+  final bool? favourite;
 
   Recipe({
+    required this.id,
     required this.title,
     required this.ingredients,
     required this.cookingTime,
@@ -27,10 +31,12 @@ class Recipe {
     this.protein,
     this.carbohydrates,
     this.fat,
+    this.loading,
+    this.favourite,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
-    // print("Title: ${json['title'] as String}");
+    print("Title: ${json['title'] as String}");
     // print("Ingredients: ${json['ingredients'] as List}");
     // print("Cooking Time: ${json['cooking_time'] as String}");
     // print("Instructions: ${json['instructions'] as List}");
@@ -38,6 +44,7 @@ class Recipe {
     // print("Meal Type: ${(json['meal_type'] ?? "dinner") as String}");
 
     return Recipe(
+      id: json['id'] as String,
       title: json['title'] as String,
       ingredients: (json['ingredients'] as List)
           .map((ingredient) => Ingredient.fromJson(ingredient))
@@ -52,6 +59,8 @@ class Recipe {
       protein: json['protein'] as int?,
       carbohydrates: json['carbohydrates'] as int?,
       fat: json['fat'] as int?,
+      loading: json['loading'] as bool?,
+      favourite: json['favourite'] as bool?,
     );
   }
 
@@ -75,6 +84,8 @@ class Recipe {
       'protein': protein,
       'carbohydrates': carbohydrates,
       'fat': fat,
+      'loading': loading,
+      'favourite': favourite,
     };
   }
 }

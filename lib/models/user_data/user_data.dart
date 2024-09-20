@@ -1,24 +1,53 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_firebase_template/models/dietary_preference/dietary_preference.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 
-part 'user_data.freezed.dart';
-part 'user_data.g.dart';
+class UserData {
+  final String uid;
+  final String? name;
+  final String email;
+  final List<String>? providers;
+  final List<DietaryPreference>? dietaryPreferences;
+  final List<DocumentReference>? favourites;
 
-// If updating, run:
-// flutter pub run build_runner build --delete-conflicting-outputs
+  UserData({
+    required this.uid,
+    this.name,
+    required this.email,
+    this.providers,
+    this.dietaryPreferences,
+    this.favourites,
+  });
 
-/// Whilst [Appuser] is the direct implementation of a firebase user, this model
-/// contains additional information that can be used by the app and stored in firestore.
-@unfreezed
-class UserData with _$UserData {
-  factory UserData({
-    required String uid,
-    String? name,
-    required String email,
-    List<String>? providers,
-    List<DietaryPreference>? dietaryPreferences,
-  }) = _UserData;
+  // Factory method to create UserData from a Firestore document (JSON)
+  factory UserData.fromJson(Map<String, dynamic> json) {
+    return UserData(
+      uid: json['uid'] as String,
+      name: json['name'] as String?,
+      email: json['email'] as String,
+      providers: json['providers'] != null
+          ? List<String>.from(json['providers'])
+          : null,
+      dietaryPreferences: json['dietaryPreferences'] != null
+          ? (json['dietaryPreferences'] as List<dynamic>)
+              .map((e) => DietaryPreference.fromJson(e))
+              .toList()
+          : null,
+      favourites: json['favourites'] != null
+          ? (json['favourites'] as List<dynamic>)
+              .map((e) => e as DocumentReference)
+              .toList()
+          : null,
+    );
+  }
 
-  factory UserData.fromJson(Map<String, dynamic> json) =>
-      _$UserDataFromJson(json);
+  // Convert UserData to JSON (for storing in Firestore)
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'email': email,
+      'providers': providers,
+      'dietaryPreferences': dietaryPreferences?.map((e) => e.toJson()).toList(),
+      'favourites': favourites?.map((e) => e.path).toList(),
+    };
+  }
 }

@@ -307,10 +307,26 @@ exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCal
 
   // Update the meal plan document in Firestore
   try {
-    await newMealPlanDocRef.update({
-      recipes: recipes,
-      loading: false,
+    // Start a batch
+    const batch = admin.firestore().batch();
+
+    // Add each recipe to the 'recipes' subcollection
+    recipes.forEach((recipe) => {
+      const recipeDocRef = newMealPlanDocRef.collection('recipes').doc(); // Auto-generate a new recipe ID
+      batch.set(recipeDocRef, recipe); // Add the recipe to the batch
     });
+
+    // Update the meal plan document itself to mark loading as false (if necessary)
+    batch.update(newMealPlanDocRef, {
+      loading: false
+    });
+
+    // Commit the batch
+    await batch.commit();
+    // await newMealPlanDocRef.update({
+    //   recipes: recipes,
+    //   loading: false,
+    // });
     console.log("Meal plan updated successfully");
     sendMealPlanNotification(userId, mealPlanId);
 
@@ -320,8 +336,83 @@ exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCal
   }
 });
 
+exports.refreshSingleRecipe = functions.https.onCall(async (data, context) => {
+  const { mealPlanId, mealPlanConfiguration, recipeId, existingTitles, mealType } = data;
 
-exports.refreshRecipe = functions.https.onCall(async (data, context) => {
+  const userId = context.auth.uid;
+
+  if (!context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated to refresh the recipe.');
+  }
+  const recipeDocRef = admin.firestore().collection('users').doc(userId).collection('mealPlans').doc(mealPlanId).collection('recipes').doc(recipeId);
+  
+  const numberOfPeople = mealPlanConfiguration?.numberOfPeople ?? 1;
+  const preferences = mealPlanConfiguration?.dietaryPreferences ?? [];
+
+
+  const thread = await openai.beta.threads.create();
+  const threadId = thread.id;
+
+  const userMessage = `
+  Number of people: ${numberOfPeople}
+  Number of breakfasts: ${mealType === 'breakfast' ? 1 : 0}
+  Number of lunches: ${mealType === 'lunch' ? 1 : 0}
+  Number of dinners: ${mealType === 'dinner' ? 1 : 0}
+  Dietary preferences: ${preferences.join(', ')}
+  Recipes to NOT make: ${existingTitles.join(', ')}
+  `;
+
+  await openai.beta.threads.messages.create(threadId, {
+    role: "user",
+    content: userMessage,
+  });
+
+  // console.log("getRecipeList Submitted message")
+
+  const run = await openai.beta.threads.runs.createAndPoll(threadId, {
+    assistant_id: recipeListAiAssistantId, 
+  });
+
+  if (run.status === 'completed') {
+    // console.log("getRecipeList test 1");
+
+    const messages = await openai.beta.threads.messages.list(run.thread_id);
+    // console.log("getRecipeList test 2", messages);
+    
+    // Return only the latest message from the assistant
+    const latestMessage = messages.data.find(msg => msg.role === 'assistant');
+
+
+    const responseData = JSON.parse(latestMessage.content[0].text.value);
+    const recipesToCreate = responseData.recipes.map(recipe => recipe.title);
+  
+
+    // Wait for all API calls to complete in parallel
+    let recipe;
+    try {
+      recipe = await generateRecipe(recipesToCreate[0], mealType, preferences, numberOfPeople)
+    } catch (error) {
+      console.error('Error with recipe requests:', error);
+      await recipeDocRef.update({ loading: false });
+      throw new functions.https.HttpsError('internal', 'Failed to generate recipes');
+    }
+
+    // Update the meal plan document in Firestore
+    try {
+      recipeDocRef.set({ loading: false, ...recipe });
+      console.log("Meal plan updated successfully");
+    } catch (dbError) {
+      console.error('Error updating Firestore document:', dbError);
+      await recipeDocRef.update({ loading: false });
+      throw new functions.https.HttpsError('internal', 'Failed to update the meal plan');
+    }
+  } else {
+    await recipeDocRef.update({ loading: false });
+  }
+});
+
+
+exports.refreshMultipleRecipes = functions.https.onCall(async (data, context) => {
   const { mealPlanId, type, recipesToRefresh } = data;
 
   const userId = context.auth.uid;

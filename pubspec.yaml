@@ -63,6 +63,7 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.4.0
   url_launcher: ^6.3.0
+  rxdart: ^0.28.0
   # intro_slider: ^4.2.0
   
 
