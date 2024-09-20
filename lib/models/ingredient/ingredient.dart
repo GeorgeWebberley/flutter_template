@@ -11,6 +11,7 @@ class Ingredient with _$Ingredient {
     required String name,
     required double quantity,
     required String unit,
+    @JsonKey(name: 'ingredient_type') String? ingredientType,
   }) = _Ingredient;
 
   factory Ingredient.fromJson(Map<String, dynamic> json) =>

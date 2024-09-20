@@ -63,5 +63,9 @@
 		<string>We need access to your camera to take pictures of grocery receipts for AI analysis.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>https</string>
+		</array>
 	</dict>
 </plist>

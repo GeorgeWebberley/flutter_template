@@ -11,6 +11,7 @@ _$IngredientImpl _$$IngredientImplFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       quantity: (json['quantity'] as num).toDouble(),
       unit: json['unit'] as String,
+      ingredientType: json['ingredient_type'] as String?,
     );
 
 Map<String, dynamic> _$$IngredientImplToJson(_$IngredientImpl instance) =>
@@ -18,4 +19,5 @@ Map<String, dynamic> _$$IngredientImplToJson(_$IngredientImpl instance) =>
       'name': instance.name,
       'quantity': instance.quantity,
       'unit': instance.unit,
+      'ingredient_type': instance.ingredientType,
     };

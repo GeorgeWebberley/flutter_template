@@ -8,6 +8,11 @@ class Recipe {
   final String mealType;
   final bool? refreshed;
   final bool? completed;
+  final String? image;
+  final int? calories;
+  final int? protein;
+  final int? carbohydrates;
+  final int? fat;
 
   Recipe({
     required this.title,
@@ -17,6 +22,11 @@ class Recipe {
     required this.mealType,
     this.refreshed,
     this.completed,
+    this.image,
+    this.calories,
+    this.protein,
+    this.carbohydrates,
+    this.fat,
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
@@ -37,6 +47,11 @@ class Recipe {
       mealType: (json['meal_type'] ?? "lunch"),
       refreshed: json['refreshed'] as bool?,
       completed: json['completed'] as bool?,
+      image: json['image'] as String?,
+      calories: json['calories'] as int?,
+      protein: json['protein'] as int?,
+      carbohydrates: json['carbohydrates'] as int?,
+      fat: json['fat'] as int?,
     );
   }
 
@@ -53,6 +68,13 @@ class Recipe {
       'cooking_time': cookingTime,
       'instructions': instructions,
       'meal_type': mealType,
+      'refreshed': refreshed,
+      'completed': completed,
+      'image': image,
+      'calories': calories,
+      'protein': protein,
+      'carbohydrates': carbohydrates,
+      'fat': fat,
     };
   }
 }

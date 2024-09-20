@@ -53,14 +53,12 @@ class _ConfirmEmailState extends State<ConfirmEmail> {
           : "An email has been sent to the address you provided. Please click on the link in the email to verify your account before continuing.",
       lottieFile: _isEmailVerified
           ? LottieController(
-              key: UniqueKey(),
               location: 'assets/lottie/email_confirmed.json',
               height: _animationSize,
               repeat: false,
               onComplete: () => widget.onSuccess.call(),
             )
           : LottieController(
-              key: UniqueKey(),
               repeat: true,
               location: 'assets/lottie/email_sent.json',
               height: _animationSize),
@@ -76,9 +74,9 @@ class _ConfirmEmailState extends State<ConfirmEmail> {
                       color: Colors.black.withOpacity(0.8),
                     )),
                     Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: AppPading.medium),
-                      child: Text("Didn't receive an email?",
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppPading.medium),
+                      child: const Text("Didn't receive an email?",
                               style: TextStyle(color: Colors.black))
                           .h5(),
                     ),

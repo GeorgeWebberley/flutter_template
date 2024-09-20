@@ -25,6 +25,8 @@ class _RecipeScreenState extends State<RecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("widget.recipe.image");
+    print(widget.recipe.image);
     return Container(
       decoration: const BoxDecoration(
         gradient: AppGradients.backgroundGradient,
@@ -89,14 +91,10 @@ class _RecipeScreenState extends State<RecipeScreen> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              color: Colors.white,
-            ),
+            icon: const Icon(Icons.arrow_back_ios),
             onPressed: () {
               Navigator.pop(context);
             },
-            iconSize: 24,
           ),
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -113,10 +111,9 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     right: 0,
                     left: 0,
                     child: Container(
-                      color: Colors.white.withOpacity(0.8),
-                      padding: const EdgeInsets.all(AppPading.extraSmall),
+                      color: Colors.white.withOpacity(0.6),
+                      padding: const EdgeInsets.all(AppPading.small),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Flexible(
                             child: Text(
@@ -125,15 +122,6 @@ class _RecipeScreenState extends State<RecipeScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ).h3(),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              // Add to favourites
-                            },
-                            icon: Icon(
-                              Icons.favorite_border,
-                              size: 30,
-                            ),
                           ),
                         ],
                       ),

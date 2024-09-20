@@ -40,7 +40,9 @@ class _AppNavigationState extends State<AppNavigation> {
       NavigationItem(
           title: 'Meal Plans',
           icon: Icons.home,
-          page: const ViewMealPlansScreen()),
+          page: ViewMealPlansScreen(
+            changeNavigationIndex: _onItemTapped,
+          )),
       NavigationItem(
         title: 'Meal Hub',
         hideAppBar: true,

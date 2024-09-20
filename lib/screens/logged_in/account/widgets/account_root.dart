@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
+import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_about.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_header.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_privacy.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_settings.dart';
@@ -43,12 +44,16 @@ class AccountRoot extends StatelessWidget {
     //   Ingredient(name: 'Yogurt', quantity: 2, unit: 'cups'),
     //   Ingredient(name: 'Yogurt', quantity: 100, unit: 'milliliters'),
     // ];
+    List<Ingredient> exampleList = [
+      Ingredient(name: 'Balsamic vinegar', quantity: 15, unit: 'milliliter'),
+      Ingredient(name: 'Balsamic vinegar', quantity: 1, unit: 'tablespoon'),
+    ];
 
-    // List<Ingredient> output = UnitConverter().combineIngredients(exampleList);
+    List<Ingredient> output = UnitConverter().combineIngredients(exampleList);
 
-    // for (var item in output) {
-    //   print(item);
-    // }
+    for (var item in output) {
+      print(item);
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -144,7 +149,11 @@ class AccountRoot extends StatelessWidget {
                     ),
                     DetailTile(
                       title: 'About Nutriveat',
-                      onPressed: () {},
+                      onPressed: () {
+                        setScreen(AccountAbout(
+                          backToRoot: backToRoot,
+                        ));
+                      },
                       icon: Icons.info,
                       iconColor: AppColors.primary,
                     ),

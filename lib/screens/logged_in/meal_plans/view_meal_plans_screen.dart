@@ -9,10 +9,15 @@ import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
+import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
+import 'package:flutter_firebase_template/widgets/lottie_controller.dart';
 import 'package:provider/provider.dart';
 
 class ViewMealPlansScreen extends StatelessWidget {
-  const ViewMealPlansScreen({Key? key}) : super(key: key);
+  const ViewMealPlansScreen({Key? key, required this.changeNavigationIndex})
+      : super(key: key);
+
+  final Function(int) changeNavigationIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +37,30 @@ class ViewMealPlansScreen extends StatelessWidget {
             child: Text('An error occurred: ${snapshot.error}'),
           );
         } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text('No meal plans found'),
+          return Padding(
+            padding: const EdgeInsets.all(AppPading.page),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("You don't have any plans").h3(),
+                const SizedBox(
+                  height: AppPading.medium,
+                ),
+                const LottieController(
+                  location: 'assets/lottie/no_meal_plans.json',
+                  height: 200,
+                  repeat: true,
+                ),
+                const SizedBox(
+                  height: AppPading.large,
+                ),
+                AppButton(
+                    onPressed: () {
+                      changeNavigationIndex(1);
+                    },
+                    text: "Get started")
+              ],
+            ),
           );
         } else {
           snapshot.data!.sort((a, b) {

@@ -7,6 +7,7 @@ import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
+import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
@@ -183,56 +184,177 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
     );
   }
 
-  Row _builtRecipeSelectTile(
+  Container _builtRecipeSelectTile(
       Recipe recipe, BuildContext context, String uid, int index) {
-    return Row(
-      children: [
-        if (mode != null)
-          Checkbox(
-              activeColor: AppColors.primary,
-              value: selected.contains(recipe),
-              onChanged: (value) {
-                setState(() {
-                  if (selected.contains(recipe)) {
-                    selected.remove(recipe);
-                  } else {
-                    selected.add(recipe);
-                  }
-                });
-              }),
-        Flexible(
-          child: Dismissible(
-            key: Key(recipe.title),
-            direction: DismissDirection.startToEnd,
-            confirmDismiss: (direction) async {
-              _removeRecipe(index: index, recipe: recipe, uid: uid);
-              return true;
-            },
-            background: Container(
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: AppPading.medium),
-              child: const Icon(Icons.done, color: AppColors.green),
-            ),
-            child: AppBox(
-              child: DetailTile(
-                title: recipe.title,
-                onPressed: mode != null
-                    ? null
-                    : () {
-                        Navigator.push(
-                          context,
-                          SlideNavigator(
-                              builder: (context, _, __) =>
-                                  RecipeScreen(recipe: recipe)),
-                        );
-                      },
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        boxShadow: [AppBoxShadow.small],
+      ),
+      child: Column(
+        children: [
+          Container(
+            height: 150,
+            width: double.infinity,
+            child: ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+              child: Image.network(
+                recipe.image ?? "", // replace with your image URL
+                fit: BoxFit.cover,
               ),
             ),
           ),
-        ),
-      ],
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+              color: Colors.white,
+            ),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  recipe.title,
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  recipe.cookingTime,
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                  ),
+                ),
+                SizedBox(height: AppPading.extraSmall),
+                // Action buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton.icon(
+                      icon: Icon(
+                        Icons.restaurant,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        'View',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      onPressed: mode != null
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                SlideNavigator(
+                                    builder: (context, _, __) =>
+                                        RecipeScreen(recipe: recipe)),
+                              );
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+
+                    // OutlinedButton.icon(
+                    //   icon: Icon(
+                    //     Icons.swap_horiz,
+                    //     color: AppColors.primary,
+                    //   ),
+                    //   label: Text('Swap',
+                    //       style: TextStyle(color: AppColors.primary)),
+                    //   onPressed: () {},
+                    //   style: OutlinedButton.styleFrom(
+                    //     side: BorderSide(color: AppColors.primary),
+                    //     shape: RoundedRectangleBorder(
+                    //       borderRadius: BorderRadius.circular(10),
+                    //     ),
+                    //   ),
+                    // ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.favorite_border),
+                          onPressed: () {},
+                          color: Colors.black,
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () {},
+                          color: AppColors.danger,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
+  // Row _builtRecipeSelectTile(
+  //     Recipe recipe, BuildContext context, String uid, int index) {
+  //   return Row(
+  //     children: [
+  //       if (mode != null)
+  //         Checkbox(
+  //             activeColor: AppColors.primary,
+  //             value: selected.contains(recipe),
+  //             onChanged: (value) {
+  //               setState(() {
+  //                 if (selected.contains(recipe)) {
+  //                   selected.remove(recipe);
+  //                 } else {
+  //                   selected.add(recipe);
+  //                 }
+  //               });
+  //             }),
+  //       Flexible(
+  //         child: Dismissible(
+  //           key: Key(recipe.title),
+  //           direction: DismissDirection.startToEnd,
+  //           confirmDismiss: (direction) async {
+  //             _removeRecipe(index: index, recipe: recipe, uid: uid);
+  //             return true;
+  //           },
+  //           background: Container(
+  //             alignment: Alignment.centerLeft,
+  //             padding: const EdgeInsets.symmetric(horizontal: AppPading.medium),
+  //             child: const Icon(Icons.done, color: AppColors.green),
+  //           ),
+  //           child: AppBox(
+  //             child: DetailTile(
+  //               title: recipe.title,
+  //               onPressed: mode != null
+  //                   ? null
+  //                   : () {
+  //                       Navigator.push(
+  //                         context,
+  //                         SlideNavigator(
+  //                             builder: (context, _, __) =>
+  //                                 RecipeScreen(recipe: recipe)),
+  //                       );
+  //                     },
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   void _removeRecipe(
       {required int index, required Recipe recipe, required String uid}) async {

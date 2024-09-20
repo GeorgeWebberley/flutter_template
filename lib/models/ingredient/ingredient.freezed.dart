@@ -23,6 +23,8 @@ mixin _$Ingredient {
   String get name => throw _privateConstructorUsedError;
   double get quantity => throw _privateConstructorUsedError;
   String get unit => throw _privateConstructorUsedError;
+  @JsonKey(name: 'ingredient_type')
+  String? get ingredientType => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -36,7 +38,11 @@ abstract class $IngredientCopyWith<$Res> {
           Ingredient value, $Res Function(Ingredient) then) =
       _$IngredientCopyWithImpl<$Res, Ingredient>;
   @useResult
-  $Res call({String name, double quantity, String unit});
+  $Res call(
+      {String name,
+      double quantity,
+      String unit,
+      @JsonKey(name: 'ingredient_type') String? ingredientType});
 }
 
 /// @nodoc
@@ -55,6 +61,7 @@ class _$IngredientCopyWithImpl<$Res, $Val extends Ingredient>
     Object? name = null,
     Object? quantity = null,
     Object? unit = null,
+    Object? ingredientType = freezed,
   }) {
     return _then(_value.copyWith(
       name: null == name
@@ -69,6 +76,10 @@ class _$IngredientCopyWithImpl<$Res, $Val extends Ingredient>
           ? _value.unit
           : unit // ignore: cast_nullable_to_non_nullable
               as String,
+      ingredientType: freezed == ingredientType
+          ? _value.ingredientType
+          : ingredientType // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -81,7 +92,11 @@ abstract class _$$IngredientImplCopyWith<$Res>
       __$$IngredientImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String name, double quantity, String unit});
+  $Res call(
+      {String name,
+      double quantity,
+      String unit,
+      @JsonKey(name: 'ingredient_type') String? ingredientType});
 }
 
 /// @nodoc
@@ -98,6 +113,7 @@ class __$$IngredientImplCopyWithImpl<$Res>
     Object? name = null,
     Object? quantity = null,
     Object? unit = null,
+    Object? ingredientType = freezed,
   }) {
     return _then(_$IngredientImpl(
       name: null == name
@@ -112,6 +128,10 @@ class __$$IngredientImplCopyWithImpl<$Res>
           ? _value.unit
           : unit // ignore: cast_nullable_to_non_nullable
               as String,
+      ingredientType: freezed == ingredientType
+          ? _value.ingredientType
+          : ingredientType // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -120,7 +140,10 @@ class __$$IngredientImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$IngredientImpl implements _Ingredient {
   _$IngredientImpl(
-      {required this.name, required this.quantity, required this.unit});
+      {required this.name,
+      required this.quantity,
+      required this.unit,
+      @JsonKey(name: 'ingredient_type') this.ingredientType});
 
   factory _$IngredientImpl.fromJson(Map<String, dynamic> json) =>
       _$$IngredientImplFromJson(json);
@@ -131,10 +154,13 @@ class _$IngredientImpl implements _Ingredient {
   final double quantity;
   @override
   final String unit;
+  @override
+  @JsonKey(name: 'ingredient_type')
+  final String? ingredientType;
 
   @override
   String toString() {
-    return 'Ingredient(name: $name, quantity: $quantity, unit: $unit)';
+    return 'Ingredient(name: $name, quantity: $quantity, unit: $unit, ingredientType: $ingredientType)';
   }
 
   @override
@@ -145,12 +171,15 @@ class _$IngredientImpl implements _Ingredient {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.quantity, quantity) ||
                 other.quantity == quantity) &&
-            (identical(other.unit, unit) || other.unit == unit));
+            (identical(other.unit, unit) || other.unit == unit) &&
+            (identical(other.ingredientType, ingredientType) ||
+                other.ingredientType == ingredientType));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, name, quantity, unit);
+  int get hashCode =>
+      Object.hash(runtimeType, name, quantity, unit, ingredientType);
 
   @JsonKey(ignore: true)
   @override
@@ -168,9 +197,11 @@ class _$IngredientImpl implements _Ingredient {
 
 abstract class _Ingredient implements Ingredient {
   factory _Ingredient(
-      {required final String name,
-      required final double quantity,
-      required final String unit}) = _$IngredientImpl;
+          {required final String name,
+          required final double quantity,
+          required final String unit,
+          @JsonKey(name: 'ingredient_type') final String? ingredientType}) =
+      _$IngredientImpl;
 
   factory _Ingredient.fromJson(Map<String, dynamic> json) =
       _$IngredientImpl.fromJson;
@@ -181,6 +212,9 @@ abstract class _Ingredient implements Ingredient {
   double get quantity;
   @override
   String get unit;
+  @override
+  @JsonKey(name: 'ingredient_type')
+  String? get ingredientType;
   @override
   @JsonKey(ignore: true)
   _$$IngredientImplCopyWith<_$IngredientImpl> get copyWith =>
