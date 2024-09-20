@@ -4,13 +4,15 @@ import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/ai_chat_popup.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/ingredient_tile.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
-import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 
 class RecipeScreen extends StatefulWidget {
-  const RecipeScreen({super.key, required this.recipe});
+  const RecipeScreen({
+    super.key,
+    required this.recipe,
+  });
 
   final Recipe recipe;
 
@@ -76,7 +78,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                         top: AppPading.extraSmall,
                         right: AppPading.extraSmall,
                         child: IconButton(
-                          icon: Icon(Icons.close),
+                          icon: const Icon(Icons.close),
                           onPressed: () {
                             setState(() {
                               _isChatMinimized = true;
@@ -121,20 +123,22 @@ class _RecipeScreenState extends State<RecipeScreen> {
                           Flexible(
                             child: Text(
                               widget.recipe.title,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
                             ).h3(),
                           ),
-                          IconButton(
-                            onPressed: () {
-                              // Add to favourites
-                            },
-                            icon: Icon(
-                              Icons.favorite_border,
-                              size: 30,
-                            ),
-                          ),
+                          // if (widget.addFavourite != null)
+                          //   IconButton(
+                          //     onPressed: () {
+                          //       widget.addFavourite!();
+                          //       // Add to favourites
+                          //     },
+                          //     icon: Icon(
+                          //       Icons.favorite_border,
+                          //       size: 30,
+                          //     ),
+                          //   ),
                         ],
                       ),
                     ),
@@ -146,43 +150,46 @@ class _RecipeScreenState extends State<RecipeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // AppTitle(
-                    //   title: widget.recipe.title,
-                    //   subtitle: "Cooking time: ${widget.recipe.cookingTime}",
-                    // ),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.timer_outlined),
-                              SizedBox(
+                              const Icon(Icons.timer_outlined),
+                              const SizedBox(
                                 width: AppPading.small,
                               ),
-                              Text(
-                                widget.recipe.cookingTime,
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ).h4(),
+                              Flexible(
+                                child: Text(
+                                  widget.recipe.cookingTime,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600),
+                                ).h5(),
+                              ),
                             ],
                           ),
                         ),
                         Expanded(
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.directions_run),
-                              SizedBox(
+                              const Icon(Icons.directions_run),
+                              const SizedBox(
                                 width: AppPading.small,
                               ),
                               Text(
                                 "${widget.recipe.calories} calories",
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ).h4(),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
+                              ).h5(),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: AppPading.large,
                     ),
                     // Text("Carbohydrate: ${widget.recipe.carbohydrates} grams")
@@ -202,7 +209,7 @@ class _RecipeScreenState extends State<RecipeScreen> {
                     //     ),
                     //   ],
                     // ),
-                    SizedBox(
+                    const SizedBox(
                       height: AppPading.large,
                     ),
                     AppBox(

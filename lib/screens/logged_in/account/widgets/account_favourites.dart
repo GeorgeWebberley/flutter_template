@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
+import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/app_dialog.dart';
+import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/theme/border_radius.dart';
 import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
+import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 
 class AccountFavourites extends StatefulWidget {
   const AccountFavourites({
@@ -66,8 +69,21 @@ class _AccountFavouritesState extends State<AccountFavourites> {
                 },
               );
             } else {
-              return Center(
-                child: Text('No favourites yet'),
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('You have no favourites').h4(),
+                  const SizedBox(height: AppPading.large),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppPading.page * 2),
+                    child: AppButton(
+                        onPressed: () {
+                          widget.backToRoot();
+                        },
+                        text: "Go back"),
+                  )
+                ],
               );
             }
           },
@@ -94,7 +110,7 @@ class _AccountFavouritesState extends State<AccountFavourites> {
                 height: 150,
                 width: double.infinity,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.only(
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
                   ),
@@ -133,12 +149,12 @@ class _AccountFavouritesState extends State<AccountFavourites> {
                         borderRadius: AppBorderRadius.small,
                       ),
                       child: isFavourite
-                          ? Icon(
+                          ? const Icon(
                               Icons.favorite,
                               size: 25,
                               color: AppColors.danger,
                             )
-                          : Icon(
+                          : const Icon(
                               Icons.favorite_border,
                               size: 25,
                               color: Colors.black,
@@ -167,7 +183,32 @@ class _AccountFavouritesState extends State<AccountFavourites> {
                     fontSize: 14,
                   ),
                 ),
-                SizedBox(height: AppPading.extraSmall),
+                const SizedBox(height: AppPading.extraSmall),
+                ElevatedButton.icon(
+                  icon: const Icon(
+                    Icons.restaurant,
+                    color: Colors.white,
+                  ),
+                  label: const Text(
+                    'View',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      SlideNavigator(
+                          builder: (context, _, __) => RecipeScreen(
+                                recipe: recipe,
+                              )),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

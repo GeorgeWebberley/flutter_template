@@ -3,9 +3,7 @@ import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/models/meal_plan/meal_plan.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
-import 'package:flutter_firebase_template/services/chat_service.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
-import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/theme/border_radius.dart';
@@ -13,7 +11,6 @@ import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
-import 'package:flutter_firebase_template/widgets/detail_tile.dart';
 import 'package:provider/provider.dart';
 
 class ViewRecipeListScreen extends StatefulWidget {
@@ -266,8 +263,9 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                               Navigator.push(
                                 context,
                                 SlideNavigator(
-                                    builder: (context, _, __) =>
-                                        RecipeScreen(recipe: recipe)),
+                                    builder: (context, _, __) => RecipeScreen(
+                                          recipe: recipe,
+                                        )),
                               );
                             },
                       style: ElevatedButton.styleFrom(
