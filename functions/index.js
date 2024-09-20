@@ -3,11 +3,17 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const OpenAI = require("openai");
 const { parse } = require("dotenv");
+const { NovitaSDK, TaskStatus } = require("novita-sdk");
+const axios = require('axios');
+
 
 admin.initializeApp();
 admin.firestore().settings({ignoreUndefinedProperties:true});
 
+const bucket = admin.storage().bucket();
+
 const openai = new OpenAI({ key: process.env.OPENAI_API_KEY });
+const novitaClient = new NovitaSDK(process.env.NOVITA_API_KEY);
 
 const generalAiAssistantId = "asst_wNFWDodhq6vuUYHS3HlOZBSv";
 const recipeAiAssistantId = "asst_pxquMj2BqU0kjkB18dp5H68l";
@@ -291,54 +297,13 @@ exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCal
   }
 
   // Wait for all API calls to complete in parallel
-  let results;
+  let recipes;
   try {
-    results = await Promise.all(recipeRequests);
+    recipes = await Promise.all(recipeRequests);
   } catch (error) {
     console.error('Error with recipe requests:', error);
     throw new functions.https.HttpsError('internal', 'Failed to generate recipes');
   }
-
-  // console.log('Recipe results:', results);
-
-  // Initialize an array to store parsed recipes
-  let recipes = [];
-
-  for (let i = 0; i < results.length; i++) {
-    // console.log("generateRecipes test 1", results[i]);
-  
-    if (results[i] && results[i]['content'] && results[i]['content'].length > 0) {
-      // console.log("generateRecipes test 2");
-  
-      const contentList = results[i]['content'];
-      const contentObject = contentList.length > 0 ? contentList[0] : null;
-      // console.log("generateRecipes test 3", contentObject);
-  
-      if (contentObject && contentObject['type'] === 'text') {
-        const textValue = contentObject['text']['value'];
-  
-        try {
-          const parsedJson = JSON.parse(textValue);
-          // console.log("generateRecipes test 4", parsedJson);
-  
-          // Check if the parsed JSON has a "properties" key
-          let finalRecipe = parsedJson;
-          if (parsedJson.hasOwnProperty('properties')) {
-            // console.log("generateRecipes test 5 - properties found, flattening");
-            finalRecipe = parsedJson.properties; // Flatten the object by extracting "properties"
-          }
-  
-          recipes.push(finalRecipe); // Push the flattened recipe to the final array
-        } catch (parseError) {
-          console.error('Error parsing recipe JSON:', parseError);
-          continue; // Skip this recipe if parsing fails
-        }
-      }
-    }
-  }
-  
-  // console.log("generateRecipes test 5", recipes);
-
 
   // Update the meal plan document in Firestore
   try {
@@ -426,52 +391,15 @@ exports.refreshRecipe = functions.https.onCall(async (data, context) => {
       }
 
       // Wait for all API calls to complete in parallel
-      let results;
+      let recipes;
       try {
-        results = await Promise.all(recipeRequests);
+        recipes = await Promise.all(recipeRequests);
       } catch (error) {
         console.error('Error with recipe requests:', error);
         await newMealPlanDocRef.update({ [refreshKey]: false });
         throw new functions.https.HttpsError('internal', 'Failed to generate recipes');
       }
 
-      let recipes = [];
-
-      for (let i = 0; i < results.length; i++) {
-        // console.log("generateRecipes test 1", results[i]);
-      
-        if (results[i] && results[i]['content'] && results[i]['content'].length > 0) {
-          // console.log("generateRecipes test 2");
-      
-          const contentList = results[i]['content'];
-          const contentObject = contentList.length > 0 ? contentList[0] : null;
-          // console.log("generateRecipes test 3", contentObject);
-      
-          if (contentObject && contentObject['type'] === 'text') {
-            const textValue = contentObject['text']['value'];
-      
-            try {
-              const parsedJson = JSON.parse(textValue);
-              // console.log("generateRecipes test 4", parsedJson);
-      
-              // Check if the parsed JSON has a "properties" key
-              let finalRecipe = parsedJson;
-              if (parsedJson.hasOwnProperty('properties')) {
-                // console.log("generateRecipes test 5 - properties found, flattening");
-                finalRecipe = parsedJson.properties; // Flatten the object by extracting "properties"
-              }
-      
-              recipes.push(finalRecipe); // Push the flattened recipe to the final array
-            } catch (parseError) {
-              console.error('Error parsing recipe JSON:', parseError);
-              await newMealPlanDocRef.update({
-                [refreshKey]: false,
-              });
-            }
-          }
-        }
-      }
-      
       // Update the meal plan document in Firestore
       try {
         // Re-Retrieve the current array of recipes. We do this again here since the openAI API
@@ -514,8 +442,31 @@ exports.refreshRecipe = functions.https.onCall(async (data, context) => {
 // Function to generate recipe by calling AI API
 async function generateRecipe(recipeTitle, mealType, dietaryPreferences, numberOfPeople) {
   try {
+    // Run both functions in parallel using Promise.all
+    const [image, recipe] = await Promise.all([
+      generateImage(recipeTitle),
+      generateRecipeJson(recipeTitle, mealType, dietaryPreferences, numberOfPeople),
+    ]);
+
+    if(image && recipe){
+      recipe.image = image;
+    }
+
+    console.log("Combined Recipe with Images:", recipe);
+    return recipe;
+  } catch (error) {
+    console.error('Error generating recipe:', error);
+    return null;
+  }
+}
+// Function to generate recipe by calling AI API
+async function generateRecipeJson(recipeTitle, mealType, dietaryPreferences, numberOfPeople) {
+  try {
     const thread = await openai.beta.threads.create();
     const threadId = thread.id;
+
+    console.log("generateRecipe 3");
+
 
     const userMessage = `
     Recipe title: ${recipeTitle},
@@ -540,7 +491,35 @@ async function generateRecipe(recipeTitle, mealType, dietaryPreferences, numberO
     if (run.status === 'completed') {
       const messages = await openai.beta.threads.messages.list(run.thread_id);
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
-      return latestMessage || null; // Return the message or null if not found
+      let finalRecipe;
+
+      if (latestMessage && latestMessage['content'] && latestMessage['content'].length > 0) {
+        // console.log("generateRecipes test 2");
+    
+        const contentList = latestMessage['content'];
+        const contentObject = contentList.length > 0 ? contentList[0] : null;
+        // console.log("generateRecipes test 3", contentObject);
+    
+        if (contentObject && contentObject['type'] === 'text') {
+          const textValue = contentObject['text']['value'];
+    
+          try {
+            const parsedJson = JSON.parse(textValue);
+            // console.log("generateRecipes test 4", parsedJson);
+    
+            // Check if the parsed JSON has a "properties" key
+            finalRecipe = parsedJson;
+            if (parsedJson.hasOwnProperty('properties')) {
+              // console.log("generateRecipes test 5 - properties found, flattening");
+              finalRecipe = parsedJson.properties; // Flatten the object by extracting "properties"
+              return finalRecipe;
+            }
+          } catch (parseError) {
+            console.error('Error parsing recipe JSON:', parseError);
+          }
+        }
+      }
+      return finalRecipe;
     } else {
       console.error('OpenAI run did not complete', run);
       return null;
@@ -549,6 +528,96 @@ async function generateRecipe(recipeTitle, mealType, dietaryPreferences, numberO
     console.error('Error generating recipe:', error);
     return null;
   }
+}
+
+async function generateImage(recipeTitle) {
+  const imageParams = {
+    request: {
+      model_name: "flat2DAnimerge_v30_72593.safetensors",
+      prompt: recipeTitle,
+      width: 512,
+      height: 384,
+      sampler_name: "Euler a",
+      negative_prompt: "nsfw,person,girl",
+      guidance_scale: 7,
+      steps: 20,
+      image_num: 1,
+      seed: -1,
+    },
+  };
+  
+  console.log("generateRecipe 1");
+  const imageResponse = await novitaClient.txt2ImgV3(imageParams);
+  console.log("generateRecipe 2", imageResponse);
+  
+  if (imageResponse && imageResponse.task_id) {
+    console.log("task_id:", imageResponse.task_id);
+  
+    let isCompleted = false;
+    const timeoutLimit = 30000; // 30 seconds in milliseconds
+    const intervalDelay = 1000; // 1 second delay between checks
+    const startTime = Date.now();
+  
+    // Start checking the task progress using a loop with timeout
+    while (!isCompleted) {
+      console.log("checking progress");
+  
+      try {
+        const progressRes = await novitaClient.progressV3({
+          task_id: imageResponse.task_id,
+        });
+  
+        if (progressRes.task.status === TaskStatus.SUCCEED) {
+          console.log("finished!", progressRes.images);
+          isCompleted = true; // Break the loop when done
+  
+          // Assuming progressRes.images is an array of image URLs
+          if(progressRes.images[0]['image_url']){
+            const imageUrls = await uploadImageToCloudStorage(progressRes.images[0]['image_url']);
+            console.log("Image URLs:", imageUrls);
+            return imageUrls;
+          }
+        } else if (progressRes.task.status === TaskStatus.FAILED) {
+          console.warn("failed!", progressRes.task.reason);
+          isCompleted = true; // Stop the loop on failure
+        } else if (progressRes.task.status === TaskStatus.QUEUED) {
+          console.log("queueing");
+        }
+      } catch (err) {
+        console.error("progress error:", err);
+        isCompleted = true; // Stop the loop in case of error
+      }
+  
+      // Check if the timeout limit has been exceeded
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime > timeoutLimit) {
+        console.error("Timed out after 20 seconds");
+        isCompleted = true;
+      }
+  
+      // Delay before the next check (1 second)
+      if (!isCompleted) {
+        await new Promise((resolve) => setTimeout(resolve, intervalDelay));
+      }
+    }
+  }
+}
+
+async function uploadImageToCloudStorage(imageUrl) {
+  // Fetch the image from the URL
+  const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+  const imageBuffer = Buffer.from(response.data);
+  const fileName = `images/generated-image-${Date.now()}.png`;
+  const file = bucket.file(fileName);
+
+  await file.save(imageBuffer, {
+    metadata: {
+      contentType: 'image/png', 
+    },
+    public: true, 
+  });
+
+  return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
 }
 
 
