@@ -22,13 +22,10 @@ class ShoppingListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(totalIngredients.first);
     List<Ingredient> combinedIngredients = UnitConverter()
         .combineIngredients(totalIngredients)
       ..sort((a, b) =>
           a.name.compareTo(b.name)); // New field for combined ingredients
-
-    print(combinedIngredients.first);
 
     // Group the ingredients by ingredientType
     Map<String, List<Ingredient>> groupedIngredients = groupBy(

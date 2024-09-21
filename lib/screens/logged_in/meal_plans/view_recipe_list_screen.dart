@@ -296,7 +296,7 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                           ? null
                           : () {
                               UserService(uid: uid).refreshSingleRecipe(
-                                recipeId: recipe.id,
+                                recipeId: recipe.id!,
                                 mealPlanId: widget.mealPlan.id,
                                 mealType: recipe.mealType,
                                 mealPlanConfiguration:
@@ -341,8 +341,8 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
       required Recipe recipe,
       required String uid,
       required List<Recipe> allRecipes}) async {
-    UserService(uid: uid)
-        .setRecipeComplete(recipeId: recipe.id, mealPlanId: widget.mealPlan.id);
+    UserService(uid: uid).setRecipeComplete(
+        recipeId: recipe.id!, mealPlanId: widget.mealPlan.id);
     // setState(() {
     completedRecipes.add(recipe); // Mark recipe as completed
     Recipe removedRecipe = nonCompletedRecipes.removeAt(index);

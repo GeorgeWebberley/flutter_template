@@ -64,7 +64,8 @@ List<Ingredient> getTotalIngredients(List<Recipe> recipes) {
   return ingredients.toSet().toList();
 }
 
-String formatIngredientQuantity(Ingredient ingredient) {
+String formatIngredientQuantity(Ingredient ingredient,
+    {bool simplify = false}) {
   String unit = ingredient.unit;
   num quantity = ingredient.quantity;
   if (ingredient.quantity == 1 && ingredient.unit.endsWith('s')) {
@@ -74,5 +75,20 @@ String formatIngredientQuantity(Ingredient ingredient) {
   if (ingredient.quantity == ingredient.quantity.toInt()) {
     quantity = ingredient.quantity.toInt();
   }
+
+  if (unit.toLowerCase() == "piece" || unit.toLowerCase() == "pieces") {
+    return "$quantity";
+  }
+  if (simplify &&
+      quantity < 20 &&
+      (unit.toLowerCase() == "gram" ||
+          unit.toLowerCase() == "grams" ||
+          unit.toLowerCase() == "g")) {
+    return "a pinch";
+  } else if (unit.toLowerCase() == "milliliters" ||
+      unit.toLowerCase() == "ml") {
+    return "a splash";
+  }
+
   return "$quantity $unit";
 }

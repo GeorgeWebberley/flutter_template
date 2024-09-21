@@ -173,6 +173,18 @@ class UserService {
             .toList());
   }
 
+  Stream<List<Recipe>> getSnacks() {
+    return _usersRef
+        .doc(uid)
+        .collection('snacks')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((document) {
+              Map<String, dynamic> data = document.data();
+              data['id'] = document.id;
+              return Recipe.fromJson(data);
+            }).toList());
+  }
+
   Stream<List<Recipe>> getRecipes(String mealPlanId) {
     return _usersRef
         .doc(uid)
@@ -308,6 +320,33 @@ class UserService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> addSnacks({
+    required List snacks,
+  }) async {
+    try {
+      CollectionReference snacksCollection =
+          _usersRef.doc(uid).collection('snacks');
+
+      List<Map<String, dynamic>> snackDocsWithIds = [];
+
+      for (var snack in snacks) {
+        // Add snack to Firestore and get the reference with generated ID
+        DocumentReference docRef = await snacksCollection.add(snack);
+
+        // Add the document data along with the Firestore document ID
+        snackDocsWithIds.add({
+          ...snack, // Include the original snack data
+          'id': docRef.id // Add the generated document ID
+        });
+      }
+
+      return snackDocsWithIds; // Return the list with the IDs
+    } catch (e) {
+      debugPrint('Error in UserService: $e');
+      throw Exception('Failed to delete recipe');
+    }
+  }
+
   Future<void> deleteRecipe({
     required String recipeId,
     required String mealPlanId,
@@ -320,6 +359,17 @@ class UserService {
           .collection('recipes')
           .doc(recipeId)
           .delete();
+    } catch (e) {
+      debugPrint('Error in UserService: $e');
+      throw Exception('Failed to delete recipe');
+    }
+  }
+
+  Future<void> deleteSnack({
+    required String recipeId,
+  }) async {
+    try {
+      await _usersRef.doc(uid).collection('snacks').doc(recipeId).delete();
     } catch (e) {
       debugPrint('Error in UserService: $e');
       throw Exception('Failed to delete recipe');

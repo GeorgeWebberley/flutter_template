@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/message.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/models/recipe_stub.dart';
+import 'package:flutter_firebase_template/services/user_service.dart';
 
 class ChatService {
   ChatService();
 
-  Future<Message?> sendMessage(String message,
-      {String? mealPlanId, bool isNewConversation = true}) async {
+  Future<Message?> sendMessage(String message, String uid,
+      {bool isNewConversation = true}) async {
     try {
       // Prepare the data to be sent to the Cloud Function
       final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
@@ -25,18 +26,59 @@ class ChatService {
         body['isNewConversation'] = isNewConversation;
       }
 
-      if (mealPlanId != null) {
-        body['mealPlanId'] = mealPlanId;
-        callable.call(body);
-        return null;
-      } else {
-        final response = await callable.call(body);
+      final response = await callable.call(body);
 
-        // Parse the JSON response into a Message object
-        final Map<String, dynamic> responseData =
-            Map<String, dynamic>.from(response.data['message']);
-        return Message.fromJson(responseData);
+      // Parse the JSON response into a Message object
+      final Map<String, dynamic> responseData =
+          Map<String, dynamic>.from(response.data['message']);
+
+      // Extract the first content object and its text value
+      final List<dynamic> contentList =
+          responseData['content'] as List<dynamic>;
+      final contentObject = contentList.isNotEmpty ? contentList.first : null;
+
+      String? parsedTextResponse;
+      List<Recipe>? parsedRecipes;
+      String? responseType;
+
+      if (contentObject != null && contentObject['type'] == 'text') {
+        final textValue = contentObject['text']['value'];
+        dynamic parsedJson = jsonDecode(textValue);
+
+        if (parsedJson?['properties'] != null) {
+          parsedJson = parsedJson['properties'];
+        }
+
+        responseType = parsedJson['response_type'];
+
+        print('Response type: $responseType');
+        print('Parsed JSON: $parsedJson');
+
+        if (responseType == 'text') {
+          parsedTextResponse = parsedJson['text_response'];
+        } else if (responseType == 'recipe' && parsedJson['recipes'] is List) {
+          List<Map<String, dynamic>> recipeDocs = await UserService(uid: uid)
+              .addSnacks(snacks: parsedJson['recipes']);
+
+          parsedRecipes =
+              recipeDocs.map((recipe) => Recipe.fromJson(recipe)).toList();
+        } else if (responseType == 'recipe' && parsedJson['recipe'] is Map) {
+          List<Map<String, dynamic>> recipeDoc = await UserService(uid: uid)
+              .addSnacks(snacks: [parsedJson['recipe']]);
+
+          parsedRecipes =
+              recipeDoc.map((recipe) => Recipe.fromJson(recipe)).toList();
+        }
       }
+
+      return Message(
+        role: responseData['role'] as String,
+        textResponse: parsedTextResponse,
+        recipes: parsedRecipes,
+        responseType: responseType,
+      );
+
+      // return Message.fromJson(responseData);
     } catch (e) {
       // Handle any errors here
       debugPrint('Error in ChatService: $e');

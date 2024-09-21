@@ -7,6 +7,7 @@ import 'package:flutter_firebase_template/screens/logged_in/account/widgets/acco
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_privacy.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_settings.dart';
 import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_smart_inventory.dart';
+import 'package:flutter_firebase_template/screens/logged_in/account/widgets/account_snacks.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
@@ -76,34 +77,53 @@ class AccountRoot extends StatelessWidget {
               const SizedBox(
                 height: AppPading.large,
               ),
-              if (user.favourites != null && user.favourites!.isNotEmpty)
-                Column(
-                  children: [
-                    AppBox(
-                      child: Column(
-                        children: [
-                          DetailTile(
-                            title: 'Favourite meals',
-                            onPressed: () {
-                              setScreen(AccountFavourites(
-                                      userData: user, backToRoot: backToRoot)
-                                  //   AccountSmartInventory(
-                                  //   user: user,
-                                  //   backToRoot: backToRoot,
-                                  // )
-                                  );
-                            },
-                            icon: Icons.favorite,
-                            iconColor: AppColors.danger,
+              // if (user.favourites != null && user.favourites!.isNotEmpty)
+              Column(
+                children: [
+                  AppBox(
+                    child: Column(
+                      children: [
+                        DetailTile(
+                          title: 'Favourite meals',
+                          onPressed: () {
+                            setScreen(AccountFavourites(
+                                    userData: user, backToRoot: backToRoot)
+                                //   AccountSmartInventory(
+                                //   user: user,
+                                //   backToRoot: backToRoot,
+                                // )
+                                );
+                          },
+                          icon: Icons.favorite,
+                          iconColor: AppColors.danger,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppPading.large),
+                          child: Divider(
+                            height: 0,
+                            color: Colors.black.withOpacity(0.1),
                           ),
-                        ],
-                      ),
+                        ),
+                        DetailTile(
+                          title: 'Your snacks',
+                          onPressed: () {
+                            setScreen(AccountSnacks(
+                              userData: user,
+                              backToRoot: backToRoot,
+                            ));
+                          },
+                          icon: Icons.lunch_dining,
+                          iconColor: AppColors.green,
+                        ),
+                      ],
                     ),
-                    const SizedBox(
-                      height: AppPading.large,
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(
+                    height: AppPading.large,
+                  ),
+                ],
+              ),
               AppBox(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -90,7 +90,9 @@ class UnitConverter {
 
       // Handle unrecognized units
       if (!_isRecognizedUnit(normalizedUnit)) {
-        String uniqueKey = '$key (${ingredient.unit})';
+        String uniqueKey = key;
+        // If we want the brackets after the name e.g. Onions (pieces)
+        // String uniqueKey = '$key (${ingredient.unit})';
         if (combinedQuantities.containsKey(uniqueKey)) {
           combinedQuantities[uniqueKey] =
               combinedQuantities[uniqueKey]! + ingredient.quantity;

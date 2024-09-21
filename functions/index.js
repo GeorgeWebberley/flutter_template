@@ -33,15 +33,10 @@ exports.sendMessage = functions.runWith({ timeoutSeconds: 120 }).https.onCall(as
 
   // Will be true if the message being sent is the final in the meal planning.
   // Used to create an entry in the database with "loading" set to true.
-  const mealPlanId = data.mealPlanId;
   const isNewConversation = data.isNewConversation;
   
   let newMealPlanDocRef;
 
-  if(mealPlanId){
-    // Get the mealPlan subcollection of the user
-    newMealPlanDocRef = userDocRef.collection('mealPlans').doc(mealPlanId);
-  }
 
   try {
     // If the thread doesn't exist, create a new one.
@@ -76,54 +71,10 @@ exports.sendMessage = functions.runWith({ timeoutSeconds: 120 }).https.onCall(as
       const messages = await openai.beta.threads.messages.list(run.thread_id);
       console.log("sendMessage test 2", messages);
 
-
-      
       // Return only the latest message from the assistant
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
 
       console.log("sendMessage test 3", latestMessage);
-
-      if (mealPlanId && latestMessage['content'][0]) {
-
-          // Extract the first content object
-          const contentList = latestMessage['content'];
-
-          const contentObject = contentList.length > 0 ? contentList[0] : null;
-          console.log("sendMessage test 4", contentObject);
-
-
-          let parsedRecipes = [];
-
-          if (contentObject && contentObject['type'] === 'text') {
-
-              const textValue = contentObject['text']['value'];
-              
-              try {
-                  console.log("sendMessage textValue");
-                  console.log(textValue);
-                  const parsedJson = JSON.parse(textValue);
-
-                  const responseType = parsedJson['response_type'];
-
-                  if (responseType === 'recipe' && Array.isArray(parsedJson['recipes'])) {
-                      parsedRecipes = parsedJson['recipes'];
-                  } else if (responseType === 'recipe' && typeof parsedJson['recipe'] === 'object') {
-                      parsedRecipes = [parsedJson['recipe']];
-                  }
-
-              } catch (error) {
-                  console.error("Error parsing response JSON:", error);
-              }
-          }
-
-          // If recipes were parsed successfully, update the meal plan document with recipes
-          if (parsedRecipes.length > 0 && newMealPlanDocRef) {
-              await newMealPlanDocRef.update({
-                  recipes: parsedRecipes,
-                  loading: false,  // Optionally, set loading to false since the recipes are now added
-              });
-          }
-      }
 
       return { status: 'success', message: latestMessage };
     } else {
@@ -629,7 +580,7 @@ async function generateImage(recipeTitle) {
       width: 512,
       height: 384,
       sampler_name: "Euler a",
-      negative_prompt: "nsfw,person,girl",
+      negative_prompt: "nsfw, person, girl, human, man, woman, body, face, figure, humanoid",
       guidance_scale: 7,
       steps: 20,
       image_num: 1,
@@ -645,7 +596,7 @@ async function generateImage(recipeTitle) {
     console.log("task_id:", imageResponse.task_id);
   
     let isCompleted = false;
-    const timeoutLimit = 30000; // 30 seconds in milliseconds
+    const timeoutLimit = 40000; // 40 seconds in milliseconds
     const intervalDelay = 1000; // 1 second delay between checks
     const startTime = Date.now();
   
@@ -682,7 +633,7 @@ async function generateImage(recipeTitle) {
       // Check if the timeout limit has been exceeded
       const elapsedTime = Date.now() - startTime;
       if (elapsedTime > timeoutLimit) {
-        console.error("Timed out after 20 seconds");
+        console.error("Timed out after 40 seconds");
         isCompleted = true;
       }
   

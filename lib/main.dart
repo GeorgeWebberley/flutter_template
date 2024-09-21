@@ -7,6 +7,7 @@ import 'package:flutter_firebase_template/providers/local_storage_provider.dart'
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
 import 'package:flutter_firebase_template/providers/share_provider.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
+import 'package:flutter_firebase_template/state/chat_state.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/widgets/wrapper.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -36,6 +37,7 @@ void main() async {
   PushNotificationProvider pushNotificationProvider =
       PushNotificationProvider(localStorageProvider: localStorageProvider);
   AuthService authService = AuthService();
+  ChatState chatState = ChatState();
   await pushNotificationProvider.init();
 
   FlutterNativeSplash.remove();
@@ -51,7 +53,10 @@ void main() async {
         Provider<ShareProvider>(create: (context) => shareProvider),
         Provider<LocalNotificationProvider>(
           create: (_) => localNotificationProvider,
-        )
+        ),
+        ChangeNotifierProvider<ChatState>(
+          create: (_) => chatState,
+        ),
       ],
       child: MyApp(authService: authService),
     ),

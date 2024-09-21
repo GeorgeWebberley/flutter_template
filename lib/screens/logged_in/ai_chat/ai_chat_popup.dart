@@ -7,6 +7,9 @@ import 'package:flutter_firebase_template/screens/logged_in/ai_chat/typing_input
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
 import 'package:flutter_firebase_template/services/chat_service.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
+import 'package:flutter_firebase_template/theme/border_radius.dart';
+import 'package:flutter_firebase_template/theme/box_shadow.dart';
+import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:provider/provider.dart';
@@ -55,8 +58,8 @@ class _AiChatPopupState extends State<AiChatPopup>
 
   Future<void> _addWelcomeMessage() async {
     List<String> welcomeMessages = [
-      "Hello! Chef Michael at your service. Need any help with ${widget.recipe.title}?",
-      "Hey there! How can I help with the ${widget.recipe.title} recipe?",
+      "Hello! Let me help with ${widget.recipe.title}. I can convert units, offer ingredient alternatives or give advice on any of the steps :)",
+      "Hey there! Let's make ${widget.recipe.title} together! I can help with unit conversions, ingredient alternatives or precise cooking instructions!",
     ];
     setState(() {
       _isTyping = true;
@@ -85,49 +88,58 @@ class _AiChatPopupState extends State<AiChatPopup>
   Widget build(BuildContext context) {
     user = Provider.of<AppUser?>(context);
 
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            reverse: true,
-            padding: const EdgeInsets.all(10),
-            itemCount:
-                _messages.length + 1, // Include placeholder or typing indicator
-            itemBuilder: (context, index) {
-              if (_isTyping && index == 0) {
-                // Return the typing indicator
-                return const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 5, horizontal: 20),
-                    child: TypingIndicator(),
-                  ),
-                );
-              } else if (!_isTyping && index == 0) {
-                // Return a placeholder
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Container(),
-                );
-              }
+    return Container(
+      decoration: BoxDecoration(
+          gradient: AppGradients.backgroundGradient,
+          borderRadius: AppBorderRadius.small),
+      child: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              reverse: true,
+              padding: const EdgeInsets.all(10),
+              itemCount: _messages.length +
+                  1, // Include placeholder or typing indicator
+              itemBuilder: (context, index) {
+                if (_isTyping && index == 0) {
+                  // Return the typing indicator
+                  return const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 5, horizontal: 20),
+                      child: TypingIndicator(),
+                    ),
+                  );
+                } else if (!_isTyping && index == 0) {
+                  // Return a placeholder
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Container(),
+                  );
+                }
 
-              // Safely access the message and animation controller
-              final messageIndex = _isTyping ? index - 1 : index - 1;
-              final message = _messages[messageIndex];
+                // Safely access the message and animation controller
+                final messageIndex = _isTyping ? index - 1 : index - 1;
+                final message = _messages[messageIndex];
 
-              if (messageIndex < _animationControllers.length) {
-                final animationController = _animationControllers[messageIndex];
+                if (messageIndex < _animationControllers.length) {
+                  final animationController =
+                      _animationControllers[messageIndex];
 
-                return _buildAnimatedMessage(message, animationController);
-              }
+                  return _buildAnimatedMessage(message, animationController);
+                }
 
-              // In case there's no corresponding AnimationController, return a basic message
-              return _buildMessageContent(message);
-            },
+                // In case there's no corresponding AnimationController, return a basic message
+                return _buildMessageContent(message);
+              },
+            ),
           ),
-        ),
-        TypingInput(sendMessage: _sendMessage),
-      ],
+          Container(
+              color: Colors.white,
+              child: TypingInput(sendMessage: _sendMessage)),
+        ],
+      ),
     );
   }
 
@@ -151,12 +163,15 @@ class _AiChatPopupState extends State<AiChatPopup>
             margin: const EdgeInsets.symmetric(vertical: 5),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: isUserMessage
-                  ? const LinearGradient(
-                      colors: [Colors.blue, Colors.blueAccent])
-                  : const LinearGradient(
-                      colors: [Colors.green, Colors.lightGreen]),
-              borderRadius: BorderRadius.circular(20),
+              color: isUserMessage ? AppColors.primary : Colors.white,
+              boxShadow: [AppBoxShadow.small],
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                  bottomLeft:
+                      isUserMessage ? Radius.circular(20) : Radius.circular(0),
+                  bottomRight:
+                      isUserMessage ? Radius.circular(0) : Radius.circular(20)),
             ),
             child: _buildMessageContent(message), // Ensure this is not empty
           ),
@@ -169,19 +184,19 @@ class _AiChatPopupState extends State<AiChatPopup>
     if (message.responseType == 'text') {
       return Text(
         message.textResponse ?? '',
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(
+            color: message.role == 'user' ? Colors.white : Colors.black),
       );
     } else if (message.responseType == 'recipe' && message.recipes != null) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: message.recipes!
+      return Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(
+          "Here you go! I will add ${message.recipes!.length > 1 ? 'these recipes' : 'this recipe'} to your 'snacks' section on your profile.",
+          style: const TextStyle(color: Colors.black),
+        ),
+        const SizedBox(height: AppPading.large),
+        ...message.recipes!
             .map((recipe) => Column(
                   children: [
-                    Text(
-                      "Here is a recipe for a delicious ${recipe.title}. I hope you like it!",
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    const SizedBox(height: AppPading.large),
                     AppButton(
                       onPressed: () {
                         Navigator.push(
@@ -193,10 +208,11 @@ class _AiChatPopupState extends State<AiChatPopup>
                       },
                       text: recipe.title,
                     ),
+                    const SizedBox(height: AppPading.large),
                   ],
                 ))
             .toList(),
-      );
+      ]);
     } else {
       return Container();
     }

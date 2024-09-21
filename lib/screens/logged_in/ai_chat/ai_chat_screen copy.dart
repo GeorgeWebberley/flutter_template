@@ -14,13 +14,12 @@ import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_sc
 import 'package:flutter_firebase_template/services/chat_service.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
+import 'package:flutter_firebase_template/shared/app_checkbox.dart';
 import 'package:flutter_firebase_template/shared/app_dialog.dart';
 import 'package:flutter_firebase_template/shared/dialogs.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/fade_navigator.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/shared/number_input.dart';
-import 'package:flutter_firebase_template/state/chat_state.dart';
-import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/form_fields.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
@@ -44,10 +43,16 @@ class AiChatScreen extends StatefulWidget {
 
 class _AiChatScreenState extends State<AiChatScreen>
     with TickerProviderStateMixin {
-  AppUser? user;
-  final ChatService _chatService = ChatService();
+  final List<Message> _messages = [];
 
-  final List<String> _mealPlanResponses = [
+  final ChatService _chatService = ChatService();
+  final List<AnimationController> _animationControllers = [];
+  bool _isTyping = false;
+  ConversationType? conversationType;
+
+  AppUser? user;
+
+  List<String> _mealPlanResponses = [
     "Great! Now could you tell me how many meals would you like to create?",
     "Awesome! Next, how many meals would you like to prepare?",
     "Fantastic! How many meals are you thinking of creating?",
@@ -55,7 +60,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     "Excellent! How many meals should we plan for?"
   ];
 
-  final List<String> _welcomeMessages = [
+  List<String> _welcomeMessages = [
     "Hi there! Chef Michael at your service for all things culinary. Would you like to create a meal plan, or do you have any food-related questions? How can I assist today?",
     "Greetings! Chef Michael here, ready to help with all your cooking needs. Are you looking to craft a meal plan, or do you have some food questions I can answer?",
     "Hello! Chef Michael checking in to assist with your culinary adventures. Need help with a meal plan, or do you have some general food inquiries?",
@@ -63,7 +68,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     "Hey there! Chef Michael here, ready to lend a hand with anything culinary. Would you like to start on a meal plan, or do you have any food questions I can answer?"
   ];
 
-  final List<String> _foodAssistantWelcome = [
+  List<String> _foodAssistantWelcome = [
     "Great! Feel free to ask me any questions about food or diets. I can also create an individual meal for you, complete with a recipe and ingredients list tailored to your preferences. Just let me know what you need!",
     "Awesome! You can ask me anything about food or diets right here. I’m also happy to create an individual meal for you, including a recipe and ingredients list based on what you like. Just ask away!",
     "Cool! I’m here to answer any food or diet questions you have. If you’d like, I can also create an individual meal for you, complete with a recipe and ingredients list to match your preferences. Just tell me what you need!",
@@ -71,13 +76,32 @@ class _AiChatScreenState extends State<AiChatScreen>
     "Great! You can ask me anything related to food or diets. Plus, I can create an individual meal for you, with a recipe and ingredients list tailored to your preferences. Just let me know what you’re looking for!"
   ];
 
-  final List<String> _dietaryPreferencesMessages = [
+  List<String> _dietaryPreferencesMessages = [
     "Great! Before I finalise your plan, is there anything else you’d like to add? Feel free to be as detailed as you like - preferred cooking methods, portion sizes, low-carb options, or anything else that’s on your mind!",
     "Awesome! Is there anything you’d like to specify about your meals? Don’t hesitate to be specific - ingredient preferences, dietary requirements, spice levels, family-friendly recipes, or any other preferences you have!",
     "Fantastic! Is there anything you'd like to include in your meals? You can get as detailed as you want - dietary requirements, prep time limits, favorite cuisines, dairy-free options, or anything else!",
     "Perfect! Before I build your plan, is there anything you’d like to share that can help me create your meals? Feel free to go into as much detail as you’d like - dietary requirements,  preferred cooking tools , or anything else you’re thinking of!",
     "Excellent! Is there anything else you’d like to add that will help me create meals perfect for you? You can be as detailed as you want - dietary requirements, specific ingredients to include or avoid, quick weekday dinners, or any other preferences you have in mind!",
   ];
+
+  List<DietaryPreference>? dietaryPreferences;
+  List<RecipeStub>? recipeStubs;
+  int numberOfBreakfasts = 0;
+  int numberOfLunches = 0;
+  int numberOfDinners = 0;
+  List<RecipeStub> selectedBreakfastRecipes = [];
+  List<RecipeStub> selectedLunchRecipes = [];
+  List<RecipeStub> selectedDinnerRecipes = [];
+  int? numberOfPeople;
+  bool specifiedNumberOfMeals = false;
+  bool specifiedDietaryPreferences = false;
+  bool specifiedNumberOfPeople = false;
+  bool selectedRecipeTitles = false;
+  bool submitted = false;
+
+  // Boolean will be sent to the backend cloud function to inidicate this is a new conversation.
+  // Will be set to false after the first message is sent.
+  bool isNewConversation = true;
 
   @override
   void initState() {
@@ -88,129 +112,89 @@ class _AiChatScreenState extends State<AiChatScreen>
 
   Future<void> _addWelcomeMessage() async {
     // Get a random message from the welcome messages list
-    ChatState chatState = Provider.of<ChatState>(context, listen: false);
+    final Message aiMessage = Message(
+        role: 'system',
+        textResponse: _welcomeMessages[
+            DateTime.now().millisecond % _welcomeMessages.length],
+        responseType: 'text');
 
-    if (chatState.messages.isEmpty) {
-      chatState.addMessage(
-          Message(
-              role: 'system',
-              textResponse: _welcomeMessages[
-                  DateTime.now().millisecond % _welcomeMessages.length],
-              responseType: 'text'),
-          this);
-    }
+    AnimationController aiAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    setState(() {
+      _messages.insert(0, aiMessage);
+      _animationControllers.insert(0, aiAnimationController);
+    });
+
+    aiAnimationController.forward();
   }
 
-  // @override
-  // void dispose() {
-  //   for (var controller in Provider.of<ChatState>(context, listen: false)
-  //       .animationControllers) {
-  //     controller.dispose();
-  //   }
-  //   super.dispose();
-  // }
+  @override
+  void dispose() {
+    for (var controller in _animationControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     user = Provider.of<AppUser?>(context);
 
-    return Consumer<ChatState>(builder: (context, chatState, child) {
-      return Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  reverse: true,
-                  padding: const EdgeInsets.all(10),
-                  itemCount: chatState.messages.length +
-                      1, // Include placeholder or typing indicator
-                  itemBuilder: (context, index) {
-                    if (chatState.isTyping && index == 0) {
-                      return _buildTypingIndicator();
-                    } else if (!chatState.isTyping && index == 0) {
-                      return _buildPlaceholder(chatState);
-                    }
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            reverse: true,
+            padding: const EdgeInsets.all(10),
+            itemCount:
+                _messages.length + 1, // Include placeholder or typing indicator
+            itemBuilder: (context, index) {
+              if (_isTyping && index == 0) {
+                return _buildTypingIndicator();
+              } else if (!_isTyping && index == 0) {
+                return _buildPlaceholder();
+              }
 
-                    final message = chatState
-                        .messages[chatState.isTyping ? index - 1 : index - 1];
-                    return _buildAnimatedMessage(
-                        message,
-                        chatState.animationControllers[
-                            chatState.isTyping ? index - 1 : index - 1]);
-                  },
-                ),
-              ),
-              if (chatState.conversationType == ConversationType.chat)
-                _buildMessageInput(chatState),
-            ],
+              final message = _messages[_isTyping ? index - 1 : index - 1];
+              return _buildAnimatedMessage(message,
+                  _animationControllers[_isTyping ? index - 1 : index - 1]);
+            },
           ),
-          if (chatState.conversationType != null)
-            Positioned(
-                top: 0,
-                right: 0,
-                child: SafeArea(
-                    child: Column(
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        chatState.clearState();
-                        _addWelcomeMessage();
-                      },
-                      icon: const Icon(
-                        Icons.close,
-                        size: 30,
-                        color: AppColors.danger,
-                      ),
-                    ),
-                    if (chatState.conversationType == ConversationType.mealPlan)
-                      // Go back one question
-                      IconButton(
-                        onPressed: () {
-                          chatState.goBackOneQuestion();
-                        },
-                        icon: const Icon(
-                          Icons.undo,
-                          size: 30,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                  ],
-                ))),
-        ],
-      );
-    });
+        ),
+        if (conversationType == ConversationType.chat) _buildMessageInput(),
+      ],
+    );
   }
 
-  Widget _buildConversationTypeSelector(ChatState chatState) {
+  Widget _buildConversationTypeSelector() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Expanded(
             child: AppButton(
           onPressed: () async {
-            // We don't notify listeners here, since they will be notified when the message is added
-            chatState.setConversationType(ConversationType.mealPlan);
-            chatState.setTyping(true);
+            _addMessage(Message(
+                role: 'user',
+                textResponse: "Create Meals",
+                responseType: 'text'));
 
-            chatState.addMessage(
-                Message(
-                    role: 'user',
-                    textResponse: "Create Meals",
-                    responseType: 'text'),
-                this);
+            setState(() {
+              conversationType = ConversationType.mealPlan;
+              _isTyping = true;
+            });
 
             Future.delayed(const Duration(milliseconds: 2000), () {
-              // We don't notify listeners here, since they will be notified when the message is added
-              chatState.setTyping(false);
-              chatState.addMessage(
-                  Message(
-                      role: 'system',
-                      textResponse: _mealPlanResponses[
-                          DateTime.now().millisecond %
-                              _mealPlanResponses.length],
-                      responseType: 'text'),
-                  this);
+              setState(() {
+                _isTyping = false;
+              });
+              _addMessage(Message(
+                  role: 'system',
+                  textResponse: _mealPlanResponses[
+                      DateTime.now().millisecond % _mealPlanResponses.length],
+                  responseType: 'text'));
             });
           },
           text: "Create Meals",
@@ -221,26 +205,24 @@ class _AiChatScreenState extends State<AiChatScreen>
             child: AppButton(
           backgroundGradient: AppGradients.greenGradient,
           onPressed: () {
-            // We don't notify listeners here, since they will be notified when the message is added
-            chatState.setConversationType(ConversationType.chat);
-            chatState.setTyping(true);
-            chatState.addMessage(
-                Message(
-                    role: 'user',
-                    textResponse: "Food Assistant",
-                    responseType: 'text'),
-                this);
+            _addMessage(Message(
+                role: 'user',
+                textResponse: "Food Assistant",
+                responseType: 'text'));
+            setState(() {
+              conversationType = ConversationType.chat;
+              _isTyping = true;
+            });
 
             Future.delayed(const Duration(milliseconds: 2000), () {
-              chatState.setTyping(false);
-
-              chatState.addMessage(
-                  Message(
-                      role: 'system',
-                      textResponse: _foodAssistantWelcome[
-                          DateTime.now().millisecond % _welcomeMessages.length],
-                      responseType: 'text'),
-                  this);
+              setState(() {
+                _isTyping = false;
+              });
+              _addMessage(Message(
+                  role: 'system',
+                  textResponse: _foodAssistantWelcome[
+                      DateTime.now().millisecond % _welcomeMessages.length],
+                  responseType: 'text'));
             });
           },
           text: "Food Assistant",
@@ -250,7 +232,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  Widget _buildMealPlanInput(ChatState chatState) {
+  Widget _buildMealPlanInput() {
     return Padding(
       padding: const EdgeInsets.all(AppPading.large),
       child: AppBox(
@@ -262,10 +244,9 @@ class _AiChatScreenState extends State<AiChatScreen>
               const Row(),
               NumberInput(
                 label: "Breakfasts",
-                initialValue: chatState.numberOfBreakfasts,
                 onChanged: (value) {
                   setState(() {
-                    chatState.numberOfBreakfasts = value;
+                    numberOfBreakfasts = value;
                   });
                 },
               ),
@@ -278,10 +259,9 @@ class _AiChatScreenState extends State<AiChatScreen>
               ),
               NumberInput(
                 label: "Lunches",
-                initialValue: chatState.numberOfLunches,
                 onChanged: (value) {
                   setState(() {
-                    chatState.numberOfLunches = value;
+                    numberOfLunches = value;
                   });
                 },
               ),
@@ -294,10 +274,9 @@ class _AiChatScreenState extends State<AiChatScreen>
               ),
               NumberInput(
                 label: "Dinners",
-                initialValue: chatState.numberOfDinners,
                 onChanged: (value) {
                   setState(() {
-                    chatState.numberOfDinners = value;
+                    numberOfDinners = value;
                   });
                 },
               ),
@@ -305,35 +284,30 @@ class _AiChatScreenState extends State<AiChatScreen>
                 height: AppPading.large * 2,
               ),
               AppButton(
-                  onPressed: chatState.numberOfBreakfasts == 0 &&
-                          chatState.numberOfLunches == 0 &&
-                          chatState.numberOfDinners == 0
+                  onPressed: numberOfBreakfasts == 0 &&
+                          numberOfLunches == 0 &&
+                          numberOfDinners == 0
                       ? null
                       : () async {
                           String message = "";
 
-                          if (chatState.numberOfBreakfasts > 0) {
-                            message +=
-                                "• ${chatState.numberOfBreakfasts} Breakfasts\n";
+                          if (numberOfBreakfasts > 0) {
+                            message += "• $numberOfBreakfasts Breakfasts\n";
                           }
-                          if (chatState.numberOfLunches > 0) {
-                            message +=
-                                "• ${chatState.numberOfLunches} Lunches\n";
+                          if (numberOfLunches > 0) {
+                            message += "• $numberOfLunches Lunches\n";
                           }
-                          if (chatState.numberOfDinners > 0) {
-                            message += "• ${chatState.numberOfDinners} Dinners";
+                          if (numberOfDinners > 0) {
+                            message += "• $numberOfDinners Dinners";
                           }
 
-                          chatState.setTyping(true);
-                          chatState.addMessage(
-                              Message(
-                                  role: "user",
-                                  responseType: "text",
-                                  textResponse: message.trim()),
-                              this);
-
+                          _addMessage(Message(
+                              role: "user",
+                              responseType: "text",
+                              textResponse: message.trim()));
                           setState(() {
-                            chatState.specifiedNumberOfMeals = true;
+                            specifiedNumberOfMeals = true;
+                            _isTyping = true;
                           });
 
                           UserData? userData =
@@ -341,20 +315,17 @@ class _AiChatScreenState extends State<AiChatScreen>
 
                           Future.delayed(const Duration(milliseconds: 1000),
                               () {
-                            chatState.setTyping(false);
-
                             setState(() {
-                              chatState.dietaryPreferences =
+                              _isTyping = false;
+                              dietaryPreferences =
                                   userData?.dietaryPreferences ?? [];
                             });
-                            chatState.addMessage(
-                                Message(
-                                    role: 'system',
-                                    textResponse: _dietaryPreferencesMessages[
-                                        DateTime.now().millisecond %
-                                            _dietaryPreferencesMessages.length],
-                                    responseType: 'text'),
-                                this);
+                            _addMessage(Message(
+                                role: 'system',
+                                textResponse: _dietaryPreferencesMessages[
+                                    DateTime.now().millisecond %
+                                        _dietaryPreferencesMessages.length],
+                                responseType: 'text'));
                           });
                         },
                   text: "Save")
@@ -365,7 +336,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  Widget _buildPeopleInput(ChatState chatState) {
+  Widget _buildPeopleInput() {
     return Padding(
       padding: const EdgeInsets.all(AppPading.large),
       child: AppBox(
@@ -378,10 +349,9 @@ class _AiChatScreenState extends State<AiChatScreen>
               NumberInput(
                 label: "People",
                 minValue: 1,
-                initialValue: chatState.numberOfPeople,
                 onChanged: (value) {
                   setState(() {
-                    chatState.numberOfPeople = value;
+                    numberOfPeople = value;
                   });
                 },
               ),
@@ -390,51 +360,58 @@ class _AiChatScreenState extends State<AiChatScreen>
               ),
               AppButton(
                   onPressed: () async {
-                    chatState.setTyping(true);
                     setState(() {
-                      chatState.specifiedNumberOfPeople = true;
-                      chatState.numberOfPeople ??= 1;
+                      _isTyping = true;
+                      specifiedNumberOfPeople = true;
+                      numberOfPeople ??= 1;
                     });
-                    chatState.addMessage(
-                        Message(
-                            role: "user",
-                            responseType: "text",
-                            textResponse:
-                                "${chatState.numberOfPeople} ${chatState.numberOfPeople == 1 ? "person" : "people"}"),
-                        this);
+                    _addMessage(Message(
+                        role: "user",
+                        responseType: "text",
+                        textResponse:
+                            "$numberOfPeople ${numberOfPeople == 1 ? "person" : "people"}"));
                     await Future.delayed(const Duration(milliseconds: 300));
-
-                    chatState.addMessage(
-                        Message(
-                            role: 'system',
-                            textResponse:
-                                "I'll create some recommendations for you, and you can tell me your favourites.",
-                            responseType: 'text'),
-                        this);
+                    _addMessage(Message(
+                        role: 'system',
+                        textResponse:
+                            "I'll create some recommendations for you, and you can tell me your favourites.",
+                        responseType: 'text'));
 
                     List<RecipeStub> recipes =
                         await _chatService.getRecipeStubs(
-                            numberOfPeople: chatState.numberOfPeople!,
-                            breakfasts:
-                                (chatState.numberOfBreakfasts * 1.5).ceil(),
-                            lunches: (chatState.numberOfLunches * 1.5).ceil(),
-                            dinners: (chatState.numberOfDinners * 1.5).ceil(),
+                            numberOfPeople: numberOfPeople!,
+                            breakfasts: (numberOfBreakfasts * 1.5).ceil(),
+                            lunches: (numberOfLunches * 1.5).ceil(),
+                            dinners: (numberOfDinners * 1.5).ceil(),
                             snacks: 0,
-                            dietaryPreferences: chatState.dietaryPreferences!
+                            dietaryPreferences: dietaryPreferences!
                                 .map((preference) => preference.preference)
                                 .toList());
 
-                    chatState.setTyping(false);
+                    setState(() {
+                      _isTyping = false;
+                      recipeStubs = recipes;
+                    });
 
-                    chatState.recipeStubs = recipes;
+                    _addMessage(Message(
+                        role: 'system',
+                        textResponse:
+                            "Here are your suggestions! Select the ones you think sound good and I'll add them to your plan.",
+                        responseType: 'text'));
 
-                    chatState.addMessage(
-                        Message(
-                            role: 'system',
-                            textResponse:
-                                "Here are your suggestions! Select the ones you think sound good and I'll add them to your plan.",
-                            responseType: 'text'),
-                        this);
+                    // Future.delayed(const Duration(milliseconds: 2000), () {
+                    //   _addMessage(Message(
+                    //       role: 'system',
+                    //       textResponse:
+                    //           "Perfect! Are you ready for me to start preparing? It can take around a minute or so, buy you are free to close your app and come back later :)",
+                    //       responseType: 'text'));
+
+                    //   _addMessage(Message(
+                    //       role: 'system',
+                    //       textResponse:
+                    //           "Perfect! Are you ready for me to start preparing? It can take around a minute or so, buy you are free to close your app and come back later :)",
+                    //       responseType: 'text'));
+                    // });
                   },
                   text: "Save")
             ],
@@ -444,7 +421,7 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  Widget _buildDietaryPreferencesChat(ChatState chatState) {
+  Widget _buildDietaryPreferencesChat() {
     return Padding(
       padding: const EdgeInsets.all(AppPading.large),
       child: AppBox(
@@ -454,7 +431,7 @@ class _AiChatScreenState extends State<AiChatScreen>
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Row(),
-              ...chatState.dietaryPreferences!
+              ...dietaryPreferences!
                   .map((preference) => Column(
                         children: [
                           Row(
@@ -469,19 +446,10 @@ class _AiChatScreenState extends State<AiChatScreen>
                                 ).h5(),
                               ),
                               IconButton(
-                                  onPressed: () async {
+                                  onPressed: () {
                                     setState(() {
-                                      chatState.dietaryPreferences
-                                          ?.remove(preference);
+                                      dietaryPreferences?.remove(preference);
                                     });
-                                    await UserService(uid: user!.uid)
-                                        .updateUserData(
-                                            key: "dietaryPreferences",
-                                            value: chatState.dietaryPreferences
-                                                ?.map(
-                                                  (e) => e.toJson(),
-                                                )
-                                                .toList());
                                   },
                                   icon: Icon(Icons.delete,
                                       color: AppColors.danger)),
@@ -490,24 +458,22 @@ class _AiChatScreenState extends State<AiChatScreen>
                           Padding(
                             padding: EdgeInsets.only(
                                 top: AppPading.large,
-                                bottom: (preference ==
-                                        chatState.dietaryPreferences!.last)
+                                bottom: (preference == dietaryPreferences!.last)
                                     ? 0
                                     : AppPading.large),
-                            child:
-                                preference != chatState.dietaryPreferences!.last
-                                    ? Divider(
-                                        height: 0,
-                                        color: Colors.black.withOpacity(0.1),
-                                      )
-                                    : Container(),
+                            child: preference != dietaryPreferences!.last
+                                ? Divider(
+                                    height: 0,
+                                    color: Colors.black.withOpacity(0.1),
+                                  )
+                                : Container(),
                           ),
                         ],
                       ))
                   .toList(),
               TextButton(
                 onPressed: () {
-                  addPreferenceDialog(context, chatState);
+                  addPreferenceDialog(context);
                 },
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -533,40 +499,46 @@ class _AiChatScreenState extends State<AiChatScreen>
                   onPressed: () async {
                     String message = "";
 
-                    if (chatState.dietaryPreferences == null ||
-                        chatState.dietaryPreferences!.isEmpty) {
+                    if (dietaryPreferences == null ||
+                        dietaryPreferences!.isEmpty) {
                       message = "No dietary preferences";
                     } else {
                       for (DietaryPreference preference
-                          in chatState.dietaryPreferences!) {
+                          in dietaryPreferences!) {
                         message += "• ${preference.preference}";
-                        if (preference != chatState.dietaryPreferences!.last &&
-                            chatState.dietaryPreferences!.length > 1) {
+                        if (preference != dietaryPreferences!.last &&
+                            dietaryPreferences!.length > 1) {
                           message += "\n";
                         }
                       }
                     }
 
-                    chatState.setTyping(true);
-                    chatState.specifiedDietaryPreferences = true;
+                    _addMessage(Message(
+                        role: "user",
+                        responseType: "text",
+                        textResponse: message.trim()));
+                    setState(() {
+                      _isTyping = true;
+                      specifiedDietaryPreferences = true;
+                    });
 
-                    chatState.addMessage(
-                        Message(
-                            role: "user",
-                            responseType: "text",
-                            textResponse: message.trim()),
-                        this);
+                    await UserService(uid: user!.uid).updateUserData(
+                        key: "dietaryPreferences",
+                        value: dietaryPreferences
+                            ?.map(
+                              (e) => e.toJson(),
+                            )
+                            .toList());
 
                     Future.delayed(const Duration(milliseconds: 1000), () {
-                      chatState.setTyping(false);
-
-                      chatState.addMessage(
-                          Message(
-                              role: 'system',
-                              textResponse:
-                                  "Thanks! Now lastly, how many people will you be needing food for?",
-                              responseType: 'text'),
-                          this);
+                      setState(() {
+                        _isTyping = false;
+                      });
+                      _addMessage(Message(
+                          role: 'system',
+                          textResponse:
+                              "Thanks! Now lastly, how many people will you be needing food for?",
+                          responseType: 'text'));
                     });
                   },
                   text: "Save")
@@ -577,21 +549,18 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  Widget _buildSelectRecipes(ChatState chatState) {
-    if (chatState.recipeStubs == null) {
+  Widget _buildSelectRecipes() {
+    if (recipeStubs == null) {
       // TODO: Something better
       return const Text("Something went wrong");
     }
 
-    List<RecipeStub> breakfastRecipes = chatState.recipeStubs!
-        .where((recipe) => recipe.mealType == "breakfast")
-        .toList();
-    List<RecipeStub> lunchRecipes = chatState.recipeStubs!
-        .where((recipe) => recipe.mealType == "lunch")
-        .toList();
-    List<RecipeStub> dinnerRecipes = chatState.recipeStubs!
-        .where((recipe) => recipe.mealType == "dinner")
-        .toList();
+    List<RecipeStub> breakfastRecipes =
+        recipeStubs!.where((recipe) => recipe.mealType == "breakfast").toList();
+    List<RecipeStub> lunchRecipes =
+        recipeStubs!.where((recipe) => recipe.mealType == "lunch").toList();
+    List<RecipeStub> dinnerRecipes =
+        recipeStubs!.where((recipe) => recipe.mealType == "dinner").toList();
     // List<RecipeStub> snackRecipes =
     //     recipeStubs!.where((recipe) => recipe.mealType == "snack").toList();
 
@@ -608,34 +577,28 @@ class _AiChatScreenState extends State<AiChatScreen>
                 RecipeExpandableTile(
                   mealType: "Breakfast",
                   recipes: breakfastRecipes,
-                  onChanged: ((recipes) =>
-                      chatState.selectedBreakfastRecipes = recipes),
+                  onChanged: ((recipes) => selectedBreakfastRecipes = recipes),
                 ),
               if (lunchRecipes.isNotEmpty)
                 RecipeExpandableTile(
                   mealType: "Lunch",
                   recipes: lunchRecipes,
-                  onChanged: ((recipes) =>
-                      chatState.selectedLunchRecipes = recipes),
+                  onChanged: ((recipes) => selectedLunchRecipes = recipes),
                 ),
               if (dinnerRecipes.isNotEmpty)
                 RecipeExpandableTile(
                   mealType: "Dinner",
                   recipes: dinnerRecipes,
-                  onChanged: ((recipes) =>
-                      chatState.selectedDinnerRecipes = recipes),
+                  onChanged: ((recipes) => selectedDinnerRecipes = recipes),
                 ),
               const SizedBox(
                 height: AppPading.large,
               ),
               AppButton(
                   onPressed: () async {
-                    if (chatState.selectedBreakfastRecipes.length <
-                            chatState.numberOfBreakfasts ||
-                        chatState.selectedLunchRecipes.length <
-                            chatState.numberOfLunches ||
-                        chatState.selectedDinnerRecipes.length <
-                            chatState.numberOfDinners) {
+                    if (selectedBreakfastRecipes.length < numberOfBreakfasts ||
+                        selectedLunchRecipes.length < numberOfLunches ||
+                        selectedDinnerRecipes.length < numberOfDinners) {
                       showDialog(
                         context: context,
                         builder: (context) => AppDialog(
@@ -654,19 +617,19 @@ class _AiChatScreenState extends State<AiChatScreen>
                               children: [
                                 TextSpan(
                                   text:
-                                      "${chatState.selectedBreakfastRecipes.length} breakfast${chatState.selectedBreakfastRecipes.length == 1 ? "" : "s"}\n",
+                                      "${selectedBreakfastRecipes.length} breakfast${selectedBreakfastRecipes.length == 1 ? "" : "s"}\n",
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w600),
                                 ),
                                 TextSpan(
                                   text:
-                                      "${chatState.selectedLunchRecipes.length} lunch${chatState.selectedLunchRecipes.length == 1 ? "" : "es"}\n",
+                                      "${selectedLunchRecipes.length} lunch${selectedLunchRecipes.length == 1 ? "" : "es"}\n",
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w600),
                                 ),
                                 TextSpan(
                                   text:
-                                      "${chatState.selectedDinnerRecipes.length} dinner${chatState.selectedDinnerRecipes.length == 1 ? "" : "s"}",
+                                      "${selectedDinnerRecipes.length} dinner${selectedDinnerRecipes.length == 1 ? "" : "s"}",
                                   style: const TextStyle(
                                       fontWeight: FontWeight.w600),
                                 ),
@@ -674,13 +637,13 @@ class _AiChatScreenState extends State<AiChatScreen>
                             ),
                           ),
                           onSave: () {
-                            _makeMealPlan(chatState);
+                            _makeMealPlan();
                             Navigator.pop(context);
                           },
                         ),
                       );
                     } else {
-                      _makeMealPlan(chatState);
+                      _makeMealPlan();
                     }
                   },
                   text: "Save")
@@ -691,47 +654,27 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  Future<void> _makeMealPlan(ChatState chatState) async {
+  Future<void> _makeMealPlan() async {
     String planId =
         await UserService(uid: user!.uid).addMealPlan(MealPlanConfiguration(
-      breakfasts: chatState.selectedBreakfastRecipes.length,
-      lunches: chatState.selectedLunchRecipes.length,
-      dinners: chatState.selectedDinnerRecipes.length,
-      numberOfPeople: chatState.numberOfPeople!,
-      dietaryPreferences: chatState.dietaryPreferences!
+      breakfasts: selectedBreakfastRecipes.length,
+      lunches: selectedLunchRecipes.length,
+      dinners: selectedDinnerRecipes.length,
+      numberOfPeople: numberOfPeople!,
+      dietaryPreferences: dietaryPreferences!
           .map((preference) => preference.preference)
           .toList(),
     ));
 
     _chatService.createMealPlan(
         mealPlanId: planId,
-        breakfasts:
-            chatState.selectedBreakfastRecipes.map((e) => e.title).toList(),
-        lunches: chatState.selectedLunchRecipes.map((e) => e.title).toList(),
-        dinners: chatState.selectedDinnerRecipes.map((e) => e.title).toList(),
-        numberOfPeople: chatState.numberOfPeople ?? 1,
-        dietaryPreferences: chatState.dietaryPreferences!
+        breakfasts: selectedBreakfastRecipes.map((e) => e.title).toList(),
+        lunches: selectedLunchRecipes.map((e) => e.title).toList(),
+        dinners: selectedDinnerRecipes.map((e) => e.title).toList(),
+        numberOfPeople: numberOfPeople ?? 1,
+        dietaryPreferences: dietaryPreferences!
             .map((preference) => preference.preference)
             .toList());
-
-    // String message = "";
-    // if (chatState.selectedBreakfastRecipes.isNotEmpty) {
-    //   message +=
-    //       "• Breakfasts: \n${chatState.selectedBreakfastRecipes.map((e) => "  • ${e.title}").join("\n")}\n\n";
-    // }
-    // if (chatState.selectedLunchRecipes.isNotEmpty) {
-    //   message +=
-    //       "• Lunches: \n${chatState.selectedLunchRecipes.map((e) => "  • ${e.title}").join("\n")}\n\n";
-    // }
-    // if (chatState.selectedDinnerRecipes.isNotEmpty) {
-    //   message +=
-    //       "• Dinners: \n${chatState.selectedDinnerRecipes.map((e) => "  • ${e.title}").join("\n")}";
-    // }
-
-    // chatState.addMessage(
-    //     Message(role: 'user', textResponse: message, responseType: 'text'),
-    //     this);
-    chatState.clearState();
     widget.changeNavigationIndex(0);
     Navigator.push(
       context,
@@ -739,6 +682,39 @@ class _AiChatScreenState extends State<AiChatScreen>
           builder: (context, _, __) => MealPlanRoot(
                 mealPlanId: planId,
               )),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return AppButton(
+      onPressed: () async {
+        String planId =
+            await UserService(uid: user!.uid).addMealPlan(MealPlanConfiguration(
+          breakfasts: numberOfBreakfasts,
+          lunches: numberOfLunches,
+          dinners: numberOfDinners,
+          numberOfPeople: numberOfPeople!,
+          dietaryPreferences: dietaryPreferences!
+              .map((preference) => preference.preference)
+              .toList(),
+        ));
+
+        String message =
+            """Please create recipes for $numberOfBreakfasts breakfasts, $numberOfLunches lunches and $numberOfDinners dinners for $numberOfPeople people. It is important you follow these dietary preferences: 
+        ${dietaryPreferences!.map((preference) => preference.preference).toList().join(", ")}""";
+
+        _chatService.sendMessage(message,
+            mealPlanId: planId, isNewConversation: isNewConversation);
+
+        Navigator.push(
+          context,
+          FadeNavigator(
+              builder: (context, _, __) => MealPlanRoot(
+                    mealPlanId: planId,
+                  )),
+        );
+      },
+      text: "Submit",
     );
   }
 
@@ -752,29 +728,31 @@ class _AiChatScreenState extends State<AiChatScreen>
     );
   }
 
-  Widget _buildPlaceholder(ChatState chatState) {
+  Widget _buildPlaceholder() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      child: chatState.conversationType == null
-          ? _buildConversationTypeSelector(chatState)
-          : chatState.conversationType == ConversationType.mealPlan &&
-                  chatState.specifiedNumberOfMeals == false
-              ? _buildMealPlanInput(chatState)
-              : chatState.conversationType == ConversationType.mealPlan &&
-                      chatState.specifiedDietaryPreferences == false
-                  ? _buildDietaryPreferencesChat(chatState)
-                  : chatState.conversationType == ConversationType.mealPlan &&
-                          chatState.specifiedNumberOfPeople == false
-                      ? _buildPeopleInput(chatState)
-                      : chatState.conversationType ==
-                                  ConversationType.mealPlan &&
-                              chatState.selectedRecipeTitles == false
-                          ? _buildSelectRecipes(chatState)
-                          : Container(),
+      child: conversationType == null
+          ? _buildConversationTypeSelector()
+          : conversationType == ConversationType.mealPlan &&
+                  specifiedNumberOfMeals == false
+              ? _buildMealPlanInput()
+              : conversationType == ConversationType.mealPlan &&
+                      specifiedDietaryPreferences == false
+                  ? _buildDietaryPreferencesChat()
+                  : conversationType == ConversationType.mealPlan &&
+                          specifiedNumberOfPeople == false
+                      ? _buildPeopleInput()
+                      : conversationType == ConversationType.mealPlan &&
+                              selectedRecipeTitles == false
+                          ? _buildSelectRecipes()
+                          : conversationType == ConversationType.mealPlan &&
+                                  submitted == false
+                              ? _buildSubmitButton()
+                              : Container(),
     );
   }
 
-  void addPreferenceDialog(BuildContext context, ChatState chatState) {
+  void addPreferenceDialog(BuildContext context) {
     String? preference;
     final formKey = GlobalKey<FormState>();
 
@@ -811,10 +789,10 @@ class _AiChatScreenState extends State<AiChatScreen>
                     await UserService(uid: user!.uid).updateUserData(
                         key: 'dietaryPreferences',
                         value: FieldValue.arrayUnion([
-                          {"preference": preference}
+                          {"preference": preference, "activated": true}
                         ]));
                     setState(() {
-                      chatState.dietaryPreferences
+                      dietaryPreferences
                           ?.add(DietaryPreference(preference: preference!));
                     });
                     Navigator.pop(context);
@@ -851,17 +829,14 @@ class _AiChatScreenState extends State<AiChatScreen>
             margin: const EdgeInsets.symmetric(vertical: 5),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isUserMessage ? AppColors.primary : Colors.white,
-              boxShadow: [AppBoxShadow.small],
-              borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                  bottomLeft:
-                      isUserMessage ? Radius.circular(20) : Radius.circular(0),
-                  bottomRight:
-                      isUserMessage ? Radius.circular(0) : Radius.circular(20)),
+              gradient: isUserMessage
+                  ? const LinearGradient(
+                      colors: [Colors.blue, Colors.blueAccent])
+                  : const LinearGradient(
+                      colors: [Colors.green, Colors.lightGreen]),
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: _buildMessageContent(message),
+            child: _buildMessageContent(message), // Ensure this is not empty
           ),
         ),
       ),
@@ -872,24 +847,19 @@ class _AiChatScreenState extends State<AiChatScreen>
     if (message.responseType == 'text') {
       return Text(
         message.textResponse ?? '',
-        style: TextStyle(
-            color: message.role == 'user' ? Colors.white : Colors.black),
+        style: const TextStyle(color: Colors.white),
       );
     } else if (message.responseType == 'recipe' && message.recipes != null) {
-      List<String> messages = [
-        "Here you go! I will also add ${message.recipes!.length > 1 ? 'these recipes' : 'this recipe'} to the 'snacks' section in your profile :)",
-        "Here are some recipes I found for you. I will also add ${message.recipes!.length > 1 ? 'these recipes' : 'this recipe'} to the 'snacks' section in your profile!",
-        "I hope you enjoy! If you want to find ${message.recipes!.length > 1 ? 'them' : 'it'} again you can check the 'snacks' section in your profile.",
-      ];
-      return Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(
-          messages[DateTime.now().millisecond % messages.length],
-          style: const TextStyle(color: Colors.black),
-        ),
-        const SizedBox(height: AppPading.large),
-        ...message.recipes!
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: message.recipes!
             .map((recipe) => Column(
                   children: [
+                    Text(
+                      "Here is a recipe for a delicious ${recipe.title}. I hope you like it!",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(height: AppPading.large),
                     AppButton(
                       onPressed: () {
                         Navigator.push(
@@ -901,19 +871,92 @@ class _AiChatScreenState extends State<AiChatScreen>
                       },
                       text: recipe.title,
                     ),
-                    const SizedBox(height: AppPading.large),
                   ],
                 ))
             .toList(),
-      ]);
+        // [
+        //   Text(
+        //     "Here is a recipe for a delicious ${message.recipe!.title}. I hope you like it!",
+        //     style: const TextStyle(color: Colors.white),
+        //   ),
+        //   const SizedBox(height: AppPading.large),
+        //   AppButton(
+        //     onPressed: () {
+        //       Navigator.push(
+        //           context,
+        //           SlideNavigator(
+        //               builder: (context, _, __) => RecipeScreen(
+        //                     recipe: message.recipe!,
+        //                   )));
+        //     },
+        //     text: message.recipe?.title ?? 'Recipe',
+        //   ),
+        // ],
+      );
     } else {
       return Container(); // If there's no content, return an empty container
     }
   }
 
-  Widget _buildMessageInput(ChatState chatState) {
-    return TypingInput(
-        sendMessage: (String message) =>
-            chatState.sendMessage(message, this, user!.uid));
+  Widget _buildMessageInput() {
+    return TypingInput(sendMessage: _sendMessage);
+  }
+
+  void _sendMessage(String text) async {
+    if (text.isEmpty) return;
+
+    _addMessage(
+        Message(role: 'user', textResponse: text, responseType: 'text'));
+
+    _showTypingIndicator(); // Show typing indicator
+
+    try {
+      // Call the ChatService to send the message and get the AI response
+      final Message? aiMessage = await _chatService.sendMessage(text,
+          isNewConversation: isNewConversation);
+
+      if (aiMessage != null) {
+        _addMessage(aiMessage);
+      }
+    } catch (e) {
+      setState(() {
+        final errorMessage = Message(
+            role: 'system',
+            textResponse: 'Error: Could not get AI response.',
+            responseType: 'text');
+        _messages.insert(0, errorMessage);
+        _animationControllers.insert(
+            0,
+            AnimationController(
+              duration: const Duration(milliseconds: 300),
+              vsync: this,
+            ));
+      });
+    } finally {
+      setState(() {
+        isNewConversation = false;
+        _isTyping = false;
+      });
+    }
+  }
+
+  void _addMessage(Message message) {
+    AnimationController aiAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    setState(() {
+      _messages.insert(0, message);
+      _animationControllers.insert(0, aiAnimationController);
+    });
+
+    aiAnimationController.forward();
+  }
+
+  void _showTypingIndicator() {
+    setState(() {
+      _isTyping = true;
+    });
   }
 }

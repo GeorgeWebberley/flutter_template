@@ -26,12 +26,20 @@ class Message {
     String? parsedTextResponse;
     List<Recipe>? parsedRecipes;
     String? responseType;
+    print("First");
 
     if (contentObject != null && contentObject['type'] == 'text') {
       final textValue = contentObject['text']['value'];
-      final parsedJson = jsonDecode(textValue);
+      dynamic parsedJson = jsonDecode(textValue);
+
+      if (parsedJson?['properties'] != null) {
+        parsedJson = parsedJson['properties'];
+      }
 
       responseType = parsedJson['response_type'];
+
+      print('Response type: $responseType');
+      print('Parsed JSON: $parsedJson');
 
       if (responseType == 'text') {
         parsedTextResponse = parsedJson['text_response'];
