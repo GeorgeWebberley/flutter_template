@@ -51,9 +51,6 @@ class ChatService {
 
         responseType = parsedJson['response_type'];
 
-        print('Response type: $responseType');
-        print('Parsed JSON: $parsedJson');
-
         if (responseType == 'text') {
           parsedTextResponse = parsedJson['text_response'];
         } else if (responseType == 'recipe' && parsedJson['recipes'] is List) {
@@ -114,7 +111,6 @@ class ChatService {
           Map<String, dynamic>.from(response.data['message']);
 
       try {
-        print("responseData: $responseData");
         //TODO: Make this into a model
         return {
           'message': responseData['content'][0]['text']['value'],

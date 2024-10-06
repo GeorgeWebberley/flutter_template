@@ -9,6 +9,7 @@ import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:flutter_firebase_template/widgets/app_intro_slider/intro_slider_page.dart';
 import 'package:flutter_firebase_template/widgets/app_intro_slider/page_indicator.dart';
 import 'package:flutter_firebase_template/widgets/lottie_controller.dart';
+import 'package:flutter_firebase_template/widgets/meal_plan_settings/tutorial.dart';
 import 'package:provider/provider.dart';
 
 class AppIntroSlider extends StatefulWidget {
@@ -91,14 +92,11 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
         optionalChild: AppButton(
             text: "Get Started!",
             onPressed: () async {
-              await Provider.of<LocalStorageProvider?>(context, listen: false)!
-                  .set(
-                      key: "${widget.user.uid}-${LocalStorageKeys.hasVisited}",
-                      value: "true");
               Navigator.pushReplacement(
                 context,
                 FadeNavigator(
-                    builder: (context, _, __) => const AppNavigation()),
+                  builder: (context, _, __) => const Tutorial(),
+                ),
               );
             }),
       ),

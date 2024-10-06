@@ -92,3 +92,8 @@ String formatIngredientQuantity(Ingredient ingredient,
 
   return "$quantity $unit";
 }
+
+bool listsAreTheSame(List list1, List list2) {
+  return Set.from(list1).containsAll(list2) &&
+      Set.from(list2).containsAll(list1);
+}

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
-import 'package:flutter_firebase_template/screens/logged_in/meal_plans/editable_ingredient.dart';
+import 'package:flutter_firebase_template/widgets/meal_plan_display/editable_ingredient.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_dialog.dart';

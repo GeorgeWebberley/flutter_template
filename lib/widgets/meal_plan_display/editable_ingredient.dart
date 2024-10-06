@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 import 'package:flutter_firebase_template/shared/helpers.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
-import 'package:flutter_firebase_template/theme/padding.dart';
-import 'package:flutter_firebase_template/theme/text.dart';
 
 class EditableIngredient extends StatelessWidget {
   const EditableIngredient({

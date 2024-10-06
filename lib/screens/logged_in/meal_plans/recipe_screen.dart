@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_firebase_template/models/message.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/ai_chat_popup.dart';
-import 'package:flutter_firebase_template/screens/logged_in/meal_plans/ingredient_tile.dart';
+import 'package:flutter_firebase_template/widgets/meal_plan_display/ingredient_tile.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/theme/border_radius.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';

@@ -67,5 +67,18 @@
 		<array>
 			<string>https</string>
 		</array>
+		<key>GIDClientID</key>
+		<string>373238363767-7ejk26320fv4nhq5n24denf1gg97of21.apps.googleusercontent.com</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleTypeRole</key>
+				<string>Editor</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>com.googleusercontent.apps.373238363767-7ejk26320fv4nhq5n24denf1gg97of21</string>
+				</array>
+			</dict>
+		</array>
 	</dict>
 </plist>

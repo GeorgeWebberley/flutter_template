@@ -11,6 +11,8 @@ import 'package:flutter_firebase_template/shared/helpers.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
+import 'package:flutter_firebase_template/theme/text.dart';
+import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:flutter_firebase_template/widgets/detail_tile.dart';
 import 'package:provider/provider.dart';
 
@@ -185,8 +187,23 @@ class _ViewSingleMealPlanState extends State<ViewSingleMealPlan> {
               ),
             );
           } else {
-            return const Center(
-              child: Text('No meal plan found'),
+            return Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: AppPading.page * 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('No recipes').h4(),
+                  const SizedBox(height: AppPading.large),
+                  AppButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    text: 'Go back',
+                  ),
+                ],
+              ),
             );
           }
         });

@@ -46,16 +46,16 @@ class AccountRoot extends StatelessWidget {
     //   Ingredient(name: 'Yogurt', quantity: 2, unit: 'cups'),
     //   Ingredient(name: 'Yogurt', quantity: 100, unit: 'milliliters'),
     // ];
-    List<Ingredient> exampleList = [
-      Ingredient(name: 'Balsamic vinegar', quantity: 15, unit: 'milliliter'),
-      Ingredient(name: 'Balsamic vinegar', quantity: 1, unit: 'tablespoon'),
-    ];
+    // List<Ingredient> exampleList = [
+    //   Ingredient(name: 'Balsamic vinegar', quantity: 15, unit: 'milliliter'),
+    //   Ingredient(name: 'Balsamic vinegar', quantity: 1, unit: 'tablespoon'),
+    // ];
 
-    List<Ingredient> output = UnitConverter().combineIngredients(exampleList);
+    // List<Ingredient> output = UnitConverter().combineIngredients(exampleList);
 
-    for (var item in output) {
-      print(item);
-    }
+    // for (var item in output) {
+    //   print(item);
+    // }
 
     return Scaffold(
       backgroundColor: Colors.transparent,

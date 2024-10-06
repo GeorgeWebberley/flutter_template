@@ -576,11 +576,13 @@ async function generateImage(recipeTitle) {
   const imageParams = {
     request: {
       model_name: "flat2DAnimerge_v30_72593.safetensors",
-      prompt: recipeTitle,
+      // model_name: "sd3_base_medium.safetensors",
+      // prompt: recipeTitle,
+      prompt: "Recipe: " + recipeTitle,
       width: 512,
       height: 384,
       sampler_name: "Euler a",
-      negative_prompt: "nsfw, person, girl, human, man, woman, body, face, figure, humanoid",
+      negative_prompt: "nsfw, person, people, girl, human, man, woman, body, face, figure, humanoid",
       guidance_scale: 7,
       steps: 20,
       image_num: 1,

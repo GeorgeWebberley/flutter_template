@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 import 'package:flutter_firebase_template/providers/share_provider.dart';
-import 'package:flutter_firebase_template/screens/logged_in/meal_plans/ingredient_tile.dart';
+import 'package:flutter_firebase_template/widgets/meal_plan_display/ingredient_tile.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/helpers.dart';

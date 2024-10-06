@@ -49,48 +49,68 @@ class _WrapperState extends State<Wrapper> {
                   ),
                 );
               } else {
-                return FutureBuilder<String?>(
-                    future: Provider.of<LocalStorageProvider?>(context,
-                            listen: false)!
-                        .get(key: "${user.uid}-${LocalStorageKeys.hasVisited}"),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        String? visited = snapshot.data;
+                print("Here");
 
-                        if (visited == null) {
-                          return UserSetupFlow(user: user);
-                        } else {
-                          // Check for any push notifications and handle them appropriately
-                          Provider.of<PushNotificationProvider?>(context,
-                                  listen: false)
-                              ?.setupInteractedMessage(
-                                  (RemoteMessage? message) {
-                            if (message?.data != null) {
-                              _handleMessage(
-                                  context: context,
-                                  message: message!.data,
-                                  currentUser: userData);
-                            }
-                          });
+                if (userData.hasCompletedTutorial == true) {
+                  print("Here 2");
 
-                          return const AppNavigation();
-                        }
-                      } else {
-                        return Scaffold(
-                          body: Container(
-                            height: double.infinity,
-                            decoration: const BoxDecoration(
-                              gradient: AppGradients.backgroundGradient,
-                            ),
-                            child: const Center(
-                              child: CircularProgressIndicator(
-                                color: Color.fromARGB(255, 1, 22, 24),
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                    });
+                  // Check for any push notifications and handle them appropriately
+                  Provider.of<PushNotificationProvider?>(context, listen: false)
+                      ?.setupInteractedMessage((RemoteMessage? message) {
+                    if (message?.data != null) {
+                      _handleMessage(
+                          context: context,
+                          message: message!.data,
+                          currentUser: userData);
+                    }
+                  });
+
+                  return const AppNavigation();
+                } else {
+                  return UserSetupFlow(user: user);
+                }
+                // return FutureBuilder<String?>(
+                //     future: Provider.of<LocalStorageProvider?>(context,
+                //             listen: false)!
+                //         .get(key: "${user.uid}-${LocalStorageKeys.hasVisited}"),
+                //     builder: (context, snapshot) {
+                //       if (snapshot.connectionState == ConnectionState.done) {
+                //         String? visited = snapshot.data;
+
+                //         if (visited == null) {
+                //           return UserSetupFlow(user: user);
+                //         } else {
+                //           // Check for any push notifications and handle them appropriately
+                //           Provider.of<PushNotificationProvider?>(context,
+                //                   listen: false)
+                //               ?.setupInteractedMessage(
+                //                   (RemoteMessage? message) {
+                //             if (message?.data != null) {
+                //               _handleMessage(
+                //                   context: context,
+                //                   message: message!.data,
+                //                   currentUser: userData);
+                //             }
+                //           });
+
+                //           return const AppNavigation();
+                //         }
+                //       } else {
+                //         return Scaffold(
+                //           body: Container(
+                //             height: double.infinity,
+                //             decoration: const BoxDecoration(
+                //               gradient: AppGradients.backgroundGradient,
+                //             ),
+                //             child: const Center(
+                //               child: CircularProgressIndicator(
+                //                 color: Color.fromARGB(255, 1, 22, 24),
+                //               ),
+                //             ),
+                //           ),
+                //         );
+                //       }
+                //     });
               }
             } else {
               return Scaffold(

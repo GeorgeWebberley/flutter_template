@@ -36,32 +36,36 @@ class Recipe {
   });
 
   factory Recipe.fromJson(Map<String, dynamic> json) {
-    print("Title: ${json['title'] as String}");
+    // print("Title: ${json['title'] as String}");
     // print("Ingredients: ${json['ingredients'] as List}");
     // print("Cooking Time: ${json['cooking_time'] as String}");
     // print("Instructions: ${json['instructions'] as List}");
     // print("HEEWADWAD");
     // print("Meal Type: ${(json['meal_type'] ?? "dinner") as String}");
 
-    return Recipe(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      ingredients: (json['ingredients'] as List)
-          .map((ingredient) => Ingredient.fromJson(ingredient))
-          .toList(),
-      cookingTime: json['cooking_time'] as String,
-      instructions: List<String>.from(json['instructions']),
-      mealType: (json['meal_type'] ?? "lunch"),
-      refreshed: json['refreshed'] as bool?,
-      completed: json['completed'] as bool?,
-      image: json['image'] as String?,
-      calories: json['calories'] as int?,
-      protein: json['protein'] as int?,
-      carbohydrates: json['carbohydrates'] as int?,
-      fat: json['fat'] as int?,
-      loading: json['loading'] as bool?,
-      favourite: json['favourite'] as bool?,
-    );
+    try {
+      return Recipe(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        ingredients: (json['ingredients'] as List)
+            .map((ingredient) => Ingredient.fromJson(ingredient))
+            .toList(),
+        cookingTime: json['cooking_time'] as String,
+        instructions: List<String>.from(json['instructions']),
+        mealType: (json['meal_type'] ?? "lunch"),
+        refreshed: json['refreshed'] as bool?,
+        completed: json['completed'] as bool?,
+        image: json['image'] as String?,
+        calories: json['calories'] as int?,
+        protein: json['protein'] as int?,
+        carbohydrates: json['carbohydrates'] as int?,
+        fat: json['fat'] as int?,
+        loading: json['loading'] as bool?,
+        favourite: json['favourite'] as bool?,
+      );
+    } catch (e) {
+      return nullRecipe;
+    }
   }
 
   @override
@@ -89,3 +93,21 @@ class Recipe {
     };
   }
 }
+
+Recipe nullRecipe = Recipe(
+  id: '0',
+  title: 'No Recipe Found',
+  ingredients: [],
+  cookingTime: '0',
+  instructions: [],
+  mealType: 'lunch',
+  refreshed: false,
+  completed: false,
+  image: null,
+  calories: 0,
+  protein: 0,
+  carbohydrates: 0,
+  fat: 0,
+  loading: false,
+  favourite: false,
+);

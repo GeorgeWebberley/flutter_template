@@ -15,6 +15,7 @@ class AppButton extends StatelessWidget {
     this.loading = false,
     this.size = ButtonSize.medium,
     this.type = ButtonType.primary,
+    this.disabled = false,
   });
 
   final VoidCallback? onPressed;
@@ -24,6 +25,7 @@ class AppButton extends StatelessWidget {
   final ButtonSize? size;
   final bool loading;
   final ButtonType type;
+  final bool disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -42,22 +44,29 @@ class AppButton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: backgroundGradient ??
-            (type == ButtonType.primary
-                ? AppGradients.buttonPrimaryGradient
-                : AppGradients.buttonSecondaryGradient),
-        boxShadow: type == ButtonType.primary
-            ? [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.8),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                )
-              ]
-            : null,
+            (disabled
+                ? LinearGradient(colors: [
+                    Colors.grey.withOpacity(0.25),
+                    Colors.grey.withOpacity(0.25)
+                  ])
+                : (type == ButtonType.primary
+                    ? AppGradients.buttonPrimaryGradient
+                    : AppGradients.buttonSecondaryGradient)),
+        boxShadow: disabled
+            ? null
+            : type == ButtonType.primary
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.8),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    )
+                  ]
+                : null,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: disabled ? null : onPressed,
         style: ElevatedButton.styleFrom(
             shadowColor: Colors.transparent,
             shape:

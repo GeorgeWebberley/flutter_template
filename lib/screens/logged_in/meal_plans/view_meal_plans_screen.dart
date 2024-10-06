@@ -12,6 +12,7 @@ import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:flutter_firebase_template/widgets/lottie_controller.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart'; // For formatting month
 
 class ViewMealPlansScreen extends StatelessWidget {
   const ViewMealPlansScreen({Key? key, required this.changeNavigationIndex})
@@ -75,10 +76,41 @@ class ViewMealPlansScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final mealPlan = snapshot.data![index];
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppPading.large),
-                  child: _buildMealPlanCard(
-                      context: context, user: user, mealPlan: mealPlan),
+                // Get current meal plan's month
+                final currentMonth = DateFormat.yMMMM()
+                    .format(mealPlan.createdAt ?? DateTime.now());
+
+                // Get previous meal plan's month
+                final previousMonth = index == 0
+                    ? ''
+                    : DateFormat.yMMMM().format(
+                        snapshot.data![index - 1].createdAt ?? DateTime.now());
+
+                // Show month divider if it's a new month
+                bool showMonthDivider = currentMonth != previousMonth;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (showMonthDivider)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: AppPading.medium),
+                        child: Text(
+                          currentMonth,
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary),
+                        ),
+                      ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(bottom: AppPading.extraSmall),
+                      child: _buildMealPlanCard(
+                          context: context, user: user, mealPlan: mealPlan),
+                    ),
+                  ],
                 );
               },
             ),

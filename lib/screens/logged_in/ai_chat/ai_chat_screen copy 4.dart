@@ -8,9 +8,8 @@ import 'package:flutter_firebase_template/models/recipe_stub.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/typing_indicator.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/typing_input.dart';
-import 'package:flutter_firebase_template/screens/logged_in/meal_plans/meal_plan_configuration_root.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/meal_plan_root.dart';
-import 'package:flutter_firebase_template/widgets/meal_plan_display/recipe_expandable_tile.dart';
+import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_expandable_tile.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
 import 'package:flutter_firebase_template/services/chat_service.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
@@ -27,8 +26,6 @@ import 'package:flutter_firebase_template/theme/form_fields.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
-import 'package:flutter_firebase_template/widgets/meal_plan_settings/diet_summary.dart';
-import 'package:flutter_firebase_template/widgets/simple_vito.dart';
 import 'package:provider/provider.dart';
 
 enum ConversationType { chat, mealPlan }
@@ -50,13 +47,13 @@ class _AiChatScreenState extends State<AiChatScreen>
   AppUser? user;
   final ChatService _chatService = ChatService();
 
-  // final List<String> _mealPlanResponses = [
-  //   "Great! Now could you tell me how many meals would you like to create?",
-  //   "Awesome! Next, how many meals would you like to prepare?",
-  //   "Fantastic! How many meals are you thinking of creating?",
-  //   "Perfect! How many meals would you like to make?",
-  //   "Excellent! How many meals should we plan for?"
-  // ];
+  final List<String> _mealPlanResponses = [
+    "Great! Now could you tell me how many meals would you like to create?",
+    "Awesome! Next, how many meals would you like to prepare?",
+    "Fantastic! How many meals are you thinking of creating?",
+    "Perfect! How many meals would you like to make?",
+    "Excellent! How many meals should we plan for?"
+  ];
 
   final List<String> _welcomeMessages = [
     "Hi there! Chef Michael at your service for all things culinary. Would you like to create a meal plan, or do you have any food-related questions? How can I assist today?",
@@ -83,28 +80,41 @@ class _AiChatScreenState extends State<AiChatScreen>
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Send initial welcome message
+    _addWelcomeMessage();
+  }
+
+  Future<void> _addWelcomeMessage() async {
+    // Get a random message from the welcome messages list
+    ChatState chatState = Provider.of<ChatState>(context, listen: false);
+
+    if (chatState.messages.isEmpty) {
+      chatState.addMessage(
+          Message(
+              role: 'system',
+              textResponse: _welcomeMessages[
+                  DateTime.now().millisecond % _welcomeMessages.length],
+              responseType: 'text'),
+          this);
+    }
+  }
+
+  // @override
+  // void dispose() {
+  //   for (var controller in Provider.of<ChatState>(context, listen: false)
+  //       .animationControllers) {
+  //     controller.dispose();
+  //   }
+  //   super.dispose();
+  // }
+
+  @override
   Widget build(BuildContext context) {
     user = Provider.of<AppUser?>(context);
 
     return Consumer<ChatState>(builder: (context, chatState, child) {
-      if (chatState.conversationType == null) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Row(),
-            Padding(
-              padding: const EdgeInsets.all(AppPading.page),
-              child: SimpleVito(
-                text: "Heya! How can I help you today?",
-                child: Padding(
-                  padding: const EdgeInsets.only(top: AppPading.large),
-                  child: _buildConversationTypeSelector(chatState),
-                ),
-              ),
-            ),
-          ],
-        );
-      }
       return Stack(
         children: [
           Column(
@@ -145,6 +155,7 @@ class _AiChatScreenState extends State<AiChatScreen>
                     IconButton(
                       onPressed: () {
                         chatState.clearState();
+                        _addWelcomeMessage();
                       },
                       icon: const Icon(
                         Icons.close,
@@ -178,34 +189,29 @@ class _AiChatScreenState extends State<AiChatScreen>
         Expanded(
             child: AppButton(
           onPressed: () async {
-            Navigator.push(
-              context,
-              FadeNavigator(
-                  builder: (context, _, __) => MealPlanConfigurationRoot()),
-            );
-            // // We don't notify listeners here, since they will be notified when the message is added
-            // chatState.setConversationType(ConversationType.mealPlan);
-            // chatState.setTyping(true);
+            // We don't notify listeners here, since they will be notified when the message is added
+            chatState.setConversationType(ConversationType.mealPlan);
+            chatState.setTyping(true);
 
-            // chatState.addMessage(
-            //     Message(
-            //         role: 'user',
-            //         textResponse: "Create Meals",
-            //         responseType: 'text'),
-            //     this);
+            chatState.addMessage(
+                Message(
+                    role: 'user',
+                    textResponse: "Create Meals",
+                    responseType: 'text'),
+                this);
 
-            // Future.delayed(const Duration(milliseconds: 2000), () {
-            //   // We don't notify listeners here, since they will be notified when the message is added
-            //   chatState.setTyping(false);
-            //   chatState.addMessage(
-            //       Message(
-            //           role: 'system',
-            //           textResponse: _mealPlanResponses[
-            //               DateTime.now().millisecond %
-            //                   _mealPlanResponses.length],
-            //           responseType: 'text'),
-            //       this);
-            // });
+            Future.delayed(const Duration(milliseconds: 2000), () {
+              // We don't notify listeners here, since they will be notified when the message is added
+              chatState.setTyping(false);
+              chatState.addMessage(
+                  Message(
+                      role: 'system',
+                      textResponse: _mealPlanResponses[
+                          DateTime.now().millisecond %
+                              _mealPlanResponses.length],
+                      responseType: 'text'),
+                  this);
+            });
           },
           text: "Create Meals",
           size: ButtonSize.small,
@@ -217,25 +223,25 @@ class _AiChatScreenState extends State<AiChatScreen>
           onPressed: () {
             // We don't notify listeners here, since they will be notified when the message is added
             chatState.setConversationType(ConversationType.chat);
+            chatState.setTyping(true);
             chatState.addMessage(
                 Message(
-                    role: 'system',
-                    textResponse: _foodAssistantWelcome[
-                        DateTime.now().millisecond % _welcomeMessages.length],
+                    role: 'user',
+                    textResponse: "Food Assistant",
                     responseType: 'text'),
                 this);
 
-            // Future.delayed(const Duration(milliseconds: 2000), () {
-            //   chatState.setTyping(false);
+            Future.delayed(const Duration(milliseconds: 2000), () {
+              chatState.setTyping(false);
 
-            //   chatState.addMessage(
-            //       Message(
-            //           role: 'system',
-            //           textResponse: _foodAssistantWelcome[
-            //               DateTime.now().millisecond % _welcomeMessages.length],
-            //           responseType: 'text'),
-            //       this);
-            // });
+              chatState.addMessage(
+                  Message(
+                      role: 'system',
+                      textResponse: _foodAssistantWelcome[
+                          DateTime.now().millisecond % _welcomeMessages.length],
+                      responseType: 'text'),
+                  this);
+            });
           },
           text: "Food Assistant",
           size: ButtonSize.small,

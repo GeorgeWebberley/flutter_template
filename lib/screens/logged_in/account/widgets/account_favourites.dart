@@ -4,6 +4,7 @@ import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/app_dialog.dart';
+import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/theme/border_radius.dart';
 import 'package:flutter_firebase_template/theme/box_shadow.dart';
@@ -39,54 +40,68 @@ class _AccountFavouritesState extends State<AccountFavourites> {
             onPressed: widget.backToRoot,
           ),
         ),
-        body: FutureBuilder<List<Map<String, dynamic>>>(
-          future: UserService(uid: widget.userData.uid).getFavourites(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return Center(
-                child: Text('An error occurred: ${snapshot.error}'),
-              );
-            } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-              List<Map<String, dynamic>> favourites = snapshot.data!;
-              return ListView.builder(
-                itemCount: favourites.length,
-                itemBuilder: (context, index) {
-                  Recipe recipe = favourites[index]['recipe'];
-                  String mealPlanId =
-                      favourites[index]['mealPlanId']; // Extract mealPlanId
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppPading.page),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const AppTitle(title: "Favourites"),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: UserService(uid: widget.userData.uid).getFavourites(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        ),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Text('An error occurred: ${snapshot.error}'),
+                      );
+                    } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      List<Map<String, dynamic>> favourites = snapshot.data!;
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: favourites.length,
+                        itemBuilder: (context, index) {
+                          Recipe recipe = favourites[index]['recipe'];
+                          String mealPlanId = favourites[index]
+                              ['mealPlanId']; // Extract mealPlanId
 
-                  return Padding(
-                    padding: const EdgeInsets.all(AppPading.small),
-                    child: _buildRecipeCard(
-                        recipe, mealPlanId, context, widget.userData.uid),
-                  );
-                },
-              );
-            } else {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('You have no favourites').h4(),
-                  const SizedBox(height: AppPading.large),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppPading.page * 2),
-                    child: AppButton(
-                        onPressed: () {
-                          widget.backToRoot();
+                          return Padding(
+                            padding: const EdgeInsets.all(AppPading.small),
+                            child: _buildRecipeCard(recipe, mealPlanId, context,
+                                widget.userData.uid),
+                          );
                         },
-                        text: "Go back"),
-                  )
-                ],
-              );
-            }
-          },
+                      );
+                    } else {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text('You have no favourites').h4(),
+                          const SizedBox(height: AppPading.large),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: AppPading.page * 2),
+                            child: AppButton(
+                                onPressed: () {
+                                  widget.backToRoot();
+                                },
+                                text: "Go back"),
+                          )
+                        ],
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
         ));
   }
 
@@ -103,6 +118,7 @@ class _AccountFavouritesState extends State<AccountFavourites> {
         boxShadow: [AppBoxShadow.small],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
             children: [

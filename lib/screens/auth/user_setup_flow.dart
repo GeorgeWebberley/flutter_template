@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/screens/auth/confirm_email.dart';
 import 'package:flutter_firebase_template/widgets/app_intro_slider/app_intro_slider.dart';
+import 'package:flutter_firebase_template/widgets/meal_plan_settings/tutorial.dart';
 
 class UserSetupFlow extends StatefulWidget {
   const UserSetupFlow({
@@ -28,7 +29,6 @@ class _UserSetupFlowState extends State<UserSetupFlow> {
 
   @override
   Widget build(BuildContext context) {
-    print("user setup flow");
     return Scaffold(
       body: AnimatedCrossFade(
         duration: const Duration(seconds: 1),
@@ -45,6 +45,12 @@ class _UserSetupFlowState extends State<UserSetupFlow> {
             },
           ),
         ),
+        // secondChild: Container(
+        //   constraints: BoxConstraints(
+        //       maxHeight: MediaQuery.of(context).size.height,
+        //       maxWidth: MediaQuery.of(context).size.width),
+        //   child: Tutorial(),
+        // ),
         secondChild: Container(
           constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height,

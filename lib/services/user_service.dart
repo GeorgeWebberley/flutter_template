@@ -43,6 +43,11 @@ class UserService {
             key: "tokens", value: FieldValue.arrayUnion([token])));
   }
 
+  /// Takes a a full map and updates the database
+  Future<void> updateMultipleUserData(Map<Object, Object?> object) async {
+    return await _usersRef.doc(uid).update(object);
+  }
+
   /// Takes a single key/value pair and updates the value in firestore
   Future<void> updateUserData({
     required String key,
@@ -260,9 +265,7 @@ class UserService {
 
     return Rx.combineLatest2(mealPlanStream, recipesStream,
         (mealPlanSnap, recipesSnap) {
-      print("test 1");
       final mealPlan = MealPlan.fromFirebase(mealPlanSnap);
-      print("test 2");
 
       final recipes = recipesSnap.docs.map((doc) {
         Map<String, dynamic> data = doc.data();
@@ -270,8 +273,6 @@ class UserService {
 
         return Recipe.fromJson(data);
       }).toList();
-
-      print("test 3");
 
       return MealPlanWithRecipes(mealPlan, recipes);
     });
@@ -426,10 +427,18 @@ class UserService {
 
     for (DocumentReference ref in favourites) {
       DocumentSnapshot recipeSnapshot = await ref.get();
+      Map<String, dynamic>? recipeData =
+          recipeSnapshot.data() as Map<String, dynamic>?;
 
-      Map<String, dynamic> recipeData =
-          recipeSnapshot.data() as Map<String, dynamic>;
+      if (recipeData == null) {
+        await _usersRef.doc(uid).update({
+          'favourites': FieldValue.arrayRemove([ref]),
+        });
+        continue;
+      }
+
       recipeData['id'] = recipeSnapshot.id;
+
       Recipe recipe = Recipe.fromJson(recipeData);
 
       // Extract mealPlanId from the reference

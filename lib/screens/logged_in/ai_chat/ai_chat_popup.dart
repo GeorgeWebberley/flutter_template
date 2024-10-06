@@ -48,7 +48,6 @@ class _AiChatPopupState extends State<AiChatPopup>
   void initState() {
     super.initState();
     _messages = widget.messages ?? [];
-    print("Setting threadId: ${widget.threadId}");
     threadId = widget.threadId;
     _animationControllers = List.generate(_messages.length,
         (index) => AnimationController(vsync: this, value: 1));
@@ -227,7 +226,6 @@ class _AiChatPopupState extends State<AiChatPopup>
     _showTypingIndicator(); // Show typing indicator
 
     try {
-      print("threadId: $threadId");
       // Call the ChatService to send the message and get the AI response
       final Map<String, dynamic>? aiMessage =
           await _chatService.sendSimpleMessage(
@@ -245,7 +243,6 @@ class _AiChatPopupState extends State<AiChatPopup>
           threadId = aiMessage['threadId'];
           _isTyping = false;
         });
-        print("Setting threadId: $threadId");
         widget.setThreadId?.call(threadId);
       }
     } catch (e) {

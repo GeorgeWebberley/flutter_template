@@ -11,6 +11,7 @@ import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
+import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:provider/provider.dart';
 
 class ViewRecipeListScreen extends StatefulWidget {
@@ -73,7 +74,8 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                 );
               } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 List<Recipe> recipes = snapshot.data!
-                    .where((recipe) => recipe.mealType == widget.mealType)
+                    .where((recipe) =>
+                        recipe.mealType == widget.mealType && recipe.id != "0")
                     .toList();
 
                 completedRecipes = recipes
@@ -118,8 +120,23 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                   ),
                 );
               } else {
-                return const Center(
-                  child: Text('No recipes found'),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppPading.page * 2),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('No recipes').h4(),
+                      const SizedBox(height: AppPading.large),
+                      AppButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        text: 'Go back',
+                      ),
+                    ],
+                  ),
                 );
               }
             }),
@@ -156,85 +173,106 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
       ),
       child: Column(
         children: [
-          Stack(
-            children: [
-              Container(
-                height: 150,
-                width: double.infinity,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                  child: loading
-                      ? ColorFiltered(
-                          colorFilter: ColorFilter.mode(
-                            loadingColor, // Applying a grey filter
-                            BlendMode
-                                .saturation, // Saturation blend mode to achieve the black and white effect
-                          ),
-                          child: Image.network(
-                            recipe.image ?? "", // replace with your image URL
+          if (recipe.image != null)
+            Stack(
+              children: [
+                Container(
+                  height: 150,
+                  width: double.infinity,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                    child: loading
+                        ? ColorFiltered(
+                            colorFilter: ColorFilter.mode(
+                              loadingColor, // Applying a grey filter
+                              BlendMode
+                                  .saturation, // Saturation blend mode to achieve the black and white effect
+                            ),
+                            child: Image.network(
+                              recipe.image!, // replace with your image URL
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Image.network(
+                            recipe.image!, // replace with your image URL
                             fit: BoxFit.cover,
                           ),
-                        )
-                      : Image.network(
-                          recipe.image ?? "", // replace with your image URL
-                          fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: AppPading.small,
+                  right: AppPading.small,
+                  child: InkWell(
+                    onTap: () async {
+                      await UserService(uid: uid).setFavourite(
+                        recipe: recipe,
+                        mealPlanId: widget.mealPlan.id,
+                        value: !isFavourite,
+                      );
+                    },
+                    child: Container(
+                        padding: const EdgeInsets.all(AppPading.small),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.5),
+                          borderRadius: AppBorderRadius.small,
                         ),
+                        child: isFavourite
+                            ? const Icon(
+                                Icons.favorite,
+                                size: 25,
+                                color: AppColors.danger,
+                              )
+                            : const Icon(
+                                Icons.favorite_border,
+                                size: 25,
+                                color: Colors.black,
+                              )),
+                  ),
                 ),
-              ),
-              Positioned(
-                top: AppPading.small,
-                right: AppPading.small,
-                child: InkWell(
-                  onTap: () async {
-                    await UserService(uid: uid).setFavourite(
-                      recipe: recipe,
-                      mealPlanId: widget.mealPlan.id,
-                      value: !isFavourite,
-                    );
-                  },
-                  child: Container(
-                      padding: const EdgeInsets.all(AppPading.small),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.5),
-                        borderRadius: AppBorderRadius.small,
-                      ),
-                      child: isFavourite
-                          ? Icon(
-                              Icons.favorite,
-                              size: 25,
-                              color: AppColors.danger,
-                            )
-                          : Icon(
-                              Icons.favorite_border,
-                              size: 25,
-                              color: Colors.black,
-                            )),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
           Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(20)),
               color: Colors.white,
             ),
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  recipe.title,
-                  style: TextStyle(
-                    color: loading ? loadingColor : AppColors.primary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        recipe.title,
+                        style: TextStyle(
+                          color: loading ? loadingColor : AppColors.primary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (recipe.image == null)
+                      isFavourite
+                          ? const Icon(
+                              Icons.favorite,
+                              size: 25,
+                              color: AppColors.danger,
+                            )
+                          : const Icon(
+                              Icons.favorite_border,
+                              size: 25,
+                              color: Colors.black,
+                            )
+                  ],
+                ),
+                const SizedBox(
+                  height: AppPading.small / 2,
                 ),
                 Text(
                   recipe.cookingTime,
@@ -243,17 +281,17 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                     fontSize: 14,
                   ),
                 ),
-                SizedBox(height: AppPading.extraSmall),
+                const SizedBox(height: AppPading.extraSmall),
                 // Action buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ElevatedButton.icon(
-                      icon: Icon(
+                      icon: const Icon(
                         Icons.restaurant,
                         color: Colors.white,
                       ),
-                      label: Text(
+                      label: const Text(
                         'View',
                         style: TextStyle(color: Colors.white),
                       ),
@@ -284,7 +322,7 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                                 strokeWidth: 2,
                                 color: loadingColor,
                               ))
-                          : Icon(
+                          : const Icon(
                               Icons.swap_horiz,
                               color: AppColors.primary,
                             ),
@@ -319,10 +357,39 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                     IconButton(
                       icon: const Icon(Icons.delete),
                       onPressed: () async {
+                        // Remove the recipe from the UI
+                        int index = nonCompletedRecipes.indexOf(recipe);
+
+                        if (index != -1) {
+                          _listKey.currentState!.removeItem(
+                            index,
+                            (context, animation) => _buildRemovedTile(
+                              recipe: recipe,
+                              animation: animation,
+                              uid: uid,
+                              allRecipes: allRecipes,
+                            ),
+                            duration: const Duration(milliseconds: 300),
+                          );
+
+                          // After the animation completes, update the state
+                          setState(() {
+                            nonCompletedRecipes.removeAt(index);
+                          });
+                        }
                         await UserService(uid: uid).deleteRecipe(
                           recipeId: recipe.id,
                           mealPlanId: widget.mealPlan.id,
                         );
+
+                        // After deletion, check if the lists are empty
+                        if (nonCompletedRecipes.isEmpty &&
+                            completedRecipes.isEmpty) {
+                          // Delay the pop to after the current frame
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            Navigator.pop(context);
+                          });
+                        }
                       },
                       color: AppColors.danger,
                     ),
@@ -341,8 +408,8 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
       required Recipe recipe,
       required String uid,
       required List<Recipe> allRecipes}) async {
-    UserService(uid: uid).setRecipeComplete(
-        recipeId: recipe.id!, mealPlanId: widget.mealPlan.id);
+    UserService(uid: uid)
+        .setRecipeComplete(recipeId: recipe.id, mealPlanId: widget.mealPlan.id);
     // setState(() {
     completedRecipes.add(recipe); // Mark recipe as completed
     Recipe removedRecipe = nonCompletedRecipes.removeAt(index);
