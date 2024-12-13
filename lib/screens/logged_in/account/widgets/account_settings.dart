@@ -1,16 +1,20 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
+import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_dialog.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/dialogs.dart';
+import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/form_fields.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/detail_tile.dart';
+import 'package:flutter_firebase_template/widgets/wrapper.dart';
 import 'package:provider/provider.dart';
 
 class AccountSettings extends StatelessWidget {
@@ -25,6 +29,7 @@ class AccountSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    User? currentAuth = FirebaseAuth.instance.currentUser;
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
@@ -44,20 +49,28 @@ class AccountSettings extends StatelessWidget {
             AppBox(
               child: Column(
                 children: [
-                  DetailTile(
-                    title: "Change Password",
-                    onPressed: () {
-                      editNameDialog(context);
-                    },
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppPading.large),
-                    child: Divider(
-                      height: 0,
-                      color: Colors.black.withOpacity(0.1),
+                  if (currentAuth?.providerData
+                          .map((e) => e.providerId)
+                          .contains("password") ==
+                      true)
+                    DetailTile(
+                      title: "Change Password",
+                      onPressed: () {
+                        editNameDialog(context);
+                      },
                     ),
-                  ),
+                  if (currentAuth?.providerData
+                          .map((e) => e.providerId)
+                          .contains("password") ==
+                      true)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppPading.large),
+                      child: Divider(
+                        height: 0,
+                        color: Colors.black.withOpacity(0.1),
+                      ),
+                    ),
                   DetailTile(
                     title: "Delete Account",
                     onPressed: () {
@@ -133,10 +146,21 @@ class AccountSettings extends StatelessWidget {
                             listen: false)
                         .cleanup();
 
+                    await UserService(uid: user.uid).deleteUserDbEntry();
+                    await auth.signOut();
+
                     showToast(
                         context: context,
                         message: 'Account deleted successfully!');
+
+                    // Return to wrapper
                     Navigator.of(context).pop();
+                    // Navigate back to wrapper screen
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        SlideNavigator(
+                            builder: (context, _, __) => const Wrapper()),
+                        (route) => false);
                   }
                 },
               );
@@ -163,7 +187,7 @@ class AccountSettings extends StatelessWidget {
                       decoration: textInputDecoration.copyWith(
                         prefixIcon: const Icon(Icons.lock_outline),
                         hintText: 'Password',
-                        errorStyle: const TextStyle(color: Colors.white),
+                        errorStyle: const TextStyle(color: Colors.red),
                       ),
                       validator: (value) => value!.length < 6
                           ? 'Password must be 6 or more characters'
@@ -183,7 +207,7 @@ class AccountSettings extends StatelessWidget {
                       decoration: textInputDecoration.copyWith(
                         prefixIcon: const Icon(Icons.lock_outline),
                         hintText: 'Confirm password',
-                        errorStyle: const TextStyle(color: Colors.white),
+                        errorStyle: const TextStyle(color: Colors.red),
                       ),
                       validator: (value) =>
                           value! != password ? 'Passwords do not match' : null,

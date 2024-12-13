@@ -4,7 +4,6 @@ import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/app_box.dart';
 import 'package:flutter_firebase_template/shared/app_dialog.dart';
-import 'package:flutter_firebase_template/shared/helpers.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
@@ -28,6 +27,7 @@ class DietSummary extends StatefulWidget {
     this.onToolsChanged,
     this.onTastesChanged,
     this.onExtrasChanged,
+    this.hasChanged = false,
   });
 
   final List<String> allergies;
@@ -49,6 +49,7 @@ class DietSummary extends StatefulWidget {
   final Function(List<String>)? onToolsChanged;
   final Function(List<String>)? onTastesChanged;
   final Function(List<String>)? onExtrasChanged;
+  final bool hasChanged;
 
   @override
   State<DietSummary> createState() => _DietSummaryState();
@@ -81,28 +82,14 @@ class _DietSummaryState extends State<DietSummary> {
     AppUser? user = Provider.of<AppUser?>(context);
 
     Future<void> saveToDatabase() async {
-      Map<String, dynamic> updates = {
+      await UserService(uid: user!.uid).updateMultipleUserData({
         "hasCompletedTutorial": true,
-      };
-      // Save values to database if they have changed OR if it is tutorial (in which case they are all saved)
-      if (!listsAreTheSame(requirements, widget.requirements) ||
-          widget.isTutorial) {
-        updates['requirements'] = requirements;
-      }
-      if (!listsAreTheSame(allergies, widget.allergies) || widget.isTutorial) {
-        updates['allergies'] = allergies;
-      }
-      if (!listsAreTheSame(tools, widget.tools) || widget.isTutorial) {
-        updates['tools'] = tools;
-      }
-      if (!listsAreTheSame(tastes, widget.tastes) || widget.isTutorial) {
-        updates['tastes'] = tastes;
-      }
-      if (!listsAreTheSame(extras, widget.extras) || widget.isTutorial) {
-        updates['extras'] = extras;
-      }
-
-      await UserService(uid: user!.uid).updateMultipleUserData(updates);
+        "requirements": requirements,
+        "allergies": allergies,
+        "tools": tools,
+        "tastes": tastes,
+        "extras": extras,
+      });
     }
 
     Future<void> saveAndProceed() async {
@@ -114,17 +101,14 @@ class _DietSummaryState extends State<DietSummary> {
             tools: tools,
             tastes: tastes,
             extras: extras);
-      } else if (!listsAreTheSame(requirements, widget.requirements) ||
-          !listsAreTheSame(allergies, widget.allergies) ||
-          !listsAreTheSame(tools, widget.tools) ||
-          !listsAreTheSame(tastes, widget.tastes) ||
-          !listsAreTheSame(extras, widget.extras)) {
+      } else if (widget.hasChanged) {
         await showDialog(
           context: context,
           builder: (context) {
             return AppDialog(
-                content: Container(),
-                title: "Do you want to also set this as your new default?",
+                content: const Text(
+                    "Do you want to set these new dietary preferences as your defaults?"),
+                title: "Update defaults?",
                 onCancel: () {
                   widget.onProceed.call(
                       requirements: requirements,
@@ -132,18 +116,30 @@ class _DietSummaryState extends State<DietSummary> {
                       tools: tools,
                       tastes: tastes,
                       extras: extras);
+                  Navigator.pop(context);
                 },
+                cancelButtonText: "No",
                 onSave: () async {
                   await saveToDatabase();
+
                   widget.onProceed.call(
                       requirements: requirements,
                       allergies: allergies,
                       tools: tools,
                       tastes: tastes,
                       extras: extras);
+
+                  Navigator.pop(context);
                 });
           },
         );
+      } else {
+        widget.onProceed.call(
+            requirements: requirements,
+            allergies: allergies,
+            tools: tools,
+            tastes: tastes,
+            extras: extras);
       }
     }
 
@@ -384,6 +380,7 @@ class _DietSummaryState extends State<DietSummary> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leadingWidth: 75,
         leading: pageViewIndex > 0
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios),
@@ -423,6 +420,7 @@ class _DietSummaryState extends State<DietSummary> {
             : null,
       ),
       body: PageView(
+        physics: const NeverScrollableScrollPhysics(),
         controller: pageController,
         children: screens,
       ),

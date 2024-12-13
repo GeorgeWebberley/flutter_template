@@ -53,19 +53,20 @@ class AccountAbout extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    top: AppPading.extraSmall,
-                    right: AppPading.extraSmall,
-                    child: IconButton(
-                      // TODO: Add correct URL
-                      onPressed: () => _launchUrl(
-                          "https://nutrisyncai-145173104.hubspotpagebuilder.eu/en-gb/?hs_preview=xpDlnACp-111471759307#about"),
-                      icon: Icon(
-                        Icons.open_in_new,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  )
+                  // TODO: Removed for now until we get a proper webbro limited website
+                  // Positioned(
+                  //   top: AppPading.extraSmall,
+                  //   right: AppPading.extraSmall,
+                  //   child: IconButton(
+                  //     // TODO: Add correct URL
+                  //     onPressed: () => _launchUrl(
+                  //         "https://nutrisyncai-145173104.hubspotpagebuilder.eu/en-gb/?hs_preview=xpDlnACp-111471759307#about"),
+                  //     icon: Icon(
+                  //       Icons.open_in_new,
+                  //       color: AppColors.primary,
+                  //     ),
+                  //   ),
+                  // )
                 ],
               ),
               const SizedBox(height: 20),

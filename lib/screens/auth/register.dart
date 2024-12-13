@@ -81,14 +81,14 @@ class _RegisterState extends State<Register> {
                         children: [
                           TextFormField(
                             autocorrect: false,
+                            textCapitalization: TextCapitalization.sentences,
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.person_outline),
-                                hintText: 'Name',
-                                errorStyle:
-                                    const TextStyle(color: Colors.white)),
+                                hintText: 'Display Name',
+                                errorStyle: const TextStyle(color: Colors.red)),
                             validator: (value) {
                               if (value!.isEmpty) {
-                                return 'Enter a name';
+                                return 'Enter a display name';
                               }
                               return null;
                             },
@@ -106,8 +106,7 @@ class _RegisterState extends State<Register> {
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.email_outlined),
                                 hintText: 'Email',
-                                errorStyle:
-                                    const TextStyle(color: Colors.white)),
+                                errorStyle: const TextStyle(color: Colors.red)),
                             validator: (value) {
                               if (value!.isEmpty) {
                                 return 'Enter an email';
@@ -130,8 +129,7 @@ class _RegisterState extends State<Register> {
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 hintText: 'Password',
-                                errorStyle:
-                                    const TextStyle(color: Colors.white)),
+                                errorStyle: const TextStyle(color: Colors.red)),
                             validator: (value) => value!.length < 6
                                 ? 'Password must be 6 or more characters'
                                 : null,
@@ -150,8 +148,7 @@ class _RegisterState extends State<Register> {
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 hintText: 'Confirm Password',
-                                errorStyle:
-                                    const TextStyle(color: Colors.white)),
+                                errorStyle: const TextStyle(color: Colors.red)),
                             validator: (value) => value! != password
                                 ? 'Passwords do not match'
                                 : null,
@@ -178,12 +175,12 @@ class _RegisterState extends State<Register> {
                                       context: context,
                                       message: result,
                                       color: AppColors.danger);
+                                  setState(() {
+                                    loading = false;
+                                  });
                                 } else {
                                   await createUserDbEntry(appUser: result);
                                 }
-                                setState(() {
-                                  loading = false;
-                                });
                               }
                             },
                             text: 'Register',

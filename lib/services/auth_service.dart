@@ -40,10 +40,10 @@ class AuthService {
   // }
 
   // auth stream (when user logs in/out)
-  Stream<AppUser?> get user => _auth
-      .authStateChanges() // Firebase function that returns a firebase 'User' stream
-      .map((User? user) => AppUser.fromFirebase(
-          user)); // map firebase 'User' to my own app's 'AppUser' class.
+  Stream<AppUser?> get user => _auth.authStateChanges().map((User? user) {
+        print("Auth state changed: ${user?.uid}");
+        return AppUser.fromFirebase(user);
+      });
 
   // sign in with firebase
   Future signInWithEmailAndPassword(String email, String password) async {

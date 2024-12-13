@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -23,17 +25,38 @@ class UserService {
     required AppUser appUser,
     String? name,
   }) async {
-    return await _usersRef.doc(uid).set({
-      'email': appUser.email,
-      'providers': appUser.providers,
-      'name': name ?? appUser.name,
-    });
+    // First check if the user already exists
+    DocumentSnapshot<Map<String, dynamic>> snapshot =
+        await _usersRef.doc(uid).get();
+
+    if (!snapshot.exists) {
+      return await _usersRef.doc(uid).set({
+        'email': appUser.email,
+        'providers': appUser.providers,
+        'name': name ?? appUser.name,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      return await _usersRef.doc(uid).update({
+        'providers': appUser.providers,
+      });
+    }
+  }
+
+  Future deleteUserDbEntry() async {
+    return await _usersRef.doc(uid).delete();
   }
 
   /// Get the token from FirebaseMessaging.instance and store it in the DB
   Future _setupUserNotificationToken() async {
     // Get the token each time the application loads
-    String? token = await FirebaseMessaging.instance.getToken();
+    String? token;
+
+    if (Platform.isIOS) {
+      token = await FirebaseMessaging.instance.getAPNSToken();
+    } else {
+      token = await FirebaseMessaging.instance.getToken();
+    }
     // Save the initial token to the database
     // await _storeTokenInDatabase(token!);
     await updateUserData(key: "tokens", value: FieldValue.arrayUnion([token]));

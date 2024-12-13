@@ -119,272 +119,292 @@ class _TutorialState extends State<Tutorial> {
             child: Column(
               children: [
                 Expanded(
-                  child: Stack(
-                    children: [
-                      AnimatedPositioned(
-                        duration: const Duration(milliseconds: 1000),
-                        curve: Curves.ease,
-                        left: 0,
-                        right: 0,
-                        bottom: _moveToBottom
-                            ? 0
-                            : size.height / 2 -
-                                100, // Move between middle and bottom
-                        child: AnimatedOpacity(
-                          opacity: isQuestion ? 0 : 1.0,
-                          duration: const Duration(milliseconds: 300),
-                          child: TalkingVito(
-                            key: UniqueKey(),
-                            text: messages[stage],
-                            onContinue: _onContinue,
+                  child: GestureDetector(
+                    onTap: messages[stage] != null ? _onContinue : null,
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Stack(
+                        children: [
+                          AnimatedPositioned(
+                            duration: const Duration(milliseconds: 1000),
+                            curve: Curves.ease,
+                            left: 0,
+                            right: 0,
+                            bottom: _moveToBottom
+                                ? 0
+                                : size.height / 2 -
+                                    100, // Move between middle and bottom
+                            child: AnimatedOpacity(
+                              opacity: isQuestion ? 0 : 1.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: TalkingVito(
+                                key: UniqueKey(),
+                                text: messages[stage],
+                                onContinue: _onContinue,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
 
-                      Positioned.fill(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child:
+                          Positioned.fill(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child:
 
-                              // DietSummary(
-                              //   tools: tools,
-                              //   requirements: requirements,
-                              //   tastes: tastes,
-                              //   allergies: allergies,
-                              //   extras: extras,
-                              //   key: const ValueKey('meal_plan_summary'),
-                              // )
+                                  // DietSummary(
+                                  //   tools: tools,
+                                  //   requirements: requirements,
+                                  //   tastes: tastes,
+                                  //   allergies: allergies,
+                                  //   extras: extras,
+                                  //   key: const ValueKey('meal_plan_summary'),
+                                  // )
 
-                              (stage == requirementIndex - 1 ||
-                                      stage == requirementIndex ||
-                                      stage == requirementIndex + 1)
-                                  ? Align(
-                                      key: const ValueKey(
-                                          'meal_plan_requirements'),
-                                      alignment: Alignment.topCenter,
-                                      child: AbsorbPointer(
-                                        absorbing: stage != requirementIndex,
-                                        child: AnimatedOpacity(
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          opacity: stage == requirementIndex - 1
-                                              ? 0.3
-                                              : 1,
-                                          child: DietSetting(
-                                            title: "Requirements",
-                                            subtitle:
-                                                "Select your dietary requirements. This does not include allergies, which we will cover next!",
-                                            values: [
-                                              "vegetarian",
-                                              "vegan",
-                                              "pescatarian",
-                                              "gluten-free",
-                                              "lactose-free",
-                                              "dairy-free",
-                                              "kosher",
-                                              "halal",
-                                              "paleo",
-                                              "keto",
-                                            ],
-                                            onSave: (values) {
-                                              setState(() {
-                                                requirements = values;
-                                              });
-                                              _onContinue();
-                                            },
-                                            initialValues: requirements,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  : (stage == allergyIndex - 1 ||
-                                          stage == allergyIndex ||
-                                          stage == allergyIndex + 1)
+                                  (stage == requirementIndex - 1 ||
+                                          stage == requirementIndex ||
+                                          stage == requirementIndex + 1)
                                       ? Align(
                                           key: const ValueKey(
-                                              'meal_plan_allergies'),
+                                              'meal_plan_requirements'),
                                           alignment: Alignment.topCenter,
                                           child: AbsorbPointer(
-                                            absorbing: stage != allergyIndex,
+                                            absorbing:
+                                                stage != requirementIndex,
                                             child: AnimatedOpacity(
                                               duration: const Duration(
                                                   milliseconds: 300),
-                                              opacity: stage == allergyIndex - 1
-                                                  ? 0.3
-                                                  : 1,
+                                              opacity:
+                                                  stage == requirementIndex - 1
+                                                      ? 0.3
+                                                      : 1,
                                               child: DietSetting(
-                                                title: "Allergies",
+                                                title: "Requirements",
                                                 subtitle:
-                                                    "Select all that apply. If you don't see your allergy simply add it using the + button!",
+                                                    "Select your dietary requirements. This does not include allergies, which we will cover next!",
                                                 values: [
-                                                  "peanuts",
-                                                  "shellfish",
-                                                  "gluten",
-                                                  "eggs",
-                                                  "soy",
+                                                  "vegetarian",
+                                                  "vegan",
+                                                  "pescatarian",
+                                                  "gluten-free",
+                                                  "lactose-free",
+                                                  "dairy-free",
+                                                  "kosher",
+                                                  "halal",
+                                                  "paleo",
+                                                  "keto",
                                                 ],
-                                                allowExtra: true,
                                                 onSave: (values) {
                                                   setState(() {
-                                                    allergies = values;
+                                                    requirements = values;
                                                   });
                                                   _onContinue();
                                                 },
-                                                initialValues: allergies,
+                                                initialValues: requirements,
                                               ),
                                             ),
                                           ),
                                         )
-                                      : (stage == toolIndex - 1 ||
-                                              stage == toolIndex ||
-                                              stage == toolIndex + 1)
+                                      : (stage == allergyIndex - 1 ||
+                                              stage == allergyIndex ||
+                                              stage == allergyIndex + 1)
                                           ? Align(
                                               key: const ValueKey(
-                                                  'meal_plan_tools'),
+                                                  'meal_plan_allergies'),
                                               alignment: Alignment.topCenter,
                                               child: AbsorbPointer(
-                                                absorbing: stage != toolIndex,
+                                                absorbing:
+                                                    stage != allergyIndex,
                                                 child: AnimatedOpacity(
                                                   duration: const Duration(
                                                       milliseconds: 300),
                                                   opacity:
-                                                      stage == toolIndex - 1
+                                                      stage == allergyIndex - 1
                                                           ? 0.3
                                                           : 1,
                                                   child: DietSetting(
-                                                    title: "Kitchen Tools",
+                                                    title: "Allergies",
                                                     subtitle:
-                                                        "Select all that apply! If we are missing anything add it with the + button!",
+                                                        "Select all that apply. If you don't see your allergy simply add it using the + button!",
                                                     values: [
-                                                      "oven",
-                                                      "microwave",
-                                                      "sous vide",
-                                                      "slow cooker",
-                                                      "pressure cooker",
-                                                      "food processor",
-                                                      "air fryer",
+                                                      "peanuts",
+                                                      "shellfish",
+                                                      "gluten",
+                                                      "eggs",
+                                                      "soy",
                                                     ],
                                                     allowExtra: true,
                                                     onSave: (values) {
                                                       setState(() {
-                                                        tools = values;
+                                                        allergies = values;
                                                       });
                                                       _onContinue();
                                                     },
-                                                    initialValues: tools,
+                                                    initialValues: allergies,
                                                   ),
                                                 ),
                                               ),
                                             )
-                                          : (stage == tastesIndex ||
-                                                  stage == tastesIndex + 1)
+                                          : (stage == toolIndex - 1 ||
+                                                  stage == toolIndex ||
+                                                  stage == toolIndex + 1)
                                               ? Align(
                                                   key: const ValueKey(
-                                                      'meal_plan_tastes'),
+                                                      'meal_plan_tools'),
                                                   alignment:
                                                       Alignment.topCenter,
-                                                  child: DietSetting(
-                                                    title: "Likes",
-                                                    subtitle:
-                                                        "Select some meals that you would enjoy eating.",
-                                                    values: [
-                                                      "spaghetti bolognese",
-                                                      "chicken curry",
-                                                      "beef tacos",
-                                                      "margherita pizza",
-                                                      "sushi rolls",
-                                                      "lasagna",
-                                                      "pad thai",
-                                                      "caesar salad",
-                                                      "grilled cheese sandwich",
-                                                      "roast chicken",
-                                                      "fish and chips",
-                                                      "ramen",
-                                                      "hamburgers",
-                                                      "chicken alfredo",
-                                                      "pulled pork sandwich",
-                                                      "vegetable stir fry",
-                                                      "shrimp scampi",
-                                                      "fried rice",
-                                                      "chicken fajitas",
-                                                      "moussaka",
-                                                      "lentil soup",
-                                                      "falafel wrap",
-                                                      "quinoa salad",
-                                                      "vegan burrito bowl",
-                                                      "tofu stir fry",
-                                                      "eggplant parmesan",
-                                                      "mushroom risotto",
-                                                      "greek salad",
-                                                      "chickpea curry",
-                                                      "avocado toast",
-                                                      "vegan shepherd's pie",
-                                                    ],
-                                                    onSave: (values) {
-                                                      setState(() {
-                                                        tastes = values;
-                                                      });
-                                                      _onContinue();
-                                                    },
-                                                    initialValues: tastes,
-                                                  ),
-                                                )
-                                              : (stage == extrasIndex - 1 ||
-                                                      stage == extrasIndex ||
-                                                      stage == extrasIndex + 1)
-                                                  ? Align(
-                                                      key: const ValueKey(
-                                                          'meal_plan_extras'),
-                                                      alignment:
-                                                          Alignment.topCenter,
-                                                      child: AbsorbPointer(
-                                                        absorbing: stage !=
-                                                            extrasIndex,
-                                                        child: AnimatedOpacity(
-                                                          duration:
-                                                              const Duration(
-                                                                  milliseconds:
-                                                                      300),
-                                                          opacity: stage ==
-                                                                  extrasIndex -
-                                                                      1
+                                                  child: AbsorbPointer(
+                                                    absorbing:
+                                                        stage != toolIndex,
+                                                    child: AnimatedOpacity(
+                                                      duration: const Duration(
+                                                          milliseconds: 300),
+                                                      opacity:
+                                                          stage == toolIndex - 1
                                                               ? 0.3
                                                               : 1,
-                                                          child: DietSetting(
-                                                            title: "Additions",
-                                                            subtitle:
-                                                                "Add any additional requirements you might have. This can anything, such as likes/dislikes, goals, budgets or anything you can think of! I will try to incorporate as much of it into my planning as possible.",
-                                                            values: [],
-                                                            allowExtra: true,
-                                                            onSave: (values) {
-                                                              setState(() {
-                                                                extras = values;
-                                                              });
-                                                              _onContinue();
-                                                            },
-                                                            initialValues:
-                                                                extras,
-                                                          ),
-                                                        ),
+                                                      child: DietSetting(
+                                                        title: "Kitchen Tools",
+                                                        subtitle:
+                                                            "Select all that apply! If we are missing anything add it with the + button!",
+                                                        values: [
+                                                          "oven",
+                                                          "microwave",
+                                                          "sous vide",
+                                                          "slow cooker",
+                                                          "pressure cooker",
+                                                          "food processor",
+                                                          "air fryer",
+                                                        ],
+                                                        allowExtra: true,
+                                                        onSave: (values) {
+                                                          setState(() {
+                                                            tools = values;
+                                                          });
+                                                          _onContinue();
+                                                        },
+                                                        initialValues: tools,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                              : (stage == tastesIndex ||
+                                                      stage == tastesIndex + 1)
+                                                  ? Align(
+                                                      key: const ValueKey(
+                                                          'meal_plan_tastes'),
+                                                      alignment:
+                                                          Alignment.topCenter,
+                                                      child: DietSetting(
+                                                        title: "Likes",
+                                                        subtitle:
+                                                            "Select some meals that you would enjoy eating.",
+                                                        values: [
+                                                          "spaghetti bolognese",
+                                                          "chicken curry",
+                                                          "beef tacos",
+                                                          "margherita pizza",
+                                                          "sushi rolls",
+                                                          "lasagna",
+                                                          "pad thai",
+                                                          "caesar salad",
+                                                          "grilled cheese sandwich",
+                                                          "roast chicken",
+                                                          "fish and chips",
+                                                          "ramen",
+                                                          "hamburgers",
+                                                          "chicken alfredo",
+                                                          "pulled pork sandwich",
+                                                          "vegetable stir fry",
+                                                          "shrimp scampi",
+                                                          "fried rice",
+                                                          "chicken fajitas",
+                                                          "moussaka",
+                                                          "lentil soup",
+                                                          "falafel wrap",
+                                                          "quinoa salad",
+                                                          "vegan burrito bowl",
+                                                          "tofu stir fry",
+                                                          "eggplant parmesan",
+                                                          "mushroom risotto",
+                                                          "greek salad",
+                                                          "chickpea curry",
+                                                          "avocado toast",
+                                                          "vegan shepherd's pie",
+                                                        ],
+                                                        onSave: (values) {
+                                                          setState(() {
+                                                            tastes = values;
+                                                          });
+                                                          _onContinue();
+                                                        },
+                                                        initialValues: tastes,
                                                       ),
                                                     )
-                                                  : const SizedBox
-                                                      .shrink(), // Use this to remove the widget completely when it's invisible
-                        ),
+                                                  : (stage == extrasIndex - 1 ||
+                                                          stage ==
+                                                              extrasIndex ||
+                                                          stage ==
+                                                              extrasIndex + 1)
+                                                      ? Align(
+                                                          key: const ValueKey(
+                                                              'meal_plan_extras'),
+                                                          alignment: Alignment
+                                                              .topCenter,
+                                                          child: AbsorbPointer(
+                                                            absorbing: stage !=
+                                                                extrasIndex,
+                                                            child:
+                                                                AnimatedOpacity(
+                                                              duration:
+                                                                  const Duration(
+                                                                      milliseconds:
+                                                                          300),
+                                                              opacity: stage ==
+                                                                      extrasIndex -
+                                                                          1
+                                                                  ? 0.3
+                                                                  : 1,
+                                                              child:
+                                                                  DietSetting(
+                                                                title:
+                                                                    "Additions",
+                                                                subtitle:
+                                                                    "Add any additional requirements you might have. This can anything, such as likes/dislikes, goals, budgets or anything you can think of! I will try to incorporate as much of it into my planning as possible.",
+                                                                values: [],
+                                                                allowExtra:
+                                                                    true,
+                                                                onSave:
+                                                                    (values) {
+                                                                  setState(() {
+                                                                    extras =
+                                                                        values;
+                                                                  });
+                                                                  _onContinue();
+                                                                },
+                                                                initialValues:
+                                                                    extras,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        )
+                                                      : const SizedBox
+                                                          .shrink(), // Use this to remove the widget completely when it's invisible
+                            ),
+                          ),
+                          // if (stage == toolIndex || stage == toolIndex + 1)
+                          //   Positioned.fill(
+                          //     child: AnimatedOpacity(
+                          //         opacity:
+                          //             (stage == toolIndex || stage == toolIndex + 1)
+                          //                 ? 1.0
+                          //                 : 0.0,
+                          //         duration: const Duration(milliseconds: 300),
+                          //         child: MealPlanAllergies(
+                          //           onContinue: _onContinue,
+                          //         )),
+                          //   ),
+                        ],
                       ),
-                      // if (stage == toolIndex || stage == toolIndex + 1)
-                      //   Positioned.fill(
-                      //     child: AnimatedOpacity(
-                      //         opacity:
-                      //             (stage == toolIndex || stage == toolIndex + 1)
-                      //                 ? 1.0
-                      //                 : 0.0,
-                      //         duration: const Duration(milliseconds: 300),
-                      //         child: MealPlanAllergies(
-                      //           onContinue: _onContinue,
-                      //         )),
-                      //   ),
-                    ],
+                    ),
                   ),
                 ),
               ],

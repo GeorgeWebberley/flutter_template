@@ -16,8 +16,11 @@ const openai = new OpenAI({ key: process.env.OPENAI_API_KEY });
 const novitaClient = new NovitaSDK(process.env.NOVITA_API_KEY);
 
 const generalAiAssistantId = "asst_wNFWDodhq6vuUYHS3HlOZBSv";
+const generalAiAssistantNewId = "asst_wWYSFaXKRfSUZnPFdqxKFM1g";
 const recipeAiAssistantId = "asst_pxquMj2BqU0kjkB18dp5H68l";
+const recipeAiAssistantNewId = "asst_m3tKYtVKcbDoPOReNhRoTKI0";
 const recipeListAiAssistantId = "asst_9OK4fq0HyQoOk4rQ7vS8s2v2";
+const recipeListAiAssistantNewId = "asst_WKcWA2lHIdaP9EZbxg1pUTq0";
 const refreshRecipeAiAssistantId = "asst_LGfISDuP0aG7YF0x739YGBHh";
 const recipeHelpAiAssistantId = "asst_vi2XNfwlTHrMZAXLwKPGjbW8";
 
@@ -59,6 +62,103 @@ exports.sendMessage = functions.runWith({ timeoutSeconds: 120 }).https.onCall(as
 
     const run = await openai.beta.threads.runs.createAndPoll(threadId, {
       assistant_id: generalAiAssistantId, 
+    });
+
+    console.log("sendMessage run.status");
+    console.log(run.status);
+    
+
+    if (run.status === 'completed') {
+      console.log("sendMessage test 1");
+
+      const messages = await openai.beta.threads.messages.list(run.thread_id);
+      console.log("sendMessage test 2", messages);
+
+      // Return only the latest message from the assistant
+      const latestMessage = messages.data.find(msg => msg.role === 'assistant');
+
+      console.log("sendMessage test 3", latestMessage);
+
+      return { status: 'success', message: latestMessage };
+    } else {
+      return { status: run.status };
+    }
+  } catch (error) {
+    console.error("Error handling message:", error);
+    throw new functions.https.HttpsError('failed-precondition', 'Failed to send message.');
+  }
+});
+
+
+// After updating this document, re-deploy functions using the following command:
+//
+// firebase deploy --only functions
+exports.sendMessageNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
+
+  const requirements = data.requirements?.length 
+    ? data.requirements 
+    : ["none"];
+  const allergies = data.allergies?.length 
+    ? data.allergies 
+    : ["none"];
+  const tools = data.tools?.length 
+    ? data.tools 
+    : ["none"];
+  const tastes = data.tastes?.length 
+    ? data.tastes 
+    : ["none"];
+  const extras = data.extras?.length 
+    ? data.extras 
+    : ["none"];
+
+  const userId = context.auth.uid;
+  const userDocRef = admin.firestore().collection('users').doc(userId);
+  const userDoc = await userDocRef.get();
+  
+  let threadId = userDoc.data()?.threadId;
+
+  // Will be true if the message being sent is the final in the meal planning.
+  // Used to create an entry in the database with "loading" set to true.
+  const isNewConversation = data.isNewConversation;
+  
+  let newMealPlanDocRef;
+
+
+  try {
+    // If the thread doesn't exist, create a new one.
+    if (!threadId || isNewConversation) {
+      const thread = await openai.beta.threads.create();
+      threadId = thread.id;
+
+      // Save the new thread ID in Firestore
+      await userDocRef.update({ threadId: threadId });
+
+      const initialMessage = `
+        Context: This message contains user preferences. No response needed.
+        Dietary requirements: ${requirements.join(', ')}
+        Allergies: ${allergies.join(', ')}
+        Kitchen Tools: ${tools.join(', ')}
+        Tastes: ${tastes.join(', ')}
+        Extras: ${extras.join(', ')}
+      `;
+
+      await openai.beta.threads.messages.create(threadId, {
+        role: "user",
+        content: initialMessage,
+      });
+    }
+
+    const userMessage = data.message;
+
+    await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: userMessage,
+    });
+
+    console.log("sendMessage Submitted message")
+
+    const run = await openai.beta.threads.runs.createAndPoll(threadId, {
+      assistant_id: generalAiAssistantNewId, 
     });
 
     console.log("sendMessage run.status");
@@ -216,6 +316,96 @@ exports.getRecipeList = functions.runWith({ timeoutSeconds: 120 }).https.onCall(
 });
 
 
+
+
+// TODO: The above function seems to fail often times when producing may recipes (10 plus). To get round this another option is to call 2 different AI models.
+// - The first one returns list of recipe names
+// - The second one returns a single recipe for each name. Can be called in parallel to save time (only billed on number of tokens).
+// Difficulties may be when trying to do this as well as accounting for the fact that user has diet preferences.
+// Keep the above function for the general "chat" functionality and for being able to generate recipes on the fly.
+exports.getRecipeListNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
+  const userId = context.auth.uid;
+  // TODO: Also to check for user subscription status
+  if (!userId) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated.');
+  }
+
+  const numberOfPeople = data.numberOfPeople ?? 0;
+  const breakfasts = data.breakfasts ?? 0;
+  const lunches = data.lunches ?? 0;
+  const dinners = data.dinners ?? 0;
+  const snacks = data.snacks ?? 0;
+  const requirements = data.requirements?.length 
+      ? data.requirements 
+      : ["none"];
+  const allergies = data.allergies?.length 
+      ? data.allergies 
+      : ["none"];
+  const tools = data.tools?.length 
+      ? data.tools 
+      : ["none"];
+  const tastes = data.tastes?.length 
+      ? data.tastes 
+      : ["none"];
+  const extras = data.extras?.length 
+      ? data.extras 
+      : ["none"];
+
+
+  try {
+
+    const thread = await openai.beta.threads.create();
+    const threadId = thread.id;
+
+    const userMessage = `
+    Number of people: ${numberOfPeople}
+    Number of breakfasts: ${breakfasts}
+    Number of lunches: ${lunches}
+    Number of dinners: ${dinners}
+    Number of snacks: ${snacks}
+    Dietary requirements: ${requirements.join(', ')}
+    Allergies: ${allergies.join(', ')}
+    Kitchen Tools: ${tools.join(', ')}
+    Tastes: ${tastes.join(', ')}
+    Extras: ${extras.join(', ')}
+    `;
+
+    await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: userMessage,
+    });
+
+    // console.log("getRecipeList Submitted message")
+
+    const run = await openai.beta.threads.runs.createAndPoll(threadId, {
+      assistant_id: recipeListAiAssistantNewId, 
+    });
+
+    // console.log("getRecipeList run.status");
+    // console.log(run.status);
+
+    if (run.status === 'completed') {
+      // console.log("getRecipeList test 1");
+
+      const messages = await openai.beta.threads.messages.list(run.thread_id);
+      // console.log("getRecipeList test 2", messages);
+      
+      // Return only the latest message from the assistant
+      const latestMessage = messages.data.find(msg => msg.role === 'assistant');
+
+      // For now just return response. To decide whether these recipes should be saved to the database.
+      return { status: 'success', message: latestMessage };
+    } else {
+      return { status: run.status };
+    }
+  } catch (error) {
+    console.error("Error handling message:", error);
+    throw new functions.https.HttpsError('failed-precondition', 'Failed to send message.');
+  }
+});
+
+
+
 exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
   const { breakfasts, lunches, dinners, dietaryPreferences, numberOfPeople, mealPlanId } = data;
 
@@ -244,6 +434,78 @@ exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCal
   if (dinners && dinners.length > 0) {
     dinners.forEach(dinner => {
       recipeRequests.push(generateRecipe(dinner, 'dinner', dietaryPreferences, numberOfPeople));
+    });
+  }
+
+  // Wait for all API calls to complete in parallel
+  let recipes;
+  try {
+    recipes = await Promise.all(recipeRequests);
+  } catch (error) {
+    console.error('Error with recipe requests:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to generate recipes');
+  }
+
+  // Update the meal plan document in Firestore
+  try {
+    // Start a batch
+    const batch = admin.firestore().batch();
+
+    // Add each recipe to the 'recipes' subcollection
+    recipes.forEach((recipe) => {
+      const recipeDocRef = newMealPlanDocRef.collection('recipes').doc(); // Auto-generate a new recipe ID
+      batch.set(recipeDocRef, recipe); // Add the recipe to the batch
+    });
+
+    // Update the meal plan document itself to mark loading as false (if necessary)
+    batch.update(newMealPlanDocRef, {
+      loading: false
+    });
+
+    // Commit the batch
+    await batch.commit();
+    // await newMealPlanDocRef.update({
+    //   recipes: recipes,
+    //   loading: false,
+    // });
+    console.log("Meal plan updated successfully");
+    sendMealPlanNotification(userId, mealPlanId);
+
+  } catch (dbError) {
+    console.error('Error updating Firestore document:', dbError);
+    throw new functions.https.HttpsError('internal', 'Failed to update the meal plan');
+  }
+});
+
+
+exports.generateRecipesNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
+  const { breakfasts, lunches, dinners, requirements, allergies, tools, extras, numberOfPeople, mealPlanId } = data;
+
+  const userId = context.auth.uid;
+  const userDocRef = admin.firestore().collection('users').doc(userId);
+  const newMealPlanDocRef = userDocRef.collection('mealPlans').doc(mealPlanId);
+
+  // Create an array of recipe requests for each meal type
+  const recipeRequests = [];
+
+  // Push breakfast recipe requests
+  if (breakfasts && breakfasts.length > 0) {
+    breakfasts.forEach(breakfast => {
+      recipeRequests.push(generateRecipeNew(breakfast, 'breakfast', requirements, allergies, tools, extras, numberOfPeople));
+    });
+  }
+
+  // Push lunch recipe requests
+  if (lunches && lunches.length > 0) {
+    lunches.forEach(lunch => {
+      recipeRequests.push(generateRecipeNew(lunch, 'lunch', requirements, allergies, tools, extras, numberOfPeople));
+    });
+  }
+
+  // Push dinner recipe requests
+  if (dinners && dinners.length > 0) {
+    dinners.forEach(dinner => {
+      recipeRequests.push(generateRecipeNew(dinner, 'dinner', requirements, allergies, tools, extras, numberOfPeople));
     });
   }
 
@@ -501,6 +763,28 @@ async function generateRecipe(recipeTitle, mealType, dietaryPreferences, numberO
     return null;
   }
 }
+
+// Function to generate recipe by calling AI API
+async function generateRecipeNew(recipeTitle, mealType, requirements, allergies, tools, extras, numberOfPeople) {
+  try {
+    // Run both functions in parallel using Promise.all
+    const [image, recipe] = await Promise.all([
+      generateImage(recipeTitle),
+      generateRecipeJsonNew(recipeTitle, mealType, requirements, allergies, tools, extras, numberOfPeople),
+    ]);
+
+    if(image && recipe){
+      recipe.image = image;
+    }
+
+    console.log("Combined Recipe with Images:", recipe);
+    return recipe;
+  } catch (error) {
+    console.error('Error generating recipe:', error);
+    return null;
+  }
+}
+
 // Function to generate recipe by calling AI API
 async function generateRecipeJson(recipeTitle, mealType, dietaryPreferences, numberOfPeople) {
   try {
@@ -526,6 +810,80 @@ async function generateRecipeJson(recipeTitle, mealType, dietaryPreferences, num
 
     const run = await openai.beta.threads.runs.createAndPoll(threadId, {
       assistant_id: recipeAiAssistantId, 
+    });
+
+    console.log("OpenAI run status:", run.status);
+
+    if (run.status === 'completed') {
+      const messages = await openai.beta.threads.messages.list(run.thread_id);
+      const latestMessage = messages.data.find(msg => msg.role === 'assistant');
+      let finalRecipe;
+
+      if (latestMessage && latestMessage['content'] && latestMessage['content'].length > 0) {
+        // console.log("generateRecipes test 2");
+    
+        const contentList = latestMessage['content'];
+        const contentObject = contentList.length > 0 ? contentList[0] : null;
+        // console.log("generateRecipes test 3", contentObject);
+    
+        if (contentObject && contentObject['type'] === 'text') {
+          const textValue = contentObject['text']['value'];
+    
+          try {
+            const parsedJson = JSON.parse(textValue);
+            // console.log("generateRecipes test 4", parsedJson);
+    
+            // Check if the parsed JSON has a "properties" key
+            finalRecipe = parsedJson;
+            if (parsedJson.hasOwnProperty('properties')) {
+              // console.log("generateRecipes test 5 - properties found, flattening");
+              finalRecipe = parsedJson.properties; // Flatten the object by extracting "properties"
+              return finalRecipe;
+            }
+          } catch (parseError) {
+            console.error('Error parsing recipe JSON:', parseError);
+          }
+        }
+      }
+      return finalRecipe;
+    } else {
+      console.error('OpenAI run did not complete', run);
+      return null;
+    }
+  } catch (error) {
+    console.error('Error generating recipe:', error);
+    return null;
+  }
+}
+
+// Function to generate recipe by calling AI API
+async function generateRecipeJsonNew(recipeTitle, mealType, requirements, allergies, tools, extras, numberOfPeople) {
+  try {
+    const thread = await openai.beta.threads.create();
+    const threadId = thread.id;
+
+    console.log("generateRecipe 3");
+
+
+    const userMessage = `
+    Recipe title: ${recipeTitle},
+    Meal type: ${mealType},
+    Number of people: ${numberOfPeople},
+    Dietary requirements: ${requirements.join(', ')},
+    Allergies: ${allergies.join(', ')},
+    Kitchen Tools: ${tools.join(', ')},
+    Extras: ${extras.join(', ')}
+    `;
+
+    await openai.beta.threads.messages.create(threadId, {
+      role: "user",
+      content: userMessage,
+    });
+
+    console.log("Message submitted to OpenAI");
+
+    const run = await openai.beta.threads.runs.createAndPoll(threadId, {
+      assistant_id: recipeAiAssistantNewId, 
     });
 
     console.log("OpenAI run status:", run.status);

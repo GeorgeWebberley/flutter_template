@@ -3,14 +3,22 @@ class MealPlanConfiguration {
   final int lunches;
   final int dinners;
   final int numberOfPeople;
-  final List<String> dietaryPreferences;
+  final List<String>? requirements;
+  final List<String>? allergies;
+  final List<String>? tools;
+  final List<String>? tastes;
+  final List<String>? extras;
 
   MealPlanConfiguration({
     this.breakfasts = 0,
     this.lunches = 0,
     this.dinners = 0,
     required this.numberOfPeople,
-    required this.dietaryPreferences,
+    this.requirements,
+    this.allergies,
+    this.tools,
+    this.tastes,
+    this.extras,
   });
 
   factory MealPlanConfiguration.fromJson(Map<String, dynamic> json) {
@@ -19,9 +27,15 @@ class MealPlanConfiguration {
       lunches: json['lunches'] as int,
       dinners: json['dinners'] as int,
       numberOfPeople: json['numberOfPeople'] as int,
-      dietaryPreferences: (json['dietaryPreferences'] as List)
-          .map((preference) => preference as String)
+      requirements: (json['requirements'] as List)
+          .map((requirement) => requirement as String)
           .toList(),
+      allergies: (json['allergies'] as List)
+          .map((allergy) => allergy as String)
+          .toList(),
+      tools: (json['tools'] as List).map((tool) => tool as String).toList(),
+      tastes: (json['tastes'] as List).map((taste) => taste as String).toList(),
+      extras: (json['extras'] as List).map((extra) => extra as String).toList(),
     );
   }
 
@@ -31,7 +45,11 @@ class MealPlanConfiguration {
       'lunches': lunches,
       'dinners': dinners,
       'numberOfPeople': numberOfPeople,
-      'dietaryPreferences': dietaryPreferences,
+      'requirements': requirements,
+      'allergies': allergies,
+      'tools': tools,
+      'tastes': tastes,
+      'extras': extras,
     };
   }
 }

@@ -76,6 +76,7 @@ class MyApp extends StatelessWidget {
       value: authService
           .user, // A stream, for the app user so we can check auth status in real time
       child: MaterialApp(
+        key: UniqueKey(),
         title: 'Nutriveat',
         builder: (context, child) {
           return MediaQuery(

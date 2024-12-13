@@ -16,6 +16,7 @@ import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
 import 'package:flutter_firebase_template/widgets/detail_tile.dart';
+import 'package:flutter_firebase_template/widgets/wrapper.dart';
 import 'package:provider/provider.dart';
 
 class AccountRoot extends StatelessWidget {
@@ -191,6 +192,13 @@ class AccountRoot extends StatelessWidget {
                       onPressed: () async {
                         await Provider.of<AuthService>(context, listen: false)
                             .signOut();
+
+                        // Navigate back to wrapper screen
+                        Navigator.pushAndRemoveUntil(
+                            context,
+                            SlideNavigator(
+                                builder: (context, _, __) => const Wrapper()),
+                            (route) => false);
                       },
                       icon: Icons.logout,
                       iconColor: AppColors.primary,

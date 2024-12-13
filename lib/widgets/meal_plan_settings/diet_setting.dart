@@ -208,7 +208,7 @@ class _DietSettingState extends State<DietSetting>
                     TextFormField(
                       autocorrect: false,
                       decoration: textInputDecoration.copyWith(
-                        errorStyle: const TextStyle(color: Colors.white),
+                        errorStyle: const TextStyle(color: Colors.red),
                       ),
                       validator: (value) => value == null || value.isEmpty
                           ? 'Add ${widget.title}'

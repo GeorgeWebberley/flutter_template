@@ -74,9 +74,10 @@ class _AccountHeaderState extends State<AccountHeader> {
           return AppDialog(
               loading: loading,
               content: TextField(
+                textCapitalization: TextCapitalization.sentences,
                 decoration: textInputDecoration.copyWith(
                   prefixIcon: const Icon(Icons.person_outline),
-                  hintText: 'First name',
+                  hintText: 'Display name',
                 ),
                 onChanged: (value) {
                   dialogSetState(() {
@@ -84,7 +85,7 @@ class _AccountHeaderState extends State<AccountHeader> {
                   });
                 },
               ),
-              title: "Update your name",
+              title: "Update your display name",
               onSave: () async {
                 dialogSetState(() {
                   loading = true;

@@ -60,7 +60,7 @@ class IntroSliderPage extends StatelessWidget {
                 style: TextStyle(
                     color: foregroundColor ?? Colors.black,
                     fontFamily: 'Times New Roman',
-                    fontSize: 38,
+                    fontSize: 36,
                     fontWeight: FontWeight.w500),
               ),
               const SizedBox(
@@ -69,7 +69,7 @@ class IntroSliderPage extends StatelessWidget {
               // Image takes preference, then lottiefile
               image ?? lottieFile ?? Container(),
               const SizedBox(
-                height: AppPading.page * 2,
+                height: AppPading.page,
               ),
               SizedBox(
                 height: 120,
@@ -83,7 +83,7 @@ class IntroSliderPage extends StatelessWidget {
               ),
               if (optionalChild != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: AppPading.page * 2),
+                  padding: const EdgeInsets.only(top: AppPading.page),
                   child: optionalChild!,
                 )
             ],

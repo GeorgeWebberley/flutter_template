@@ -27,22 +27,17 @@ class _WrapperState extends State<Wrapper> {
   @override
   Widget build(BuildContext context) {
     final AppUser? user = Provider.of<AppUser?>(context);
-    print("Refreshing user state!");
-    print("User: $user");
     if (user == null) {
-      print("User is not authenticated");
-
       return const Authenticate();
     } else {
-      print("User is authenticated");
-
       return StreamBuilder<UserData?>(
           stream: UserService(uid: user.uid).userDataStream,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.active) {
+            if (snapshot.connectionState == ConnectionState.done) {
               UserData? userData = snapshot.data;
 
               if (userData == null) {
+                print("User data is null");
                 return Scaffold(
                   body: Container(
                     height: double.infinity,

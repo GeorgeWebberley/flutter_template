@@ -84,8 +84,7 @@ class _SignInState extends State<SignIn> {
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.email_outlined),
                                 hintText: 'Email',
-                                errorStyle:
-                                    const TextStyle(color: Colors.white)),
+                                errorStyle: const TextStyle(color: Colors.red)),
                             validator: (value) {
                               if (value!.isEmpty) {
                                 return 'Enter an email';
@@ -108,8 +107,7 @@ class _SignInState extends State<SignIn> {
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 hintText: 'Password',
-                                errorStyle:
-                                    const TextStyle(color: Colors.white)),
+                                errorStyle: const TextStyle(color: Colors.red)),
                             validator: (value) => value!.length < 6
                                 ? 'Password must be 6 or more characters'
                                 : null,

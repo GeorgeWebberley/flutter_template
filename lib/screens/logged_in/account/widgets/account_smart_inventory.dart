@@ -205,7 +205,7 @@ class AccountSmartInventory extends StatelessWidget {
                       decoration: textInputDecoration.copyWith(
                         prefixIcon: const Icon(Icons.lock_outline),
                         hintText: 'Password',
-                        errorStyle: const TextStyle(color: Colors.white),
+                        errorStyle: const TextStyle(color: Colors.red),
                       ),
                       validator: (value) => value!.length < 6
                           ? 'Password must be 6 or more characters'
@@ -225,7 +225,7 @@ class AccountSmartInventory extends StatelessWidget {
                       decoration: textInputDecoration.copyWith(
                         prefixIcon: const Icon(Icons.lock_outline),
                         hintText: 'Confirm password',
-                        errorStyle: const TextStyle(color: Colors.white),
+                        errorStyle: const TextStyle(color: Colors.red),
                       ),
                       validator: (value) =>
                           value! != password ? 'Passwords do not match' : null,

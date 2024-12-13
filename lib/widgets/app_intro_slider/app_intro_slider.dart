@@ -50,7 +50,7 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
         backgroundColor: Colors.transparent,
         title: "Tailored Meal Plans",
         description:
-            "Our platform creates personalised meal plans tailored to your dietary needs and preferences, ensuring you have delicious meals tailored for your exact needs!",
+            "Nutriveat crafts meal plans specifically designed to meet your dietary preferences and needs. Every meal is deliciously suited just for you!",
         lottieFile: LottieController(
             repeat: false,
             location: 'assets/lottie/cook.json',
@@ -67,7 +67,7 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
         backgroundColor: Colors.transparent,
         title: "Shopping Made Easy",
         description:
-            "Once you've selected your preferred dishes, our platform will create a shopping list containing all the essential ingredients for your weekly cooking escapades.",
+            "Once you've selected your preferred dishes, we will create a shopping list containing all the essential ingredients.",
         lottieFile: LottieController(
             repeat: false,
             location: 'assets/lottie/fruit_basket.json',

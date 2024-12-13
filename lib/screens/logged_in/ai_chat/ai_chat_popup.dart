@@ -14,6 +14,7 @@ import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/widgets/buttons/app_button.dart';
 import 'package:provider/provider.dart';
 
+// TODO: Update so that this popup knows all of the user preferences, allergies etc (similar to regular chat)
 class AiChatPopup extends StatefulWidget {
   const AiChatPopup({
     super.key,

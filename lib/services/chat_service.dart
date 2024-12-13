@@ -5,17 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/message.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:flutter_firebase_template/models/recipe_stub.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 
 class ChatService {
   ChatService();
 
-  Future<Message?> sendMessage(String message, String uid,
-      {bool isNewConversation = true}) async {
+  Future<Message?> sendMessage(
+    String message,
+    String uid, {
+    bool isNewConversation = true,
+  }) async {
     try {
       // Prepare the data to be sent to the Cloud Function
       final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
-          'sendMessage',
+          'sendMessageNew',
           options: HttpsCallableOptions(timeout: const Duration(minutes: 2)));
 
       Map<String, dynamic> body = {
@@ -23,7 +27,15 @@ class ChatService {
       };
 
       if (isNewConversation) {
+        UserData? userData = await UserService(uid: uid).getUserData();
+        print("NEW CONVERSATION");
+
         body['isNewConversation'] = isNewConversation;
+        body['requirements'] = userData?.requirements;
+        body['allergies'] = userData?.allergies;
+        body['tools'] = userData?.tools;
+        body['tastes'] = userData?.tastes;
+        body['extras'] = userData?.extras;
       }
 
       final response = await callable.call(body);

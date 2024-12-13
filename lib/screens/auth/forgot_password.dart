@@ -75,8 +75,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                             decoration: textInputDecoration.copyWith(
                                 prefixIcon: const Icon(Icons.email_outlined),
                                 hintText: 'Email',
-                                errorStyle:
-                                    const TextStyle(color: Colors.white)),
+                                errorStyle: const TextStyle(color: Colors.red)),
                             validator: (value) {
                               if (value!.isEmpty) {
                                 return 'Enter an email';

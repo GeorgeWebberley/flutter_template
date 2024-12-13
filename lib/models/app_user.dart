@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 
-class AppUser extends ChangeNotifier {
+class AppUser {
   final String uid;
   final List<String> providers;
   final String email;

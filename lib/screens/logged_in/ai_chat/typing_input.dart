@@ -20,6 +20,7 @@ class TypingInput extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
+                textCapitalization: TextCapitalization.sentences,
                 controller: _controller,
                 style: const TextStyle(color: Colors.black),
                 decoration: InputDecoration(
