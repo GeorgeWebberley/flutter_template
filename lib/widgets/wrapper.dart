@@ -35,6 +35,7 @@ class _WrapperState extends State<Wrapper> {
       return const Authenticate();
     } else {
       print("User is authenticated");
+      print(user.email);
 
       return StreamBuilder<UserData?>(
           stream: UserService(uid: user.uid).userDataStream,

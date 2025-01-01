@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
+import 'package:flutter_firebase_template/providers/in_app_purchase_provider.dart';
 import 'package:flutter_firebase_template/providers/local_notification_provider.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_firebase_template/state/chat_state.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/widgets/wrapper.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -40,6 +42,9 @@ void main() async {
   ChatState chatState = ChatState();
   await pushNotificationProvider.init();
 
+  InAppPurchaseProvider inAppPurchaseProvider = InAppPurchaseProvider();
+  await inAppPurchaseProvider.init();
+
   FlutterNativeSplash.remove();
 
   runApp(
@@ -56,6 +61,9 @@ void main() async {
         ),
         ChangeNotifierProvider<ChatState>(
           create: (_) => chatState,
+        ),
+        ChangeNotifierProvider<InAppPurchaseProvider>(
+          create: (_) => inAppPurchaseProvider,
         ),
       ],
       child: MyApp(authService: authService),
