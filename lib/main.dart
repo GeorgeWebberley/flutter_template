@@ -54,7 +54,6 @@ void main() async {
             create: (context) => pushNotificationProvider),
         Provider<LocalStorageProvider>(
             create: (context) => localStorageProvider),
-        Provider<AuthService>(create: (context) => authService),
         Provider<ShareProvider>(create: (context) => shareProvider),
         Provider<LocalNotificationProvider>(
           create: (_) => localNotificationProvider,
@@ -62,6 +61,7 @@ void main() async {
         ChangeNotifierProvider<ChatState>(
           create: (_) => chatState,
         ),
+        Provider<AuthService>(create: (context) => authService),
         ChangeNotifierProvider<InAppPurchaseProvider>(
           create: (_) => inAppPurchaseProvider,
         ),

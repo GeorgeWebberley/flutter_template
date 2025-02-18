@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
+import 'package:flutter_firebase_template/providers/in_app_purchase_provider.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
+import 'package:flutter_firebase_template/screens/logged_in/subscription/subscription_screen.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/fade_navigator.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
@@ -10,6 +12,7 @@ import 'package:flutter_firebase_template/widgets/app_intro_slider/intro_slider_
 import 'package:flutter_firebase_template/widgets/app_intro_slider/page_indicator.dart';
 import 'package:flutter_firebase_template/widgets/lottie_controller.dart';
 import 'package:flutter_firebase_template/widgets/meal_plan_settings/tutorial.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:provider/provider.dart';
 
 class AppIntroSlider extends StatefulWidget {
@@ -28,6 +31,7 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
 
   @override
   Widget build(BuildContext context) {
+    return SubscriptionScreen();
     _sliderPages = [
       IntroSliderPage(
         backgroundColor: Colors.transparent,

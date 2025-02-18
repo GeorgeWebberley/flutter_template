@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/models/user_data/user_data.dart';
+import 'package:flutter_firebase_template/providers/in_app_purchase_provider.dart';
 import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
 import 'package:flutter_firebase_template/screens/auth/authenticate.dart';
@@ -37,107 +39,79 @@ class _WrapperState extends State<Wrapper> {
       print("User is authenticated");
       print(user.email);
 
-      return StreamBuilder<UserData?>(
-          stream: UserService(uid: user.uid).userDataStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.active) {
-              UserData? userData = snapshot.data;
+      UserService userService = UserService(uid: user.uid);
 
-              if (userData == null) {
-                return Scaffold(
-                  body: Container(
-                    height: double.infinity,
-                    decoration: const BoxDecoration(
-                      gradient: AppGradients.backgroundGradient,
-                    ),
-                    child: Center(
-                      child: AppButton(
-                          onPressed: () async {
-                            await AuthService().signOut();
-                          },
-                          text: "Test"),
-                      //     CircularProgressIndicator(
-                      //   color: Color.fromARGB(255, 1, 22, 24),
-                      // ),
-                    ),
-                  ),
-                );
-              } else {
-                if (userData.hasCompletedTutorial == true) {
-                  // Check for any push notifications and handle them appropriately
-                  Provider.of<PushNotificationProvider?>(context, listen: false)
-                      ?.setupInteractedMessage((RemoteMessage? message) {
-                    if (message?.data != null) {
-                      _handleMessage(
-                          context: context,
-                          message: message!.data,
-                          currentUser: userData);
+      return ChangeNotifierProvider<InAppPurchaseProvider>(
+        create: (_) {
+          InAppPurchaseProvider inAppProvider =
+              InAppPurchaseProvider(userService: userService);
+          inAppProvider.init();
+          return inAppProvider;
+        },
+        child: Builder(builder: (context) {
+          return StreamBuilder<UserData?>(
+              stream: userService.userDataStream,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.active) {
+                  UserData? userData = snapshot.data;
+
+                  // This should not happen, but is a fall back / safety check
+                  if (userData == null) {
+                    return Scaffold(
+                      body: Container(
+                        height: double.infinity,
+                        decoration: const BoxDecoration(
+                          gradient: AppGradients.backgroundGradient,
+                        ),
+                        child: Center(
+                          child: AppButton(
+                              onPressed: () async {
+                                await AuthService().signOut();
+                              },
+                              text: "Test"),
+                          //     CircularProgressIndicator(
+                          //   color: Color.fromARGB(255, 1, 22, 24),
+                          // ),
+                        ),
+                      ),
+                    );
+                  } else {
+                    if (userData.hasCompletedTutorial == true) {
+                      // Check for any push notifications and handle them appropriately
+                      Provider.of<PushNotificationProvider?>(context,
+                              listen: false)
+                          ?.setupInteractedMessage((RemoteMessage? message) {
+                        if (message?.data != null) {
+                          _handleMessage(
+                              context: context,
+                              message: message!.data,
+                              currentUser: userData);
+                        }
+                      });
+
+                      return const AppNavigation();
+                    } else {
+                      return UserSetupFlow(user: user);
                     }
-                  });
-
-                  return const AppNavigation();
+                  }
                 } else {
-                  return UserSetupFlow(user: user);
-                }
-                // return FutureBuilder<String?>(
-                //     future: Provider.of<LocalStorageProvider?>(context,
-                //             listen: false)!
-                //         .get(key: "${user.uid}-${LocalStorageKeys.hasVisited}"),
-                //     builder: (context, snapshot) {
-                //       if (snapshot.connectionState == ConnectionState.done) {
-                //         String? visited = snapshot.data;
-
-                //         if (visited == null) {
-                //           return UserSetupFlow(user: user);
-                //         } else {
-                //           // Check for any push notifications and handle them appropriately
-                //           Provider.of<PushNotificationProvider?>(context,
-                //                   listen: false)
-                //               ?.setupInteractedMessage(
-                //                   (RemoteMessage? message) {
-                //             if (message?.data != null) {
-                //               _handleMessage(
-                //                   context: context,
-                //                   message: message!.data,
-                //                   currentUser: userData);
-                //             }
-                //           });
-
-                //           return const AppNavigation();
-                //         }
-                //       } else {
-                //         return Scaffold(
-                //           body: Container(
-                //             height: double.infinity,
-                //             decoration: const BoxDecoration(
-                //               gradient: AppGradients.backgroundGradient,
-                //             ),
-                //             child: const Center(
-                //               child: CircularProgressIndicator(
-                //                 color: Color.fromARGB(255, 1, 22, 24),
-                //               ),
-                //             ),
-                //           ),
-                //         );
-                //       }
-                //     });
-              }
-            } else {
-              return Scaffold(
-                body: Container(
-                  height: double.infinity,
-                  decoration: const BoxDecoration(
-                    gradient: AppGradients.backgroundGradient,
-                  ),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: Color.fromARGB(255, 1, 22, 24),
+                  return Scaffold(
+                    body: Container(
+                      height: double.infinity,
+                      decoration: const BoxDecoration(
+                        gradient: AppGradients.backgroundGradient,
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Color.fromARGB(255, 1, 22, 24),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              );
-            }
-          });
+                  );
+                }
+              });
+        }),
+      );
     }
   }
 

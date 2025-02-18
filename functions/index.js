@@ -15,6 +15,9 @@ const bucket = admin.storage().bucket();
 const openai = new OpenAI({ key: process.env.OPENAI_API_KEY });
 const novitaClient = new NovitaSDK(process.env.NOVITA_API_KEY);
 
+const isProduction = process.env.ENVIRONMENT === "production";
+const appleSharedSecret = process.env.APPLE_SHARED_SECRET;
+
 const generalAiAssistantId = "asst_wNFWDodhq6vuUYHS3HlOZBSv";
 const generalAiAssistantNewId = "asst_wWYSFaXKRfSUZnPFdqxKFM1g";
 const recipeAiAssistantId = "asst_pxquMj2BqU0kjkB18dp5H68l";
@@ -23,6 +26,132 @@ const recipeListAiAssistantId = "asst_9OK4fq0HyQoOk4rQ7vS8s2v2";
 const recipeListAiAssistantNewId = "asst_WKcWA2lHIdaP9EZbxg1pUTq0";
 const refreshRecipeAiAssistantId = "asst_LGfISDuP0aG7YF0x739YGBHh";
 const recipeHelpAiAssistantId = "asst_vi2XNfwlTHrMZAXLwKPGjbW8";
+
+
+/**
+ * validateSubscription
+ * 
+ * Expects the following data from the client:
+ * - receiptData: (String or Object) Receipt data from the purchase.
+ *   * For iOS: a Base64-encoded string.
+ *   * For Android: an object containing packageName, productId, and purchaseToken.
+ * - productId: The product identifier (e.g., "com.nutriveat.app.yearly").
+ * - platform: "ios" or "android"
+ */
+exports.validateSubscription = functions.https.onCall(
+  async (data, context) => {
+    // 1. Ensure the request is authenticated.
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated.");
+    }
+
+    // 2. Extract and validate parameters.
+    const { receiptData, productId, platform } = data;
+    if (!receiptData || !productId || !platform) {
+      throw new functions.https.HttpsError("invalid-argument", "Missing receiptData, productId, or platform.");
+    }
+
+    // 3. Use the extracted helper function to validate the subscription.
+    let isValid, validationResponse;
+    try {
+      ({ isValid, validationResponse } = await revalidateSubscription({ receiptData, productId, platform }));
+    } catch (error) {
+      throw new functions.https.HttpsError("failed-precondition", error.message);
+    }
+
+    // 4. Update Firestore with the subscription status.
+    const uid = context.auth.uid;
+    let subscriptionPlan = null;
+    try {
+      if (isValid) {
+        subscriptionPlan = productId === "com.nutriveat.app.yearly" ? "yearly" : "monthly";
+        await admin.firestore().collection("users").doc(uid).update({
+          isSubscribed: true,
+          subscription: {
+            subscriptionPlan: subscriptionPlan,
+            receiptData: receiptData,
+            platform: platform,
+            productId: productId,
+            validationResponse: validationResponse,
+            lastValidated: admin.firestore.FieldValue.serverTimestamp(),
+          },
+        });
+      } else {
+        await admin.firestore().collection("users").doc(uid).update({
+          isSubscribed: false,
+          subscription: {
+            subscriptionPlan: null,
+            receiptData: receiptData,
+            platform: platform,
+            productId: productId,
+            validationResponse: validationResponse,
+            lastValidated: admin.firestore.FieldValue.serverTimestamp(),
+          },
+        });
+      }
+    } catch (error) {
+      throw new functions.https.HttpsError("internal", "Failed to update user subscription.");
+    }
+
+    if (isValid) {
+      return { success: true, subscriptionPlan };
+    } else {
+      throw new functions.https.HttpsError("failed-precondition", "Receipt validation failed.");
+    }
+  }
+);
+
+/**
+ * scheduledSubscriptionCheck
+ * 
+ * Called once a week to revalidate all active subscriptions.:
+ */
+exports.scheduledSubscriptionCheck = functions.pubsub
+  .schedule('every 168 hours')  // Run once a week (168 hours)
+  .onRun(async (context) => {
+    const usersSnapshot = await admin.firestore().collection('users')
+      .where('isSubscribed', '==', true)
+      .get();
+
+    const updatePromises = [];
+    
+    usersSnapshot.forEach((doc) => {
+      const userData = doc.data();
+      const subscription = userData.subscription;
+      
+      // Ensure we have the necessary subscription details.
+      if (subscription && subscription.receiptData && subscription.platform && subscription.productId) {
+        const promise = revalidateSubscription({
+          receiptData: subscription.receiptData,
+          productId: subscription.productId,
+          platform: subscription.platform,
+        })
+        .then(({ isValid, validationResponse }) => {
+          let subscriptionPlan = null;
+          if (isValid) {
+            subscriptionPlan = subscription.productId === "com.nutriveat.app.yearly" ? "yearly" : "monthly";
+          }
+          // Update the user document with the latest validation info.
+          return doc.ref.update({
+            isSubscribed: isValid,
+            "subscription.subscriptionPlan": isValid ? subscriptionPlan : null,
+            "subscription.validationResponse": validationResponse,
+            "subscription.lastValidated": admin.firestore.FieldValue.serverTimestamp(),
+          });
+        })
+        .catch((error) => {
+          console.error(`Error revalidating subscription for user ${doc.id}:`, error);
+          // Optionally, you could update a field to mark that revalidation failed.
+        });
+        updatePromises.push(promise);
+      }
+    });
+    
+    await Promise.all(updatePromises);
+    return null;
+});
+
+
 
 // After updating this document, re-deploy functions using the following command:
 //
@@ -1057,3 +1186,100 @@ async function sendMealPlanNotification(userId, mealplanId) {
     functions.logger.error("Error sending friend request notification:", error);
   }
 }
+
+async function checkSubscription(uid) {
+  const userDoc = await admin.firestore().collection("users").doc(uid).get();
+  if (!userDoc.exists) return false;
+  const userData = userDoc.data();
+  // Quick check based on the top-level flag.
+  return userData.isSubscribed === true;
+}
+
+function withSubscriptionCheck(fn) {
+  return async (data, context) => {
+    // Ensure the request is authenticated.
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
+    }
+
+    const uid = context.auth.uid;
+    // Check subscription status from Firestore.
+    const valid = await checkSubscription(uid);
+    if (!valid) {
+      throw new functions.https.HttpsError("permission-denied", "Subscription is not valid or has expired");
+    }
+    
+    // If valid, proceed with the original function.
+    return fn(data, context);
+  };
+}
+
+
+// Helper: Validates the receipt for either iOS or Android.
+async function revalidateSubscription({ receiptData, productId, platform }) {
+  let isValid = false;
+  let validationResponse = null;
+
+  if (platform === "ios") {
+    const appleEndpoint = isProduction
+      ? "https://buy.itunes.apple.com/verifyReceipt"
+      : "https://sandbox.itunes.apple.com/verifyReceipt";
+
+    const payload = {
+      "receipt-data": receiptData,
+      "password": appleSharedSecret,
+    };
+
+    try {
+      const response = await fetch(appleEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await response.json();
+      if (json.status === 0) {
+        isValid = true;
+        validationResponse = json;
+      } else {
+        isValid = false;
+        validationResponse = json;
+      }
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  } else if (platform === "android") {
+    // Expect receiptData for Android to be an object containing packageName, productId, and purchaseToken.
+    const { packageName, productId: googleProductId, purchaseToken } = receiptData;
+    if (!packageName || !googleProductId || !purchaseToken) {
+      throw new Error("For Android, receiptData must include packageName, productId, and purchaseToken.");
+    }
+    try {
+      const androidpublisher = google.androidpublisher("v3");
+      const authClient = await google.auth.getClient({
+        scopes: ["https://www.googleapis.com/auth/androidpublisher"],
+      });
+      google.options({ auth: authClient });
+
+      const res = await androidpublisher.purchases.subscriptions.get({
+        packageName,
+        subscriptionId: googleProductId, // should match productId from client
+        token: purchaseToken,
+      });
+
+      if (res.data.purchaseState === 0) {
+        isValid = true;
+        validationResponse = res.data;
+      } else {
+        isValid = false;
+        validationResponse = res.data;
+      }
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  } else {
+    throw new Error("Platform must be either 'ios' or 'android'.");
+  }
+
+  return { isValid, validationResponse };
+}
+
