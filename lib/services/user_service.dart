@@ -484,4 +484,29 @@ class UserService {
       throw Exception('Invalid DocumentReference path');
     }
   }
+
+  Future<bool> startFreeTrial({
+    String? deviceId,
+    String? localStoredValue,
+  }) async {
+    // Prepare the data to be sent to the Cloud Function
+    final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+      'startFreeTrial',
+    );
+
+    Map<String, dynamic> body = {
+      'deviceId': deviceId,
+      'localStoredValue': localStoredValue,
+    };
+
+    HttpsCallableResult response = await callable.call(body);
+
+    if (response.data['success'] == true) {
+      // TODO: What should I return?
+      return true;
+    } else {
+      debugPrint("Error in UserService: ${response.data['error']}");
+      return false;
+    }
+  }
 }

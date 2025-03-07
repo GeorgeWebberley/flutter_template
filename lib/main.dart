@@ -8,6 +8,7 @@ import 'package:flutter_firebase_template/providers/local_storage_provider.dart'
 import 'package:flutter_firebase_template/providers/push_notification_provider.dart';
 import 'package:flutter_firebase_template/providers/share_provider.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
+import 'package:flutter_firebase_template/state/app_state.dart';
 import 'package:flutter_firebase_template/state/chat_state.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/widgets/wrapper.dart';
@@ -40,10 +41,10 @@ void main() async {
       PushNotificationProvider(localStorageProvider: localStorageProvider);
   AuthService authService = AuthService();
   ChatState chatState = ChatState();
-  await pushNotificationProvider.init();
+  AppState appState = AppState();
+  await appState.init();
 
-  InAppPurchaseProvider inAppPurchaseProvider = InAppPurchaseProvider();
-  await inAppPurchaseProvider.init();
+  await pushNotificationProvider.init();
 
   FlutterNativeSplash.remove();
 
@@ -62,9 +63,7 @@ void main() async {
           create: (_) => chatState,
         ),
         Provider<AuthService>(create: (context) => authService),
-        ChangeNotifierProvider<InAppPurchaseProvider>(
-          create: (_) => inAppPurchaseProvider,
-        ),
+        ChangeNotifierProvider<AppState>(create: (_) => appState),
       ],
       child: MyApp(authService: authService),
     ),

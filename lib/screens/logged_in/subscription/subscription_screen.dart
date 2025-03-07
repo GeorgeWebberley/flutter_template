@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/providers/in_app_purchase_provider.dart';
+import 'package:flutter_firebase_template/providers/local_storage_provider.dart';
+import 'package:flutter_firebase_template/services/user_service.dart';
+import 'package:flutter_firebase_template/shared/dialogs.dart';
+import 'package:flutter_firebase_template/shared/helpers.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
 import 'package:flutter_firebase_template/theme/padding.dart';
 import 'package:flutter_firebase_template/theme/text.dart';
@@ -7,30 +12,37 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:provider/provider.dart';
 import 'package:in_app_purchase_android/billing_client_wrappers.dart';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
+import 'package:uuid/uuid.dart';
 
 class SubscriptionScreen extends StatefulWidget {
-  const SubscriptionScreen({super.key});
+  const SubscriptionScreen({
+    super.key,
+    required this.userData,
+  });
+
+  final UserData userData;
 
   @override
   State<SubscriptionScreen> createState() => _SubscriptionScreenState();
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  // Dummy plan details
-  final String _monthlyPrice = '\$4.99/month';
-  final String _yearlyPrice = '\$24.99/year';
   ProductDetails? _monthlyPlan;
   ProductDetails? _yearlyPlan;
+  bool _loading = false;
+  late InAppPurchaseProvider inAppProvider;
 
   @override
   void initState() {
     super.initState();
-    initialiseProducts();
+    init();
   }
 
-  initialiseProducts() {
-    List<ProductDetails> products =
-        Provider.of<InAppPurchaseProvider>(context, listen: false).products;
+  init() async {
+    inAppProvider = InAppPurchaseProvider(
+        userService: UserService(uid: widget.userData.uid));
+    await inAppProvider.initStoreInfo();
+    List<ProductDetails> products = inAppProvider.products;
 
     // Monthly plan is the cheaper of the two
     if (products.length == 2) {
@@ -45,6 +57,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       }
     }
 
+    setState(() {});
+
     for (ProductDetails product in products) {
       print(product.id);
       print(product.title);
@@ -54,19 +68,55 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   // Callback for “Skip” (free trial) logic
-  void _onSkip() {
-    // Navigate or update state to reflect skipping purchase
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('Skipped subscription — Free trial started.')),
-    );
+  void _onSkip() async {
+    // TODO: Start free trial if not yet started
+    // First need to check if user has already started a free trial. In which case we do nothing and just proceed onwards
+    if (widget.userData.freeTrialCredits == null) {
+      try {
+        setState(() {
+          _loading = true;
+        });
+        // If user has not started a free trial, we need to start one
+        // Get the device id
+        String? deviceId = await getDeviceId(context);
+
+        String? uuid = Uuid().v4();
+
+        // Store a random value in localStorage to indicate that the user has started a free trial
+        await Provider.of<LocalStorageProvider>(context, listen: false)
+            .set(key: LocalStorageKeys.randomDeviceId, value: uuid);
+
+        bool success =
+            await UserService(uid: widget.userData.uid).startFreeTrial(
+          deviceId: deviceId,
+          localStoredValue: uuid,
+        );
+        if (!success) {
+          showToast(
+              context: context,
+              message: 'Error starting free trial',
+              color: AppColors.danger);
+        } else {
+          // Don't actually have to do anything here? Should happen automatically
+        }
+      } catch (e) {
+        showToast(
+            context: context,
+            message: 'Error starting free trial',
+            color: AppColors.danger);
+      } finally {
+        setState(() {
+          _loading = false;
+        });
+      }
+    } else {
+      Navigator.of(context).pop();
+    }
   }
 
   // Callback for plan selection logic
   void _onPlanSelected(ProductDetails product) {
-    Provider.of<InAppPurchaseProvider>(context, listen: false)
-        .buyProduct(product)
-        .catchError((e) {
+    inAppProvider.buyProduct(product).catchError((e) {
       // Handle errors here (e.g., show a message to the user)
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -76,6 +126,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -142,269 +193,219 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   ),
                 ),
                 width: double.infinity,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Stack(
                   children: [
-                    // Display subscription options as buttons
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: AppPading.page, vertical: AppPading.page),
+                    Visibility(
+                        visible: _loading,
+                        child: Center(
+                            child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ))),
+                    Visibility(
+                      visible: !_loading,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Stack(
-                            clipBehavior: Clip
-                                .none, // Allow the badge to extend outside the button
-                            children: [
-                              if (_yearlyPlan != null)
-                                ElevatedButton(
-                                  onPressed: () =>
-                                      _onPlanSelected(_yearlyPlan!),
-                                  style: ElevatedButton.styleFrom(
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    backgroundColor: AppColors.primary,
+                          // Display subscription options as buttons
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: AppPading.page,
+                                vertical: AppPading.page),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                SizedBox(
+                                  height: 60,
+                                  child: Stack(
+                                    clipBehavior: Clip
+                                        .none, // Allow the badge to extend outside the button
+                                    children: [
+                                      if (_yearlyPlan != null)
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              _onPlanSelected(_yearlyPlan!),
+                                          style: ElevatedButton.styleFrom(
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            backgroundColor: AppColors.primary,
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 15),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Flexible(
+                                                  child: Text(
+                                                    'Yearly Plan',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 20,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      '£49.99',
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 15,
+                                                          // fontWeight: FontWeight.w400,
+                                                          decorationColor:
+                                                              Colors.red,
+                                                          decorationThickness:
+                                                              2,
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .lineThrough),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Text(
+                                                      "${_yearlyPlan?.price ?? ''}/year",
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 20,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      Positioned(
+                                        top:
+                                            -14, // Extend the badge outside the button
+                                        right: -10, // Position it at the corner
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 5),
+                                          decoration: BoxDecoration(
+                                            color: const Color.fromARGB(
+                                                255, 227, 175, 45),
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black26,
+                                                blurRadius: 5,
+                                                offset: Offset(2, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.star,
+                                                color: Colors.white,
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                'Best Value!',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 15),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            'Yearly Plan',
+                                ),
+                                SizedBox(height: 15),
+                                // Monthly plan
+                                if (_monthlyPlan != null)
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        _onPlanSelected(_monthlyPlan!),
+                                    style: ElevatedButton.styleFrom(
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      backgroundColor:
+                                          AppColors.primary.withOpacity(0.4),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 15),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Monthly Plan',
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 20,
                                             ),
                                           ),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              '£49.99',
-                                              style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 15,
-                                                  // fontWeight: FontWeight.w400,
-                                                  decorationColor: Colors.red,
-                                                  decorationThickness: 2,
-                                                  decoration: TextDecoration
-                                                      .lineThrough),
+                                          Text(
+                                            "${_monthlyPlan?.price ?? ''}/month",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 20,
                                             ),
-                                            SizedBox(
-                                              width: 5,
-                                            ),
-                                            Text(
-                                              "${_yearlyPlan?.price ?? ''}/year",
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 20,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              Positioned(
-                                top: -14, // Extend the badge outside the button
-                                right: -10, // Position it at the corner
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        const Color.fromARGB(255, 227, 175, 45),
-                                    borderRadius: BorderRadius.circular(15),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black26,
-                                        blurRadius: 5,
-                                        offset: Offset(2, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.star,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        'Best Value!',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 15),
-                          // Monthly plan
-                          if (_monthlyPlan != null)
-                            ElevatedButton(
-                              onPressed: () => _onPlanSelected(_monthlyPlan!),
-                              style: ElevatedButton.styleFrom(
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                backgroundColor:
-                                    AppColors.primary.withOpacity(0.4),
-                              ),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 15),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Monthly Plan',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                    Text(
-                                      "${_monthlyPlan?.price ?? ''}/month",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          // SizedBox(height: 20),
-                          // Yearly plan
-                          // Stack(
-                          //   clipBehavior: Clip
-                          //       .none, // Allow the badge to extend outside the button
-                          //   children: [
-                          //     ElevatedButton(
-                          //       onPressed: () => _onPlanSelected('yearly'),
-                          //       style: ElevatedButton.styleFrom(
-                          //         elevation: 0,
-                          //         shape: RoundedRectangleBorder(
-                          //           borderRadius: BorderRadius.circular(20),
-                          //         ),
-                          //         backgroundColor: AppColors.primary,
-                          //       ),
-                          //       child: Padding(
-                          //         padding:
-                          //             const EdgeInsets.symmetric(vertical: 15),
-                          //         child: Row(
-                          //           mainAxisAlignment:
-                          //               MainAxisAlignment.spaceBetween,
-                          //           children: [
-                          //             Text(
-                          //               'Yearly Plan',
-                          //               style: TextStyle(
-                          //                 color: Colors.white,
-                          //                 fontSize: 20,
-                          //               ),
-                          //             ),
-                          //             Text(
-                          //               _yearlyPrice,
-                          //               style: TextStyle(
-                          //                 color: Colors.white,
-                          //                 fontSize: 20,
-                          //               ),
-                          //             ),
-                          //           ],
-                          //         ),
-                          //       ),
-                          //     ),
-                          //     Positioned(
-                          //       top: -10, // Extend the badge outside the button
-                          //       right: -10, // Position it at the corner
-                          //       child: Container(
-                          //         padding: const EdgeInsets.symmetric(
-                          //             horizontal: 10, vertical: 5),
-                          //         decoration: BoxDecoration(
-                          //           color: AppColors.tertiary,
-                          //           borderRadius: BorderRadius.circular(15),
-                          //           boxShadow: [
-                          //             BoxShadow(
-                          //               color: Colors.black26,
-                          //               blurRadius: 5,
-                          //               offset: Offset(2, 2),
-                          //             ),
-                          //           ],
-                          //         ),
-                          //         child: Row(
-                          //           mainAxisSize: MainAxisSize.min,
-                          //           children: [
-                          //             Icon(
-                          //               Icons.star,
-                          //               color: Colors.white,
-                          //               size: 16,
-                          //             ),
-                          //             const SizedBox(width: 5),
-                          //             Text(
-                          //               'Best Value!',
-                          //               style: TextStyle(
-                          //                 color: Colors.white,
-                          //                 fontWeight: FontWeight.bold,
-                          //                 fontSize: 12,
-                          //               ),
-                          //             ),
-                          //           ],
-                          //         ),
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                top: AppPading.large,
-                                right: AppPading.large,
-                                left: AppPading.large),
-                            child: Row(children: [
-                              Expanded(
-                                  child: Divider(
-                                color: Colors.black.withOpacity(0.5),
-                              )),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: AppPading.medium),
-                                child: Text("or",
-                                    style: TextStyle(
-                                      color: Colors.black.withOpacity(0.5),
-                                    )).h4(),
-                              ),
-                              Expanded(
-                                  child: Divider(
-                                color: Colors.black.withOpacity(0.5),
-                              )),
-                            ]),
-                          ),
 
-                          // Skip button
-                          TextButton(
-                            onPressed: _onSkip,
-                            child: Text(
-                              'Skip for now',
-                              style: TextStyle(
-                                color: Colors.black.withOpacity(0.75),
-                                fontSize: 20,
-                              ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      top: AppPading.large,
+                                      right: AppPading.large,
+                                      left: AppPading.large),
+                                  child: Row(children: [
+                                    Expanded(
+                                        child: Divider(
+                                      color: Colors.black.withOpacity(0.5),
+                                    )),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppPading.medium),
+                                      child: Text("or",
+                                          style: TextStyle(
+                                            color:
+                                                Colors.black.withOpacity(0.5),
+                                          )).h4(),
+                                    ),
+                                    Expanded(
+                                        child: Divider(
+                                      color: Colors.black.withOpacity(0.5),
+                                    )),
+                                  ]),
+                                ),
+
+                                // Skip button
+                                if (widget.userData.freeTrialCredits != null)
+                                  TextButton(
+                                    onPressed: _onSkip,
+                                    child: Text(
+                                      widget.userData.freeTrialCredits == null
+                                          ? 'Start free trial'
+                                          : 'Continue free trial',
+                                      style: TextStyle(
+                                        color: Colors.black.withOpacity(0.75),
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],

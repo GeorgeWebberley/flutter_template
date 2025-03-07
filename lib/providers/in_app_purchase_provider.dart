@@ -34,7 +34,7 @@ class InAppPurchaseProvider extends ChangeNotifier {
 
   InAppPurchaseProvider({required this.userService});
 
-  Future<void> init() async {
+  void init() {
     final Stream<List<PurchaseDetails>> purchaseUpdated =
         _inAppPurchase.purchaseStream;
     _subscription = purchaseUpdated.listen((purchaseDetailsList) {
@@ -44,8 +44,6 @@ class InAppPurchaseProvider extends ChangeNotifier {
     }, onError: (error) {
       // handle error here.
     });
-
-    await initStoreInfo();
   }
 
   @override

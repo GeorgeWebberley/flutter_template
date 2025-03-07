@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/models/message.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/typing_indicator.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/typing_input.dart';
+import 'package:flutter_firebase_template/screens/logged_in/subscription/subscription_screen.dart';
+import 'package:flutter_firebase_template/services/user_service.dart';
+import 'package:flutter_firebase_template/state/app_state.dart';
 import 'package:flutter_firebase_template/widgets/meal_plan_settings/meal_plan_configuration_root.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
 import 'package:flutter_firebase_template/services/chat_service.dart';
@@ -149,17 +153,36 @@ class _AiChatScreenState extends State<AiChatScreen>
   }
 
   Widget _buildConversationTypeSelector(ChatState chatState) {
+    AppState appState = Provider.of<AppState>(context);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Expanded(
             child: AppButton(
           onPressed: () async {
-            Navigator.push(
-              context,
-              FadeNavigator(
-                  builder: (context, _, __) => MealPlanConfigurationRoot()),
-            );
+            UserData? userData =
+                await UserService(uid: user?.uid).getUserData();
+            AppState appState = Provider.of<AppState>(context, listen: false);
+            if (userData == null ||
+                (userData.isSubscribed != true &&
+                    (userData.freeTrialCredits ?? 0) >
+                        appState.freeTrialCreditCap)) {
+              Navigator.push(
+                context,
+                SlideNavigator(
+                  builder: (context, _, __) => SubscriptionScreen(
+                    userData: userData!,
+                  ),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                FadeNavigator(
+                    builder: (context, _, __) => MealPlanConfigurationRoot()),
+              );
+            }
           },
           text: "Create Meal plan",
           size: ButtonSize.small,
@@ -168,15 +191,32 @@ class _AiChatScreenState extends State<AiChatScreen>
         Expanded(
             child: AppButton(
           backgroundGradient: AppGradients.greenGradient,
-          onPressed: () {
-            chatState.setConversationType(ConversationType.chat);
-            chatState.addMessage(
-                Message(
-                    role: 'system',
-                    textResponse: _foodAssistantWelcome[
-                        DateTime.now().millisecond % _welcomeMessages.length],
-                    responseType: 'text'),
-                this);
+          onPressed: () async {
+            UserData? userData =
+                await UserService(uid: user?.uid).getUserData();
+            AppState appState = Provider.of<AppState>(context, listen: false);
+            if (userData == null ||
+                (userData.isSubscribed != true &&
+                    (userData.freeTrialCredits ?? 0) >
+                        appState.freeTrialCreditCap)) {
+              Navigator.push(
+                context,
+                SlideNavigator(
+                  builder: (context, _, __) => SubscriptionScreen(
+                    userData: userData!,
+                  ),
+                ),
+              );
+            } else {
+              chatState.setConversationType(ConversationType.chat);
+              chatState.addMessage(
+                  Message(
+                      role: 'system',
+                      textResponse: _foodAssistantWelcome[
+                          DateTime.now().millisecond % _welcomeMessages.length],
+                      responseType: 'text'),
+                  this);
+            }
           },
           text: "Food Assistant",
           size: ButtonSize.small,

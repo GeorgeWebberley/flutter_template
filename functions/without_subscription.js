@@ -27,16 +27,6 @@ const recipeListAiAssistantNewId = "asst_WKcWA2lHIdaP9EZbxg1pUTq0";
 const refreshRecipeAiAssistantId = "asst_LGfISDuP0aG7YF0x739YGBHh";
 const recipeHelpAiAssistantId = "asst_vi2XNfwlTHrMZAXLwKPGjbW8";
 
-// For controlling the number of free credits (read from database and cached)
-// NOTE: It is kept in the remote config (for the frontend) as well as here. If we want
-// to update the number of free credits we can do so in the database AS WELL AS here.
-// I will figure out a better solution for this in the long term, however having it 
-// hardcoded here is faster than reading from the remote config and speed is already an issue.
-// See Firebase Remote Config
-const freeCreditCap = 50000;
-const monthlyCreditCap = 3000000; // This is about equal to $1.80
-const imageTokens = 1667; // The cost of tokens based on prices of image generation vs text generation
-
 
 /**
  * validateSubscription
@@ -162,82 +152,23 @@ exports.scheduledSubscriptionCheck = functions.pubsub
 });
 
 
-/**
- * startFreeTrial
- * 
- * Expects the following data from the client:
- * - deviceId (this will be the android fingerprint or the ios identifierForVendor)
- * - localStoredValue (this will be a unique value stored on the device)
- * This function will start a free trial for the current user. However it will first check if
- * the a free trial has been started with the same exact deviceId AND localStoredValue 3 times before.
- */
-exports.startFreeTrial = functions.https.onCall(
-  async (data, context) => {
-    // 1. Ensure the request is authenticated.
-    if (!context.auth) {
-      throw new functions.https.HttpsError("unauthenticated", "User must be authenticated.");
-    }
-
-    // 2. Extract and validate parameters.
-    const { deviceId, localStoredValue } = data;
-
-    // 3. Check if there are already 3 users with the same deviceId and localStoredValue.
-    // But only if the deviceID is not null since there will prpbably be plenty with null.
-    if(deviceId != null && localStoredValue != null){
-      try {
-        const usersSnapshot = await admin.firestore().collection('users')
-          .where('deviceId', '==', deviceId)
-          .where('localStoredValue', '==', localStoredValue)
-          .get();
-
-        if (usersSnapshot.size >= 3) {
-          throw new functions.https.HttpsError("failed-precondition", "You have already started a free trial 3 times.");
-        }
-      } catch (error) {
-        throw new functions.https.HttpsError("failed-precondition", error.message);
-      }
-    }
-
-    // 4. Update Firestore with the free trial status.
-    const uid = context.auth.uid;
-    try {
-      // First we want to check if a free trial has already been started.
-      const userDoc = await admin.firestore().collection("users").doc(uid).get();
-      const userData = userDoc.data();
-      if (userData.isSubscribed || userData.freeTrialCredits != null) {
-        throw new functions.https.HttpsError("failed-precondition", "You are already subscribed.");
-      } else {
-        await userDoc.ref.update({
-          freeTrialCredits: 0,
-          deviceId: deviceId,
-          localStoredValue: localStoredValue,
-        });
-      }
-    } catch (error) {
-      throw new functions.https.HttpsError("internal", "Failed to update free trial status.");
-    }
-
-    return { success: true };
-  }
-);
-
-
-
 
 // After updating this document, re-deploy functions using the following command:
 //
 // firebase deploy --only functions
-exports.sendMessage = functions.runWith({ timeoutSeconds: 120 }).https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.sendMessage = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
   const userId = context.auth.uid;
   const userDocRef = admin.firestore().collection('users').doc(userId);
   const userDoc = await userDocRef.get();
-  const userData = userDoc.data();
   
-  let threadId = userData?.threadId;
+  let threadId = userDoc.data()?.threadId;
 
   // Will be true if the message being sent is the final in the meal planning.
   // Used to create an entry in the database with "loading" set to true.
   const isNewConversation = data.isNewConversation;
+  
+  let newMealPlanDocRef;
+
 
   try {
     // If the thread doesn't exist, create a new one.
@@ -256,18 +187,26 @@ exports.sendMessage = functions.runWith({ timeoutSeconds: 120 }).https.onCall(wi
       content: userMessage,
     });
 
+    console.log("sendMessage Submitted message")
+
     const run = await openai.beta.threads.runs.createAndPoll(threadId, {
       assistant_id: generalAiAssistantId, 
     });
 
+    console.log("sendMessage run.status");
+    console.log(run.status);
+    
+
     if (run.status === 'completed') {
-      // Calculate usage and store in Firestore (don't need to wait for this)
-      const tokens = calculateUsage(run.usage);
-      updateUsage(userId, tokens);
+      console.log("sendMessage test 1");
 
       const messages = await openai.beta.threads.messages.list(run.thread_id);
+      console.log("sendMessage test 2", messages);
+
       // Return only the latest message from the assistant
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
+
+      console.log("sendMessage test 3", latestMessage);
 
       return { status: 'success', message: latestMessage };
     } else {
@@ -277,13 +216,13 @@ exports.sendMessage = functions.runWith({ timeoutSeconds: 120 }).https.onCall(wi
     console.error("Error handling message:", error);
     throw new functions.https.HttpsError('failed-precondition', 'Failed to send message.');
   }
-}));
+});
 
 
 // After updating this document, re-deploy functions using the following command:
 //
 // firebase deploy --only functions
-exports.sendMessageNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.sendMessageNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
 
   const requirements = data.requirements?.length 
     ? data.requirements 
@@ -304,14 +243,16 @@ exports.sendMessageNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall
   const userId = context.auth.uid;
   const userDocRef = admin.firestore().collection('users').doc(userId);
   const userDoc = await userDocRef.get();
-  const userData = userDoc.data();
   
-  let threadId = userData?.threadId;
+  let threadId = userDoc.data()?.threadId;
 
   // Will be true if the message being sent is the final in the meal planning.
   // Used to create an entry in the database with "loading" set to true.
   const isNewConversation = data.isNewConversation;
   
+  let newMealPlanDocRef;
+
+
   try {
     // If the thread doesn't exist, create a new one.
     if (!threadId || isNewConversation) {
@@ -343,20 +284,26 @@ exports.sendMessageNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall
       content: userMessage,
     });
 
+    console.log("sendMessage Submitted message")
+
     const run = await openai.beta.threads.runs.createAndPoll(threadId, {
       assistant_id: generalAiAssistantNewId, 
     });
 
+    console.log("sendMessage run.status");
+    console.log(run.status);
+    
+
     if (run.status === 'completed') {
-      // Calculate usage and store in Firestore (don't need to wait for this)
-      const tokens = calculateUsage(run.usage);
-      console.log("NEW MESSAGE Tokens used:", tokens);
-      updateUsage(userId, tokens);
+      console.log("sendMessage test 1");
 
       const messages = await openai.beta.threads.messages.list(run.thread_id);
+      console.log("sendMessage test 2", messages);
 
       // Return only the latest message from the assistant
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
+
+      console.log("sendMessage test 3", latestMessage);
 
       return { status: 'success', message: latestMessage };
     } else {
@@ -366,15 +313,14 @@ exports.sendMessageNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall
     console.error("Error handling message:", error);
     throw new functions.https.HttpsError('failed-precondition', 'Failed to send message.');
   }
-}));
+});
 
 
 // Sends a message to the Recipe Help AI model.
 // Currently we are not storing this conversation in the database.
 // To decide on whether we want to or not. Could even be done frontend when the conversation ends.
-exports.sendMessageRecipeHelp = functions.runWith({ timeoutSeconds: 120 }).https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.sendMessageRecipeHelp = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
   const userId = context.auth.uid;
-  
   if(!userId){
     throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated.');
   }
@@ -412,10 +358,6 @@ exports.sendMessageRecipeHelp = functions.runWith({ timeoutSeconds: 120 }).https
     });
 
     if (run.status === 'completed') {
-      // Calculate usage and store in Firestore (don't need to wait for this)
-      const tokens = calculateUsage(run.usage);
-      updateUsage(userId, tokens);
-
       const messages = await openai.beta.threads.messages.list(run.thread_id);
       // Return only the latest message from the assistant
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
@@ -429,7 +371,7 @@ exports.sendMessageRecipeHelp = functions.runWith({ timeoutSeconds: 120 }).https
     console.error("Error handling message:", error);
     throw new functions.https.HttpsError('failed-precondition', 'Failed to send message.');
   }
-}));
+});
 
 
 
@@ -438,7 +380,7 @@ exports.sendMessageRecipeHelp = functions.runWith({ timeoutSeconds: 120 }).https
 // - The second one returns a single recipe for each name. Can be called in parallel to save time (only billed on number of tokens).
 // Difficulties may be when trying to do this as well as accounting for the fact that user has diet preferences.
 // Keep the above function for the general "chat" functionality and for being able to generate recipes on the fly.
-exports.getRecipeList = functions.runWith({ timeoutSeconds: 120 }).https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.getRecipeList = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
   const userId = context.auth.uid;
   // TODO: Also to check for user subscription status
   if (!userId) {
@@ -473,16 +415,20 @@ exports.getRecipeList = functions.runWith({ timeoutSeconds: 120 }).https.onCall(
       content: userMessage,
     });
 
+    // console.log("getRecipeList Submitted message")
+
     const run = await openai.beta.threads.runs.createAndPoll(threadId, {
       assistant_id: recipeListAiAssistantId, 
     });
 
+    // console.log("getRecipeList run.status");
+    // console.log(run.status);
+
     if (run.status === 'completed') {
-      // Calculate usage and store in Firestore (don't need to wait for this)
-      const tokens = calculateUsage(run.usage);
-      updateUsage(userId, tokens);
+      // console.log("getRecipeList test 1");
 
       const messages = await openai.beta.threads.messages.list(run.thread_id);
+      // console.log("getRecipeList test 2", messages);
       
       // Return only the latest message from the assistant
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
@@ -496,7 +442,7 @@ exports.getRecipeList = functions.runWith({ timeoutSeconds: 120 }).https.onCall(
     console.error("Error handling message:", error);
     throw new functions.https.HttpsError('failed-precondition', 'Failed to send message.');
   }
-}));
+});
 
 
 
@@ -506,7 +452,7 @@ exports.getRecipeList = functions.runWith({ timeoutSeconds: 120 }).https.onCall(
 // - The second one returns a single recipe for each name. Can be called in parallel to save time (only billed on number of tokens).
 // Difficulties may be when trying to do this as well as accounting for the fact that user has diet preferences.
 // Keep the above function for the general "chat" functionality and for being able to generate recipes on the fly.
-exports.getRecipeListNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.getRecipeListNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
   const userId = context.auth.uid;
   // TODO: Also to check for user subscription status
   if (!userId) {
@@ -558,16 +504,20 @@ exports.getRecipeListNew = functions.runWith({ timeoutSeconds: 120 }).https.onCa
       content: userMessage,
     });
 
+    // console.log("getRecipeList Submitted message")
+
     const run = await openai.beta.threads.runs.createAndPoll(threadId, {
       assistant_id: recipeListAiAssistantNewId, 
     });
 
+    // console.log("getRecipeList run.status");
+    // console.log(run.status);
+
     if (run.status === 'completed') {
-      // Calculate usage and store in Firestore (don't need to wait for this)
-      const tokens = calculateUsage(run.usage);
-      updateUsage(userId, tokens);
+      // console.log("getRecipeList test 1");
 
       const messages = await openai.beta.threads.messages.list(run.thread_id);
+      // console.log("getRecipeList test 2", messages);
       
       // Return only the latest message from the assistant
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
@@ -581,11 +531,11 @@ exports.getRecipeListNew = functions.runWith({ timeoutSeconds: 120 }).https.onCa
     console.error("Error handling message:", error);
     throw new functions.https.HttpsError('failed-precondition', 'Failed to send message.');
   }
-}));
+});
 
 
 
-exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
   const { breakfasts, lunches, dinners, dietaryPreferences, numberOfPeople, mealPlanId } = data;
 
   const userId = context.auth.uid;
@@ -630,15 +580,11 @@ exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCal
     // Start a batch
     const batch = admin.firestore().batch();
 
-    // Add each recipe to the 'recipes' subcollection AND add the usage tokens
-    let totalTokens = 0;
+    // Add each recipe to the 'recipes' subcollection
     recipes.forEach((recipe) => {
       const recipeDocRef = newMealPlanDocRef.collection('recipes').doc(); // Auto-generate a new recipe ID
-      console.log("RECIPE REQUEST TOKENS", recipe.tokens);
-      totalTokens += recipe.tokens ?? 0;
       batch.set(recipeDocRef, recipe); // Add the recipe to the batch
     });
-    updateUsage(userId, totalTokens);
 
     // Update the meal plan document itself to mark loading as false (if necessary)
     batch.update(newMealPlanDocRef, {
@@ -652,16 +598,16 @@ exports.generateRecipes = functions.runWith({ timeoutSeconds: 120 }).https.onCal
     //   loading: false,
     // });
     console.log("Meal plan updated successfully");
-    sendNotificationAndRecordTokens(userId, mealPlanId, totalTokens);
+    sendMealPlanNotification(userId, mealPlanId);
 
   } catch (dbError) {
     console.error('Error updating Firestore document:', dbError);
     throw new functions.https.HttpsError('internal', 'Failed to update the meal plan');
   }
-}));
+});
 
 
-exports.generateRecipesNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.generateRecipesNew = functions.runWith({ timeoutSeconds: 120 }).https.onCall(async (data, context) => {
   const { breakfasts, lunches, dinners, requirements, allergies, tools, extras, numberOfPeople, mealPlanId } = data;
 
   const userId = context.auth.uid;
@@ -707,14 +653,10 @@ exports.generateRecipesNew = functions.runWith({ timeoutSeconds: 120 }).https.on
     const batch = admin.firestore().batch();
 
     // Add each recipe to the 'recipes' subcollection
-    let totalTokens = 0;
     recipes.forEach((recipe) => {
       const recipeDocRef = newMealPlanDocRef.collection('recipes').doc(); // Auto-generate a new recipe ID
-      console.log("RECIPE REQUEST TOKENS", recipe.tokens);
-      totalTokens += recipe.tokens ?? 0;
       batch.set(recipeDocRef, recipe); // Add the recipe to the batch
     });
-    updateUsage(userId, totalTokens);
 
     // Update the meal plan document itself to mark loading as false (if necessary)
     batch.update(newMealPlanDocRef, {
@@ -728,15 +670,15 @@ exports.generateRecipesNew = functions.runWith({ timeoutSeconds: 120 }).https.on
     //   loading: false,
     // });
     console.log("Meal plan updated successfully");
-    sendNotificationAndRecordTokens(userId, mealPlanId);
+    sendMealPlanNotification(userId, mealPlanId);
 
   } catch (dbError) {
     console.error('Error updating Firestore document:', dbError);
     throw new functions.https.HttpsError('internal', 'Failed to update the meal plan');
   }
-}));
+});
 
-exports.refreshSingleRecipe = functions.https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.refreshSingleRecipe = functions.https.onCall(async (data, context) => {
   const { mealPlanId, mealPlanConfiguration, recipeId, existingTitles, mealType } = data;
 
   const userId = context.auth.uid;
@@ -773,10 +715,7 @@ exports.refreshSingleRecipe = functions.https.onCall(withSubscriptionCheck(async
     assistant_id: recipeListAiAssistantId, 
   });
 
-  let totalTokens = 0;
-
   if (run.status === 'completed') {
-    totalTokens += calculateUsage(run.usage);
     // console.log("getRecipeList test 1");
 
     const messages = await openai.beta.threads.messages.list(run.thread_id);
@@ -788,19 +727,17 @@ exports.refreshSingleRecipe = functions.https.onCall(withSubscriptionCheck(async
 
     const responseData = JSON.parse(latestMessage.content[0].text.value);
     const recipesToCreate = responseData.recipes.map(recipe => recipe.title);
+  
 
     // Wait for all API calls to complete in parallel
     let recipe;
     try {
       recipe = await generateRecipe(recipesToCreate[0], mealType, preferences, numberOfPeople)
-      totalTokens += recipe.tokens;
     } catch (error) {
       console.error('Error with recipe requests:', error);
       await recipeDocRef.update({ loading: false });
       throw new functions.https.HttpsError('internal', 'Failed to generate recipes');
     }
-
-    updateUsage(userId, totalTokens);
 
     // Update the meal plan document in Firestore
     try {
@@ -814,11 +751,10 @@ exports.refreshSingleRecipe = functions.https.onCall(withSubscriptionCheck(async
   } else {
     await recipeDocRef.update({ loading: false });
   }
-})
-);
+});
 
 
-exports.refreshMultipleRecipes = functions.https.onCall(withSubscriptionCheck(async (data, context) => {
+exports.refreshMultipleRecipes = functions.https.onCall(async (data, context) => {
   const { mealPlanId, type, recipesToRefresh } = data;
 
   const userId = context.auth.uid;
@@ -866,8 +802,6 @@ exports.refreshMultipleRecipes = functions.https.onCall(withSubscriptionCheck(as
     });
 
     if (run.status === 'completed') {
-      let totalTokens = 0;
-      totalTokens += calculateUsage(run.usage);
       // console.log("getRecipeList test 1");
 
       const messages = await openai.beta.threads.messages.list(run.thread_id);
@@ -898,13 +832,6 @@ exports.refreshMultipleRecipes = functions.https.onCall(withSubscriptionCheck(as
         await newMealPlanDocRef.update({ [refreshKey]: false });
         throw new functions.https.HttpsError('internal', 'Failed to generate recipes');
       }
-
-      // calculate usage
-      recipes.forEach((recipe) => {
-        console.log("RECIPE REQUEST TOKENS", recipe.tokens);
-        totalTokens += recipe.tokens ?? 0;
-      });
-      updateUsage(userId, totalTokens);
 
       // Update the meal plan document in Firestore
       try {
@@ -942,8 +869,7 @@ exports.refreshMultipleRecipes = functions.https.onCall(withSubscriptionCheck(as
   } else {
     console.log('No meal plan found');
   }
-})
-);
+});
 
 
 // Function to generate recipe by calling AI API
@@ -957,7 +883,6 @@ async function generateRecipe(recipeTitle, mealType, dietaryPreferences, numberO
 
     if(image && recipe){
       recipe.image = image;
-      recipe.tokens = (recipe.tokens ?? 0) + imageTokens;
     }
 
     console.log("Combined Recipe with Images:", recipe);
@@ -979,8 +904,6 @@ async function generateRecipeNew(recipeTitle, mealType, requirements, allergies,
 
     if(image && recipe){
       recipe.image = image;
-      console.log("TOKENS INSIDE JSON FUNCTION: ", recipe.tokens)
-      recipe.tokens = (recipe.tokens ?? 0) + imageTokens;
     }
 
     console.log("Combined Recipe with Images:", recipe);
@@ -997,6 +920,9 @@ async function generateRecipeJson(recipeTitle, mealType, dietaryPreferences, num
     const thread = await openai.beta.threads.create();
     const threadId = thread.id;
 
+    console.log("generateRecipe 3");
+
+
     const userMessage = `
     Recipe title: ${recipeTitle},
     Meal type: ${mealType},
@@ -1009,30 +935,38 @@ async function generateRecipeJson(recipeTitle, mealType, dietaryPreferences, num
       content: userMessage,
     });
 
+    console.log("Message submitted to OpenAI");
+
     const run = await openai.beta.threads.runs.createAndPoll(threadId, {
       assistant_id: recipeAiAssistantId, 
     });
+
+    console.log("OpenAI run status:", run.status);
 
     if (run.status === 'completed') {
       const messages = await openai.beta.threads.messages.list(run.thread_id);
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
       let finalRecipe;
-      const tokens = calculateUsage(run.usage);
 
       if (latestMessage && latestMessage['content'] && latestMessage['content'].length > 0) {
+        // console.log("generateRecipes test 2");
+    
         const contentList = latestMessage['content'];
         const contentObject = contentList.length > 0 ? contentList[0] : null;
+        // console.log("generateRecipes test 3", contentObject);
     
         if (contentObject && contentObject['type'] === 'text') {
           const textValue = contentObject['text']['value'];
     
           try {
             const parsedJson = JSON.parse(textValue);
+            // console.log("generateRecipes test 4", parsedJson);
+    
             // Check if the parsed JSON has a "properties" key
             finalRecipe = parsedJson;
             if (parsedJson.hasOwnProperty('properties')) {
+              // console.log("generateRecipes test 5 - properties found, flattening");
               finalRecipe = parsedJson.properties; // Flatten the object by extracting "properties"
-              finalRecipe.tokens = tokens;
               return finalRecipe;
             }
           } catch (parseError) {
@@ -1040,7 +974,6 @@ async function generateRecipeJson(recipeTitle, mealType, dietaryPreferences, num
           }
         }
       }
-      finalRecipe.tokens = tokens;
       return finalRecipe;
     } else {
       console.error('OpenAI run did not complete', run);
@@ -1088,7 +1021,6 @@ async function generateRecipeJsonNew(recipeTitle, mealType, requirements, allerg
       const messages = await openai.beta.threads.messages.list(run.thread_id);
       const latestMessage = messages.data.find(msg => msg.role === 'assistant');
       let finalRecipe;
-      const tokens = calculateUsage(run.usage);
 
       if (latestMessage && latestMessage['content'] && latestMessage['content'].length > 0) {
         // console.log("generateRecipes test 2");
@@ -1109,7 +1041,6 @@ async function generateRecipeJsonNew(recipeTitle, mealType, requirements, allerg
             if (parsedJson.hasOwnProperty('properties')) {
               // console.log("generateRecipes test 5 - properties found, flattening");
               finalRecipe = parsedJson.properties; // Flatten the object by extracting "properties"
-              finalRecipe.tokens = tokens;
               return finalRecipe;
             }
           } catch (parseError) {
@@ -1117,7 +1048,6 @@ async function generateRecipeJsonNew(recipeTitle, mealType, requirements, allerg
           }
         }
       }
-      finalRecipe.tokens = tokens;
       return finalRecipe;
     } else {
       console.error('OpenAI run did not complete', run);
@@ -1221,34 +1151,17 @@ async function uploadImageToCloudStorage(imageUrl) {
   return `https://storage.googleapis.com/${bucket.name}/${fileName}`;
 }
 
-// Sends a meal plan notification AND updates the user's usage tokens
-async function sendNotificationAndRecordTokens(userId, mealplanId, usageTokens) {
+
+async function sendMealPlanNotification(userId, mealplanId) {
    // Get the user's details
-   const userDocRef = admin.firestore().collection("users").doc(userId);
-   const user = await userDocRef.get();
+   const user = await admin.firestore().collection("users").doc(userId).get();
 
    if (!user.exists) {
      functions.logger.error(`User with ID ${userId} not found.`);
      return;
    }
-
-   const userData = user.data();
-
-   // User must be on free trial
-   if(userData.isSubscribed != true) {
-      userDocRef.update({ freeTrialCredits: admin.firestore.FieldValue.increment(tokens) });
-   } else {
-    // User is subscribed. We want to update the current month's usage
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const usageDocRef = userDocRef.collection('usage').doc(`${currentMonth}-${currentYear}`);
-    // Atomically increment the tokens field
-    usageDocRef.set({
-      tokens: admin.firestore.FieldValue.increment(tokens)
-    }, { merge: true });
-   }
  
-   const tokens = userData.tokens;
+   const tokens = user.data().tokens;
  
    if (!tokens || tokens.length === 0) {
      functions.logger.warn(`No tokens found for user with ID ${userId}.`);
@@ -1262,7 +1175,7 @@ async function sendNotificationAndRecordTokens(userId, mealplanId, usageTokens) 
 
   try {
     await admin.messaging().sendEachForMulticast({
-      tokens: userData.tokens,
+      tokens: user.data().tokens,
       data: {
         type: "mealplanReady",
         mealplanId: mealplanId
@@ -1274,36 +1187,16 @@ async function sendNotificationAndRecordTokens(userId, mealplanId, usageTokens) 
   }
 }
 
-// TODO: Figure out if we can get away with only fetch the user object once. Currently we fetch it here AND in the functions themselves.
 async function checkSubscription(uid) {
-  // TODO: PUT IN TEMPORARILY. TO REMOVE WHEN READY
-  return true;
-
-  // Check the user's subscription status in Firestore.
-  const userDocRef = admin.firestore().collection("users").doc(uid);
-  const userDoc = await userDocRef.get();
-
+  const userDoc = await admin.firestore().collection("users").doc(uid).get();
   // If user doesn't exist return false
   if (!userDoc.exists) return false;
-
+  
   const userData = userDoc.data();
-
   // If user in database not subscribed return false
-  if (userData.isSubscribed !== true && (userData.freeTrialCredits != null && userData.freeTrialCredits > freeCreditCap)) return false;
-
-  // TODO: THIS CHECKS WHETHER THE USER HAS USED TOO MUCH IN THE LAST MONTH. TEMPORARILY COMMENTED FOR SPEED. DECIDE WHETHER TO INCLUDE WHEN WE HAVE MORE USERS.
-  // const currentMonth = new Date().getMonth();
-  // const currentYear = new Date().getFullYear();
-  // const usageDocRef = userDocRef.collection('usage').doc(`${currentMonth}-${currentYear}`);
-  // const usageDoc = await usageDocRef.get();
-  // let tokensUsed = 0;
-  // if (usageDoc.exists) {
-  //   const usageData = usageDoc.data();
-  //   tokensUsed = usageData.tokens || 0;
-  // }
-  // if (tokensUsed > monthlyCreditCap) return false;
-
-  return true;
+  if (userData.isSubscribed !== true) return false;
+  // Quick check based on the top-level flag.
+  return userData.isSubscribed === true;
 }
 
 function withSubscriptionCheck(fn) {
@@ -1312,7 +1205,6 @@ function withSubscriptionCheck(fn) {
     if (!context.auth) {
       throw new functions.https.HttpsError("unauthenticated", "User must be authenticated");
     }
-    console.log("Checking subscription status");
 
     const uid = context.auth.uid;
     // Check subscription status from Firestore.
@@ -1393,58 +1285,5 @@ async function revalidateSubscription({ receiptData, productId, platform }) {
   }
 
   return { isValid, validationResponse };
-}
-
-
-function calculateUsage(usageObject) {
-  // If usageObject is null, undefined, or not an object, return 0
-  if (!usageObject || typeof usageObject !== 'object') {
-    return 0;
-  }
-
-  // Retrieve tokens and ensure they are numbers
-  const inputTokens = Number(usageObject.prompt_tokens) || 0;
-  const outputTokens = Number(usageObject.completion_tokens) || 0;
-
-  // Divide input tokens by 4 to get the calculated usage,
-  // using Math.ceil to round up any fractional part
-  const inputUsage = Math.ceil(inputTokens / 4);
-
-
-  // Return the sum of inputUsage and outputTokens
-  return inputUsage + outputTokens;
-}
-
-async function updateUsage(userId, tokens){
-  console.log("Updating usage for user", userId);
-  console.log("Number of tokens", tokens);
-  const userDocRef = admin.firestore().collection('users').doc(userId);
-  console.log("Updating usage for user 1");
-
-  const userDoc = await userDocRef.get();
-  console.log("Updating usage for user 2");
-
-  const userData = userDoc.data();
-
-  console.log("Updating usage for user 3");
-
-
-  // User must be on free trial
-  if (userData.isSubscribed != true) {
-    console.log("Updating usage for user 4");
-
-    userDocRef.update({ freeTrialCredits: admin.firestore.FieldValue.increment(tokens) });
-  } else {
-    console.log("Updating usage for user 5");
-
-    // User is subscribed. We want to update the current month's usage
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const usageDocRef = userDocRef.collection('usage').doc(`${currentMonth}-${currentYear}`);
-    // Atomically increment the tokens field
-    usageDocRef.set({
-      tokens: admin.firestore.FieldValue.increment(tokens)
-    }, { merge: true });
-  }
 }
 

@@ -9,6 +9,7 @@ import 'package:flutter_firebase_template/providers/push_notification_provider.d
 import 'package:flutter_firebase_template/screens/auth/authenticate.dart';
 import 'package:flutter_firebase_template/screens/auth/user_setup_flow.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/meal_plan_root.dart';
+import 'package:flutter_firebase_template/screens/logged_in/subscription/subscription_screen.dart';
 import 'package:flutter_firebase_template/services/auth_service.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/fade_navigator.dart';
@@ -41,77 +42,66 @@ class _WrapperState extends State<Wrapper> {
 
       UserService userService = UserService(uid: user.uid);
 
-      return ChangeNotifierProvider<InAppPurchaseProvider>(
-        create: (_) {
-          InAppPurchaseProvider inAppProvider =
-              InAppPurchaseProvider(userService: userService);
-          inAppProvider.init();
-          return inAppProvider;
-        },
-        child: Builder(builder: (context) {
-          return StreamBuilder<UserData?>(
-              stream: userService.userDataStream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.active) {
-                  UserData? userData = snapshot.data;
+      return StreamBuilder<UserData?>(
+          stream: userService.userDataStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.active) {
+              UserData? userData = snapshot.data;
 
-                  // This should not happen, but is a fall back / safety check
-                  if (userData == null) {
-                    return Scaffold(
-                      body: Container(
-                        height: double.infinity,
-                        decoration: const BoxDecoration(
-                          gradient: AppGradients.backgroundGradient,
-                        ),
-                        child: Center(
-                          child: AppButton(
-                              onPressed: () async {
-                                await AuthService().signOut();
-                              },
-                              text: "Test"),
-                          //     CircularProgressIndicator(
-                          //   color: Color.fromARGB(255, 1, 22, 24),
-                          // ),
-                        ),
-                      ),
-                    );
-                  } else {
-                    if (userData.hasCompletedTutorial == true) {
-                      // Check for any push notifications and handle them appropriately
-                      Provider.of<PushNotificationProvider?>(context,
-                              listen: false)
-                          ?.setupInteractedMessage((RemoteMessage? message) {
-                        if (message?.data != null) {
-                          _handleMessage(
-                              context: context,
-                              message: message!.data,
-                              currentUser: userData);
-                        }
-                      });
-
-                      return const AppNavigation();
-                    } else {
-                      return UserSetupFlow(user: user);
-                    }
-                  }
-                } else {
-                  return Scaffold(
-                    body: Container(
-                      height: double.infinity,
-                      decoration: const BoxDecoration(
-                        gradient: AppGradients.backgroundGradient,
-                      ),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: Color.fromARGB(255, 1, 22, 24),
-                        ),
-                      ),
+              // This should not happen, but is a fall back / safety check
+              if (userData == null) {
+                return Scaffold(
+                  body: Container(
+                    height: double.infinity,
+                    decoration: const BoxDecoration(
+                      gradient: AppGradients.backgroundGradient,
                     ),
-                  );
+                    child: Center(
+                      child: AppButton(
+                          onPressed: () async {
+                            await AuthService().signOut();
+                          },
+                          text: "Test"),
+                      //     CircularProgressIndicator(
+                      //   color: Color.fromARGB(255, 1, 22, 24),
+                      // ),
+                    ),
+                  ),
+                );
+              } else {
+                if (!(userData.hasCompletedTutorial == true)) {
+                  return UserSetupFlow(user: user);
+                } else {
+                  // Check for any push notifications and handle them appropriately
+                  Provider.of<PushNotificationProvider?>(context, listen: false)
+                      ?.setupInteractedMessage((RemoteMessage? message) {
+                    if (message?.data != null) {
+                      _handleMessage(
+                          context: context,
+                          message: message!.data,
+                          currentUser: userData);
+                    }
+                  });
+
+                  return const AppNavigation();
                 }
-              });
-        }),
-      );
+              }
+            } else {
+              return Scaffold(
+                body: Container(
+                  height: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: AppGradients.backgroundGradient,
+                  ),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: Color.fromARGB(255, 1, 22, 24),
+                    ),
+                  ),
+                ),
+              );
+            }
+          });
     }
   }
 

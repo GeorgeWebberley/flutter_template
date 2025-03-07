@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/screens/auth/confirm_email.dart';
+import 'package:flutter_firebase_template/screens/logged_in/subscription/subscription_screen.dart';
 import 'package:flutter_firebase_template/widgets/app_intro_slider/app_intro_slider.dart';
 import 'package:flutter_firebase_template/widgets/meal_plan_settings/tutorial.dart';
 

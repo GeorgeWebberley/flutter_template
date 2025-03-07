@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 abstract class LocalStorageKeys {
   static String get pushNotification => "push-notification";
   static String get hasVisited => "hasVisited";
+  static String get randomDeviceId => "randomDeviceId";
 }
 
 // Wrapper around flutter secure storage

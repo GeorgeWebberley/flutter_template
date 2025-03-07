@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/models/message.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/typing_indicator.dart';
 import 'package:flutter_firebase_template/screens/logged_in/ai_chat/typing_input.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
+import 'package:flutter_firebase_template/screens/logged_in/subscription/subscription_screen.dart';
 import 'package:flutter_firebase_template/services/chat_service.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
+import 'package:flutter_firebase_template/state/app_state.dart';
 import 'package:flutter_firebase_template/theme/border_radius.dart';
 import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
@@ -22,12 +25,14 @@ class AiChatPopup extends StatefulWidget {
     this.messages,
     this.threadId,
     this.setThreadId,
+    required this.userData,
   });
 
   final Recipe recipe;
   final List<Message>? messages;
   final String? threadId;
   final Function(String?)? setThreadId;
+  final UserData userData;
 
   @override
   _AiChatPopupState createState() => _AiChatPopupState();
@@ -40,8 +45,6 @@ class _AiChatPopupState extends State<AiChatPopup>
   final ChatService _chatService = ChatService();
   late final List<AnimationController> _animationControllers;
   bool _isTyping = false;
-
-  AppUser? user;
 
   late String? threadId;
 
@@ -86,8 +89,8 @@ class _AiChatPopupState extends State<AiChatPopup>
 
   @override
   Widget build(BuildContext context) {
-    user = Provider.of<AppUser?>(context);
-
+    print("widget.userData.freeTrialCredits");
+    print(widget.userData.freeTrialCredits);
     return Container(
       decoration: BoxDecoration(
           gradient: AppGradients.backgroundGradient,
@@ -219,6 +222,19 @@ class _AiChatPopupState extends State<AiChatPopup>
   }
 
   void _sendMessage(String text) async {
+    AppState appState = Provider.of<AppState>(context, listen: false);
+    if (widget.userData.isSubscribed != true &&
+        (widget.userData.freeTrialCredits ?? 0) > appState.freeTrialCreditCap) {
+      Navigator.push(
+        context,
+        SlideNavigator(
+          builder: (context, _, __) => SubscriptionScreen(
+            userData: widget.userData,
+          ),
+        ),
+      );
+      return;
+    }
     if (text.isEmpty) return;
 
     _addMessage(

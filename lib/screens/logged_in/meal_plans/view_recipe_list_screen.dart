@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/app_user.dart';
 import 'package:flutter_firebase_template/models/meal_plan/meal_plan.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
+import 'package:flutter_firebase_template/models/user_data/user_data.dart';
 import 'package:flutter_firebase_template/screens/logged_in/meal_plans/recipe_screen.dart';
+import 'package:flutter_firebase_template/screens/logged_in/subscription/subscription_screen.dart';
 import 'package:flutter_firebase_template/services/user_service.dart';
 import 'package:flutter_firebase_template/shared/app_title.dart';
 import 'package:flutter_firebase_template/shared/navigation.dart/slide_navigator.dart';
+import 'package:flutter_firebase_template/state/app_state.dart';
 import 'package:flutter_firebase_template/theme/border_radius.dart';
 import 'package:flutter_firebase_template/theme/box_shadow.dart';
 import 'package:flutter_firebase_template/theme/colours.dart';
@@ -332,19 +335,38 @@ class _ViewRecipeListScreenState extends State<ViewRecipeListScreen> {
                                   loading ? loadingColor : AppColors.primary)),
                       onPressed: mode != null || loading
                           ? null
-                          : () {
-                              UserService(uid: uid).refreshSingleRecipe(
-                                recipeId: recipe.id!,
-                                mealPlanId: widget.mealPlan.id,
-                                mealType: recipe.mealType,
-                                mealPlanConfiguration:
-                                    widget.mealPlan.mealPlanConfiguration,
-                                existingTitles: allRecipes
-                                    .map(
-                                      (e) => e.title,
-                                    )
-                                    .toList(),
-                              );
+                          : () async {
+                              UserData? userData =
+                                  await UserService(uid: uid).getUserData();
+                              AppState appState =
+                                  Provider.of<AppState>(context, listen: false);
+                              if (userData == null ||
+                                  (userData.isSubscribed != true &&
+                                      (userData.freeTrialCredits ?? 0) >
+                                          appState.freeTrialCreditCap)) {
+                                Navigator.push(
+                                  context,
+                                  SlideNavigator(
+                                    builder: (context, _, __) =>
+                                        SubscriptionScreen(
+                                      userData: userData!,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                UserService(uid: uid).refreshSingleRecipe(
+                                  recipeId: recipe.id!,
+                                  mealPlanId: widget.mealPlan.id,
+                                  mealType: recipe.mealType,
+                                  mealPlanConfiguration:
+                                      widget.mealPlan.mealPlanConfiguration,
+                                  existingTitles: allRecipes
+                                      .map(
+                                        (e) => e.title,
+                                      )
+                                      .toList(),
+                                );
+                              }
                             },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(

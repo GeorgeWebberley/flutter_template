@@ -31,7 +31,6 @@ class _AppIntroSliderState extends State<AppIntroSlider> {
 
   @override
   Widget build(BuildContext context) {
-    return SubscriptionScreen();
     _sliderPages = [
       IntroSliderPage(
         backgroundColor: Colors.transparent,

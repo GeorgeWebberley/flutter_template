@@ -1,3 +1,5 @@
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_firebase_template/models/ingredient/ingredient.dart';
 import 'package:flutter_firebase_template/models/recipe.dart';
 import 'package:intl/intl.dart';
@@ -96,4 +98,17 @@ String formatIngredientQuantity(Ingredient ingredient,
 bool listsAreTheSame(List list1, List list2) {
   return Set.from(list1).containsAll(list2) &&
       Set.from(list2).containsAll(list1);
+}
+
+Future<String?> getDeviceId(BuildContext context) async {
+  final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+  if (Theme.of(context).platform == TargetPlatform.android) {
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+
+    return androidInfo
+        .fingerprint; // May not be unique, but it's the best we can do
+  } else {
+    final iosInfo = await deviceInfo.iosInfo;
+    return iosInfo.identifierForVendor; // Unique ID on iOS
+  }
 }
